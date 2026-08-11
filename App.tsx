@@ -1,9 +1,11 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
@@ -59,19 +61,44 @@ function BottomTabNavigator() {
 }
 
 export default function App() {
-  const onReady = useCallback(async () => {
-    // Hide splash screen after Navigation is ready
-    await SplashScreen.hideAsync();
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Pre-load Ionicons vector font family for standalone APK builds
+        await Font.loadAsync(Ionicons.font);
+      } catch (e) {
+        console.warn("Font loading error:", e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
   }, []);
 
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      // Hide splash screen after vector icon fonts are loaded
+      await SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
-    <NavigationContainer onReady={onReady}>
-      <StatusBar style="dark" />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-        <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
-        <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <NavigationContainer>
+        <StatusBar style="dark" />
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+          <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
+          <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
 }
