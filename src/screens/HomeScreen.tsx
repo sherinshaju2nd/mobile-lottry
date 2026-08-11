@@ -178,19 +178,12 @@ export default function HomeScreen({ navigation }: any) {
 
               <Text style={styles.winnerTitle}>{todayDraw.draw_name} ({todayDraw.draw_code})</Text>
               <Text style={[styles.winnerPrizeLabel, { color: COLORS.primary }]}>
-                1ST PRIZE ({todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+                Draw Results Published for Today!
               </Text>
 
-              <Text style={styles.winnerTicketNumber}>
-                {todayDraw.first?.ticket || "N/A"}
+              <Text style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4, marginBottom: 12, lineHeight: 18 }}>
+                Official winning results for {todayDraw.draw_name} ({todayDraw.draw_code}) have been published! Enter your ticket number in the checker below to search, or tap below to view the full prize breakdown.
               </Text>
-
-              {todayDraw.first?.location && (
-                <Text style={styles.winnerMeta}>
-                  Location: <Text style={styles.boldText}>{todayDraw.first.location}</Text>
-                  {todayDraw.first?.agent ? `  |  Agent: ${todayDraw.first.agent}` : ""}
-                </Text>
-              )}
 
               <TouchableOpacity
                 style={styles.viewBreakdownBtn}
@@ -374,13 +367,25 @@ export default function HomeScreen({ navigation }: any) {
                   <Text style={styles.drawTimeText}>Official Draw: 3:00 PM</Text>
 
                   {latest ? (
-                    <View style={styles.latestHighlight}>
-                      <View style={styles.latestHeaderRow}>
-                        <Text style={styles.highlightLabel}>LATEST 1ST PRIZE</Text>
-                        <Text style={styles.highlightDate}>{latest.draw_date}</Text>
+                    latest.draw_date === todayISTDate ? (
+                      <View style={[styles.latestHighlight, { backgroundColor: COLORS.cardBg, borderColor: COLORS.primary }]}>
+                        <View style={styles.latestHeaderRow}>
+                          <Text style={[styles.highlightLabel, { color: COLORS.primary }]}>TODAY&apos;S RESULT PUBLISHED</Text>
+                          <Text style={[styles.highlightDate, { color: COLORS.primary }]}>{latest.draw_date}</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: COLORS.primary, marginTop: 4 }}>
+                          Search ticket or tap below to view result →
+                        </Text>
                       </View>
-                      <Text style={styles.highlightTicket}>{latest.first?.ticket || "N/A"}</Text>
-                    </View>
+                    ) : (
+                      <View style={styles.latestHighlight}>
+                        <View style={styles.latestHeaderRow}>
+                          <Text style={styles.highlightLabel}>LATEST 1ST PRIZE</Text>
+                          <Text style={styles.highlightDate}>{latest.draw_date}</Text>
+                        </View>
+                        <Text style={styles.highlightTicket}>{latest.first?.ticket || "N/A"}</Text>
+                      </View>
+                    )
                   ) : (
                     <View style={styles.archiveNoticeBox}>
                       <Text style={styles.archiveNotice}>Daily 3:10 PM Updates</Text>
