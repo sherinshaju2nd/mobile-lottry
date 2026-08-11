@@ -5,8 +5,8 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES, LotteryMeta } from "../constants/lotteries";
@@ -37,7 +37,7 @@ export default function LotteriesScreen({ navigation }: any) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Kerala Weekly Lotteries</Text>

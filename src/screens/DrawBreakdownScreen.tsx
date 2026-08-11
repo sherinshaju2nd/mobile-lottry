@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   TextInput,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
@@ -105,15 +105,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   };
 
   const prizeTiers = [
-    { key: "consolation", label: "Consolation Prize" },
-    { key: "2nd", label: "2nd Prize" },
-    { key: "3rd", label: "3rd Prize" },
-    { key: "4th", label: "4th Prize" },
-    { key: "5th", label: "5th Prize" },
-    { key: "6th", label: "6th Prize" },
-    { key: "7th", label: "7th Prize" },
-    { key: "8th", label: "8th Prize" },
-    { key: "9th", label: "9th Prize" },
+    { key: "consolation", label: "Consolation Prize", color: "#7F8C8D" },
+    { key: "2nd", label: "2nd Prize", color: "#D4AF37" },
+    { key: "3rd", label: "3rd Prize", color: "#2980B9" },
+    { key: "4th", label: "4th Prize", color: "#8E44AD" },
+    { key: "5th", label: "5th Prize", color: "#2C3E50" },
+    { key: "6th", label: "6th Prize", color: "#16A085" },
+    { key: "7th", label: "7th Prize", color: "#D35400" },
+    { key: "8th", label: "8th Prize", color: "#C0392B" },
+    { key: "9th", label: "9th Prize", color: "#7F8C8D" },
   ] as const;
 
   return (
@@ -138,7 +138,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             <View style={styles.winnerCard}>
               <View style={styles.winnerBadgeRow}>
                 <Ionicons name="trophy" size={16} color={COLORS.successText} />
-                <Text style={styles.winnerBadgeText}>OFFICIAL 1ST PRIZE WINNER</Text>
+                <Text style={styles.winnerBadgeText}>1ST PRIZE WINNER</Text>
               </View>
 
               <Text style={styles.prizeAmount}>{drawResult.prizes?.amounts?.["1st"] || "₹70 Lakhs"}</Text>
@@ -185,14 +185,14 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               return (
                 <View key={tier.key} style={styles.tierCard}>
                   <View style={styles.tierHeader}>
-                    <Text style={styles.tierTitle}>{tier.label}</Text>
+                    <Text style={[styles.tierTitle, { color: tier.color }]}>{tier.label}</Text>
                     {amount && <Text style={styles.tierAmount}>{amount}</Text>}
                   </View>
 
                   <View style={styles.numbersGrid}>
                     {numbers.map((num, idx) => (
-                      <View key={idx} style={styles.numberChip}>
-                        <Text style={styles.numberChipText}>{num}</Text>
+                      <View key={idx} style={[styles.numberChip, { backgroundColor: tier.color, borderColor: tier.color }]}>
+                        <Text style={[styles.numberChipText, { color: "#FFFFFF" }]}>{num}</Text>
                       </View>
                     ))}
                   </View>

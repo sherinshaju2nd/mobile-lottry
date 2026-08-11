@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
   Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
@@ -112,7 +112,7 @@ export default function HomeScreen({ navigation }: any) {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
@@ -126,7 +126,7 @@ export default function HomeScreen({ navigation }: any) {
             </View>
             <View>
               <Text style={styles.appName}>Kerala Lottery Results</Text>
-              <Text style={styles.appSubtitle}>Live Official Updates & Checker</Text>
+              <Text style={styles.appSubtitle}>Live Updates & Checker</Text>
             </View>
           </View>
         </View>
@@ -165,98 +165,6 @@ export default function HomeScreen({ navigation }: any) {
             )}
           </View>
         </ScrollView>
-
-        {/* HERO TAB 0: TODAY'S DRAW */}
-        {heroTab === 0 && (
-          todayDraw ? (
-            /* Today's Draw Published Card */
-            <View style={styles.winnerCard}>
-              <View style={styles.winnerHeader}>
-                <Ionicons name="trophy" size={16} color={COLORS.successText} />
-                <Text style={styles.winnerTextBadge}>LATEST DRAW • {todayDraw.draw_date}</Text>
-              </View>
-
-              <Text style={styles.winnerTitle}>{todayDraw.draw_name} ({todayDraw.draw_code})</Text>
-              <Text style={[styles.winnerPrizeLabel, { color: COLORS.primary }]}>
-                Draw Results Published for Today!
-              </Text>
-
-              <Text style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4, marginBottom: 12, lineHeight: 18 }}>
-                Official winning results for {todayDraw.draw_name} ({todayDraw.draw_code}) have been published! Enter your ticket number in the checker below to search, or tap below to view the full prize breakdown.
-              </Text>
-
-              <TouchableOpacity
-                style={styles.viewBreakdownBtn}
-                onPress={() =>
-                  navigation.navigate("DrawBreakdown", {
-                    code: todayDraw.lottery_code,
-                    date: todayDraw.draw_date,
-                  })
-                }
-              >
-                <Text style={styles.viewBreakdownText}>
-                  View Full Breakdown for {todayDraw.draw_date} →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            /* Today's Draw Coming Soon Scheduled Card */
-            <View style={styles.scheduledCard}>
-              <View style={styles.scheduledBadgeRow}>
-                <Ionicons name="time" size={14} color={COLORS.gold} />
-                <Text style={styles.scheduledBadgeText}>RESULT COMING SOON (3:10 PM)</Text>
-              </View>
-
-              <Text style={styles.scheduledTitle}>{todayLottery.name} ({todayLottery.code})</Text>
-              <Text style={styles.scheduledSubtitle}>Draw Scheduled Today at 3:00 PM</Text>
-              <Text style={styles.scheduledDesc}>
-                Official results for {todayLottery.name} ({todayLottery.code}) will be published automatically at 3:10 PM.
-              </Text>
-            </View>
-          )
-        )}
-
-        {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
-        {heroTab === 1 && previousDraw && (
-          <View style={[styles.winnerCard, styles.winnerCardGold]}>
-            <View style={styles.winnerHeader}>
-              <Ionicons name="trophy" size={16} color={COLORS.gold} />
-              <Text style={[styles.winnerTextBadge, { color: COLORS.gold }]}>
-                PREVIOUS DRAW RESULT • {previousDraw.draw_date}
-              </Text>
-            </View>
-
-            <Text style={styles.winnerTitle}>{previousDraw.draw_name} ({previousDraw.draw_code})</Text>
-            <Text style={styles.winnerPrizeLabel}>
-              1ST PRIZE ({previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
-            </Text>
-
-            <Text style={[styles.winnerTicketNumber, { color: COLORS.gold }]}>
-              {previousDraw.first?.ticket || "N/A"}
-            </Text>
-
-            {previousDraw.first?.location && (
-              <Text style={styles.winnerMeta}>
-                Location: <Text style={styles.boldText}>{previousDraw.first.location}</Text>
-                {previousDraw.first?.agent ? `  |  Agent: ${previousDraw.first.agent}` : ""}
-              </Text>
-            )}
-
-            <TouchableOpacity
-              style={[styles.viewBreakdownBtn, { backgroundColor: COLORS.goldLight }]}
-              onPress={() =>
-                navigation.navigate("DrawBreakdown", {
-                  code: previousDraw.lottery_code,
-                  date: previousDraw.draw_date,
-                })
-              }
-            >
-              <Text style={[styles.viewBreakdownText, { color: COLORS.gold }]}>
-                View Full Breakdown for {previousDraw.draw_date} →
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         {/* Quick Ticket Checker Card */}
         <View style={styles.checkerCard}>
@@ -336,6 +244,130 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
+        {/* HERO TAB 0: TODAY'S DRAW */}
+        {heroTab === 0 && (
+          todayDraw ? (
+            /* Today's Draw Published Card */
+            <View style={styles.winnerCard}>
+              <View style={styles.winnerHeader}>
+                <Ionicons name="trophy" size={16} color={COLORS.successText} />
+                <Text style={styles.winnerTextBadge}>LATEST DRAW • {todayDraw.draw_date}</Text>
+              </View>
+
+              <Text style={styles.winnerTitle}>{todayDraw.draw_name} ({todayDraw.draw_code})</Text>
+              <Text style={[styles.winnerPrizeLabel, { color: COLORS.primary }]}>
+                1ST PRIZE ({todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+              </Text>
+              <Text style={styles.winnerTicketNumber}>
+                {todayDraw.first?.ticket || "N/A"}
+              </Text>
+              {((todayDraw.first?.location && todayDraw.first.location.toLowerCase() !== "n/a" && todayDraw.first.location.toLowerCase() !== "nan" && todayDraw.first.location.toLowerCase() !== "null") ||
+                (todayDraw.first?.agent && todayDraw.first.agent.toLowerCase() !== "n/a" && todayDraw.first.agent.toLowerCase() !== "nan" && todayDraw.first.agent.toLowerCase() !== "null")) && (
+                <Text style={styles.winnerMeta}>
+                  {todayDraw.first?.location && todayDraw.first.location.toLowerCase() !== "n/a" && todayDraw.first.location.toLowerCase() !== "nan" && todayDraw.first.location.toLowerCase() !== "null"
+                    ? `Location: ${todayDraw.first.location}`
+                    : ""}
+                  {todayDraw.first?.agent && todayDraw.first.agent.toLowerCase() !== "n/a" && todayDraw.first.agent.toLowerCase() !== "nan" && todayDraw.first.agent.toLowerCase() !== "null"
+                    ? `${todayDraw.first?.location && todayDraw.first.location.toLowerCase() !== "n/a" && todayDraw.first.location.toLowerCase() !== "nan" && todayDraw.first.location.toLowerCase() !== "null" ? "  |  " : ""}Agent: ${todayDraw.first.agent}`
+                    : ""}
+                </Text>
+              )}
+
+              <Text style={[styles.sectionHeader, { marginTop: 12, marginBottom: 6 }]}>Complete Prize Breakdown</Text>
+              {[
+                { key: "consolation", label: "Consolation Prize", color: "#7F8C8D" },
+                { key: "2nd", label: "2nd Prize", color: "#D4AF37" },
+                { key: "3rd", label: "3rd Prize", color: "#2980B9" },
+                { key: "4th", label: "4th Prize", color: "#8E44AD" },
+                { key: "5th", label: "5th Prize", color: "#2C3E50" },
+                { key: "6th", label: "6th Prize", color: "#16A085" },
+                { key: "7th", label: "7th Prize", color: "#D35400" },
+                { key: "8th", label: "8th Prize", color: "#C0392B" },
+                { key: "9th", label: "9th Prize", color: "#7F8C8D" },
+              ].map((tier) => {
+                const numbers = (todayDraw.prizes as any)?.[tier.key] as string[] | undefined;
+                const amount = todayDraw.prizes?.amounts?.[tier.key];
+                if (!numbers || numbers.length === 0) return null;
+
+                return (
+                  <View key={tier.key} style={styles.tierCard}>
+                    <View style={styles.tierHeader}>
+                      <Text style={[styles.tierTitle, { color: tier.color }]}>{tier.label}</Text>
+                      {amount && <Text style={styles.tierAmount}>{amount}</Text>}
+                    </View>
+
+                    <View style={styles.numbersGrid}>
+                      {numbers.map((num, idx) => (
+                        <View key={idx} style={[styles.numberChip, { backgroundColor: tier.color, borderColor: tier.color }]}>
+                          <Text style={[styles.numberChipText, { color: "#FFFFFF" }]}>{num}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            /* Today's Draw Coming Soon Scheduled Card */
+            <View style={styles.scheduledCard}>
+              <View style={styles.scheduledBadgeRow}>
+                <Ionicons name="time" size={14} color={COLORS.gold} />
+                <Text style={styles.scheduledBadgeText}>RESULT COMING SOON (3:10 PM)</Text>
+              </View>
+
+              <Text style={styles.scheduledTitle}>{todayLottery.name} ({todayLottery.code})</Text>
+              <Text style={styles.scheduledSubtitle}>Draw Scheduled Today at 3:00 PM</Text>
+              <Text style={styles.scheduledDesc}>
+                Winning results for {todayLottery.name} ({todayLottery.code}) will be published automatically at 3:10 PM.
+              </Text>
+            </View>
+          )
+        )}
+
+        {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
+        {heroTab === 1 && previousDraw && (
+          <View style={[styles.winnerCard, styles.winnerCardGold]}>
+            <View style={styles.winnerHeader}>
+              <Ionicons name="trophy" size={16} color={COLORS.gold} />
+              <Text style={[styles.winnerTextBadge, { color: COLORS.gold }]}>
+                PREVIOUS DRAW RESULT • {previousDraw.draw_date}
+              </Text>
+            </View>
+
+            <Text style={styles.winnerTitle}>{previousDraw.draw_name} ({previousDraw.draw_code})</Text>
+            <Text style={styles.winnerPrizeLabel}>
+              1ST PRIZE ({previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+            </Text>
+
+            <Text style={[styles.winnerTicketNumber, { color: COLORS.gold }]}>
+              {previousDraw.first?.ticket || "N/A"}
+            </Text>
+
+            {previousDraw.first?.location && (
+              <Text style={styles.winnerMeta}>
+                Location: <Text style={styles.boldText}>{previousDraw.first.location}</Text>
+                {previousDraw.first?.agent ? `  |  Agent: ${previousDraw.first.agent}` : ""}
+              </Text>
+            )}
+
+            <TouchableOpacity
+              style={[styles.viewBreakdownBtn, { backgroundColor: COLORS.goldLight }]}
+              onPress={() =>
+                navigation.navigate("DrawBreakdown", {
+                  code: previousDraw.lottery_code,
+                  date: previousDraw.draw_date,
+                })
+              }
+            >
+              <Text style={[styles.viewBreakdownText, { color: COLORS.gold }]}>
+                View Full Breakdown for {previousDraw.draw_date} →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+
+
         {/* Weekly Schedule Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Weekly Lottery Schedule</Text>
@@ -364,7 +396,7 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
 
                   <Text style={styles.lotteryName}>{lottery.name}</Text>
-                  <Text style={styles.drawTimeText}>Official Draw: 3:00 PM</Text>
+                  <Text style={styles.drawTimeText}>Draw: 3:00 PM</Text>
 
                   {latest ? (
                     latest.draw_date === todayISTDate ? (
@@ -568,4 +600,11 @@ const styles = StyleSheet.create({
   seoTitle: { fontSize: 18, fontWeight: "800", color: COLORS.textDark, marginBottom: 12 },
   seoSubtitle: { fontSize: 14, fontWeight: "700", color: COLORS.textDark, marginBottom: 6, marginTop: 12 },
   seoText: { fontSize: 12, color: COLORS.textMuted, lineHeight: 18, marginBottom: 8 },
+  tierCard: { backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.border, marginTop: 8 },
+  tierHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: COLORS.background },
+  tierTitle: { fontSize: 14, fontWeight: "800", color: COLORS.primary },
+  tierAmount: { fontSize: 13, fontWeight: "900", color: COLORS.gold },
+  numbersGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  numberChip: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  numberChipText: { fontSize: 12, fontFamily: "monospace", fontWeight: "700", color: COLORS.textDark },
 });

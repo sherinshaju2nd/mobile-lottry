@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import * as Font from "expo-font";
+import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { Asset } from "expo-asset";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,44 +63,47 @@ function BottomTabNavigator() {
 }
 
 export default function App() {
-  const [appIsReady, setAppIsReady] = useState(false);
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+  });
 
   useEffect(() => {
-    async function prepare() {
+    async function loadAssets() {
       try {
-        // Pre-load Ionicons vector font family for standalone APK builds
-        await Font.loadAsync(Ionicons.font);
+        // Cache the brand icon
+        await Asset.loadAsync([
+          require("./assets/icon.png"),
+        ]);
       } catch (e) {
-        console.warn("Font loading error:", e);
-      } finally {
-        setAppIsReady(true);
+        console.warn("Asset caching error:", e);
       }
     }
-
-    prepare();
+    loadAssets();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
+    if (fontsLoaded || fontError) {
       // Hide splash screen after vector icon fonts are loaded
       await SplashScreen.hideAsync();
     }
-  }, [appIsReady]);
+  }, [fontsLoaded, fontError]);
 
-  if (!appIsReady) {
+  if (!fontsLoaded && !fontError) {
     return null;
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
-          <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
-          <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </View>
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
+            <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
+            <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </View>
+    </SafeAreaProvider>
   );
 }
