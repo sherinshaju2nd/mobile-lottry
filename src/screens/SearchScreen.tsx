@@ -12,6 +12,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { searchTicketNumber, SearchMatch } from "../api/lotteryApi";
+import CameraScannerModal from "../components/CameraScannerModal";
+
 
 export default function SearchScreen({ navigation }: any) {
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -19,6 +21,34 @@ export default function SearchScreen({ navigation }: any) {
   const [batchInput, setBatchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [singleResults, setSingleResults] = useState<SearchMatch[] | null>(null);
+  const [isScannerVisible, setIsScannerVisible] = useState(false);
+
+  const handleScanSuccess = async (tickets: string[]) => {
+    if (tickets.length === 0) return;
+    if (mode === "single") {
+      const firstTicket = tickets[0];
+      setQuery(firstTicket);
+      setIsSearching(true);
+      try {
+        const matches = await searchTicketNumber(firstTicket);
+        setSingleResults(matches);
+      } catch {
+        setSingleResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      // Batch mode: append all unique detected tickets to the existing inputs
+      const currentList = batchInput
+        .split(/[\n,;]+/)
+        .map((t) => t.trim())
+        .filter(Boolean);
+      
+      const combined = [...new Set([...currentList, ...tickets])];
+      setBatchInput(combined.join("\n"));
+    }
+  };
+
 
   interface BatchItem {
     ticket: string;
@@ -101,14 +131,22 @@ export default function SearchScreen({ navigation }: any) {
         {mode === "single" ? (
           <View style={styles.card}>
             <Text style={styles.label}>Ticket Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. BT 263322 or 3322"
-              placeholderTextColor={COLORS.textLight}
-              value={query}
-              onChangeText={setQuery}
-              autoCapitalize="characters"
-            />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="e.g. BT 263322 or 3322"
+                placeholderTextColor={COLORS.textLight}
+                value={query}
+                onChangeText={setQuery}
+                autoCapitalize="characters"
+              />
+              <TouchableOpacity
+                style={styles.scanIconButton}
+                onPress={() => setIsScannerVisible(true)}
+              >
+                <Ionicons name="camera" size={22} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.btnRow}>
               <TouchableOpacity style={styles.primaryBtn} onPress={handleSingleSearch} disabled={isSearching}>
@@ -126,7 +164,16 @@ export default function SearchScreen({ navigation }: any) {
         ) : (
           /* Batch Mode Input */
           <View style={styles.card}>
-            <Text style={styles.label}>Paste Multiple Ticket Numbers</Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={[styles.label, { marginBottom: 0 }]}>Paste Multiple Ticket Numbers</Text>
+              <TouchableOpacity
+                style={styles.scanTextLink}
+                onPress={() => setIsScannerVisible(true)}
+              >
+                <Ionicons name="camera-outline" size={16} color={COLORS.primary} />
+                <Text style={styles.scanTextLinkText}>Scan Tickets</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Enter tickets separated by newlines e.g.:&#10;BT 263322&#10;SS 192842&#10;3322"
@@ -152,6 +199,7 @@ export default function SearchScreen({ navigation }: any) {
             </View>
           </View>
         )}
+
 
         {/* Single Search Results */}
         {mode === "single" && singleResults !== null && (
@@ -223,9 +271,16 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      <CameraScannerModal
+        visible={isScannerVisible}
+        onClose={() => setIsScannerVisible(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
@@ -268,4 +323,18 @@ const styles = StyleSheet.create({
   batchMatchBox: { backgroundColor: COLORS.white, padding: 8, borderRadius: 6, marginTop: 6, borderWidth: 1, borderColor: COLORS.border },
   batchMatchTier: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
   batchMatchSub: { fontSize: 11, color: COLORS.textMuted },
+  inputRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  scanIconButton: {
+    width: 46,
+    height: 46,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primaryLight,
+  },
+  scanTextLink: { flexDirection: "row", alignItems: "center", gap: 4 },
+  scanTextLinkText: { fontSize: 13, fontWeight: "700", color: COLORS.primary },
 });
+
