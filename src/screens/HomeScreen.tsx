@@ -21,6 +21,7 @@ export default function HomeScreen({ navigation }: any) {
   const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAfter3PM, setIsAfter3PM] = useState(false);
 
   // Hero Section Tab: 0 = Today's Draw, 1 = Yesterday's Result
   const [heroTab, setHeroTab] = useState<number>(0);
@@ -50,6 +51,22 @@ export default function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     loadData();
+
+    const checkTime = () => {
+      try {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("en-GB", {
+          timeZone: "Asia/Kolkata",
+          hour12: false,
+        });
+        const [hStr] = timeStr.split(":");
+        const hours = parseInt(hStr, 10);
+        setIsAfter3PM(hours >= 15);
+      } catch {
+        setIsAfter3PM(false);
+      }
+    };
+    checkTime();
 
     // Realtime listener for live cron job updates
     const channel = supabase
@@ -251,9 +268,8 @@ export default function HomeScreen({ navigation }: any) {
           )}
         </View>
 
-        {/* HERO TAB 0: TODAY'S DRAW */}
         {heroTab === 0 && (
-          todayDraw ? (
+          (todayDraw && todayDraw.first?.ticket) ? (
             /* Today's Draw Published Card */
             <View style={styles.winnerCard}>
               <View style={styles.winnerHeader}>
@@ -315,19 +331,35 @@ export default function HomeScreen({ navigation }: any) {
               })}
             </View>
           ) : (
-            /* Today's Draw Coming Soon Scheduled Card */
-            <View style={styles.scheduledCard}>
-              <View style={styles.scheduledBadgeRow}>
-                <Ionicons name="time" size={14} color={COLORS.gold} />
-                <Text style={styles.scheduledBadgeText}>RESULT COMING SOON (3:10 PM)</Text>
-              </View>
+            isAfter3PM ? (
+              /* Drawing in progress card after 3 PM */
+              <View style={[styles.scheduledCard, { borderColor: "#BFDBFE", backgroundColor: "#EFF6FF" }]}>
+                <View style={styles.scheduledBadgeRow}>
+                  <Ionicons name="alert-circle" size={14} color="#3B82F6" />
+                  <Text style={[styles.scheduledBadgeText, { color: "#1E40AF" }]}>DRAWING IN PROGRESS</Text>
+                </View>
 
-              <Text style={styles.scheduledTitle}>{todayLottery.name} ({todayLottery.code})</Text>
-              <Text style={styles.scheduledSubtitle}>Draw Scheduled Today at 3:00 PM</Text>
-              <Text style={styles.scheduledDesc}>
-                Winning results for {todayLottery.name} ({todayLottery.code}) will be published automatically at 3:10 PM.
-              </Text>
-            </View>
+                <Text style={styles.scheduledTitle}>{todayLottery.name} ({todayLottery.code})</Text>
+                <Text style={[styles.scheduledSubtitle, { color: "#1E40AF" }]}>Result will update shortly</Text>
+                <Text style={[styles.scheduledDesc, { color: "#1E40AF" }]}>
+                  The live draw is currently in progress. Results will update automatically shortly on this page.
+                </Text>
+              </View>
+            ) : (
+              /* Today's Draw Coming Soon Scheduled Card */
+              <View style={styles.scheduledCard}>
+                <View style={styles.scheduledBadgeRow}>
+                  <Ionicons name="time" size={14} color={COLORS.gold} />
+                  <Text style={styles.scheduledBadgeText}>RESULT COMING SOON (3:10 PM)</Text>
+                </View>
+
+                <Text style={styles.scheduledTitle}>{todayLottery.name} ({todayLottery.code})</Text>
+                <Text style={styles.scheduledSubtitle}>Draw Scheduled Today at 3:00 PM</Text>
+                <Text style={styles.scheduledDesc}>
+                  Winning results for {todayLottery.name} ({todayLottery.code}) will be published automatically at 3:10 PM.
+                </Text>
+              </View>
+            )
           )
         )}
 
