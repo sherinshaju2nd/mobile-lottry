@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
-import { fetchDrawByDate, DrawResult } from "../api/lotteryApi";
+import { fetchDrawByDate, DrawResult, supabase } from "../api/lotteryApi";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { code, date } = route.params || { code: "BT", date: "2026-08-10" };
@@ -44,6 +44,29 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
       }
     }
     loadData();
+
+    const channel = supabase
+      .channel(`realtime-details-${codeUpper}-${date}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "draw_results",
+          filter: `lottery_code=eq.${codeUpper}`
+        },
+        (payload) => {
+          const newRow = payload.new as any;
+          if (newRow && newRow.draw_date === date) {
+            loadData();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [codeUpper, date]);
 
   const handleVerifyTicket = () => {
