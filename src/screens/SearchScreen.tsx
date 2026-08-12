@@ -12,8 +12,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { searchTicketNumber, SearchMatch } from "../api/lotteryApi";
-import CameraScannerModal from "../components/CameraScannerModal";
-
 
 export default function SearchScreen({ navigation }: any) {
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -21,34 +19,7 @@ export default function SearchScreen({ navigation }: any) {
   const [batchInput, setBatchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [singleResults, setSingleResults] = useState<SearchMatch[] | null>(null);
-  const [isScannerVisible, setIsScannerVisible] = useState(false);
-
-  const handleScanSuccess = async (tickets: string[]) => {
-    if (tickets.length === 0) return;
-    if (mode === "single") {
-      const firstTicket = tickets[0];
-      setQuery(firstTicket);
-      setIsSearching(true);
-      try {
-        const matches = await searchTicketNumber(firstTicket);
-        setSingleResults(matches);
-      } catch {
-        setSingleResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    } else {
-      // Batch mode: append all unique detected tickets to the existing inputs
-      const currentList = batchInput
-        .split(/[\n,;]+/)
-        .map((t) => t.trim())
-        .filter(Boolean);
-      
-      const combined = [...new Set([...currentList, ...tickets])];
-      setBatchInput(combined.join("\n"));
-    }
-  };
-
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   interface BatchItem {
     ticket: string;
@@ -59,11 +30,13 @@ export default function SearchScreen({ navigation }: any) {
   const handleSingleSearch = async () => {
     if (!query.trim()) return;
     setIsSearching(true);
+    setErrorMessage(null);
     try {
       const matches = await searchTicketNumber(query.trim());
       setSingleResults(matches);
-    } catch {
+    } catch (err: any) {
       setSingleResults([]);
+      setErrorMessage(err.message || "Failed to search ticket.");
     } finally {
       setIsSearching(false);
     }
@@ -77,6 +50,7 @@ export default function SearchScreen({ navigation }: any) {
 
     if (rawList.length === 0) return;
     setIsSearching(true);
+    setErrorMessage(null);
     try {
       const compiled: BatchItem[] = [];
       for (const ticket of rawList) {
@@ -84,8 +58,9 @@ export default function SearchScreen({ navigation }: any) {
         compiled.push({ ticket, matches });
       }
       setBatchResults(compiled);
-    } catch {
+    } catch (err: any) {
       setBatchResults([]);
+      setErrorMessage(err.message || "Failed to search batch tickets.");
     } finally {
       setIsSearching(false);
     }
@@ -96,6 +71,7 @@ export default function SearchScreen({ navigation }: any) {
     setBatchInput("");
     setSingleResults(null);
     setBatchResults(null);
+    setErrorMessage(null);
   };
 
   return (
@@ -108,45 +84,62 @@ export default function SearchScreen({ navigation }: any) {
           </Text>
         </View>
 
-        {/* Mode Switcher */}
+        {/* Mode Selector Tabs */}
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={[styles.tab, mode === "single" && styles.activeTab]}
-            onPress={() => setMode("single")}
+            onPress={() => {
+              setMode("single");
+              handleReset();
+            }}
           >
-            <Ionicons name="search" size={16} color={mode === "single" ? COLORS.white : COLORS.textDark} />
-            <Text style={[styles.tabText, mode === "single" && styles.activeTabText]}>Single Ticket</Text>
+            <Ionicons
+              name="ticket-outline"
+              size={16}
+              color={mode === "single" ? COLORS.white : COLORS.textDark}
+            />
+            <Text style={[styles.tabText, mode === "single" && styles.activeTabText]}>
+              Single Ticket Search
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, mode === "batch" && styles.activeTab]}
-            onPress={() => setMode("batch")}
+            onPress={() => {
+              setMode("batch");
+              handleReset();
+            }}
           >
-            <Ionicons name="layers-outline" size={16} color={mode === "batch" ? COLORS.white : COLORS.textDark} />
-            <Text style={[styles.tabText, mode === "batch" && styles.activeTabText]}>Bundle (Batch)</Text>
+            <Ionicons
+              name="layers-outline"
+              size={16}
+              color={mode === "batch" ? COLORS.white : COLORS.textDark}
+            />
+            <Text style={[styles.tabText, mode === "batch" && styles.activeTabText]}>
+              Bundle / Batch Search
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {errorMessage && (
+          <View style={{ backgroundColor: "#FEE2E2", borderColor: "#EF4444", borderWidth: 1, padding: 12, borderRadius: 10, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" />
+            <Text style={{ color: "#991B1B", fontWeight: "700", flex: 1, fontSize: 13 }}>{errorMessage}</Text>
+          </View>
+        )}
 
         {/* Single Mode Input */}
         {mode === "single" ? (
           <View style={styles.card}>
             <Text style={styles.label}>Ticket Number</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder="e.g. BT 263322 or 3322"
-                placeholderTextColor={COLORS.textLight}
-                value={query}
-                onChangeText={setQuery}
-                autoCapitalize="characters"
-              />
-              <TouchableOpacity
-                style={styles.scanIconButton}
-                onPress={() => setIsScannerVisible(true)}
-              >
-                <Ionicons name="camera" size={22} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. BT 263322 or 3322"
+              placeholderTextColor={COLORS.textLight}
+              value={query}
+              onChangeText={setQuery}
+              autoCapitalize="characters"
+            />
 
             <View style={styles.btnRow}>
               <TouchableOpacity style={styles.primaryBtn} onPress={handleSingleSearch} disabled={isSearching}>
@@ -164,16 +157,7 @@ export default function SearchScreen({ navigation }: any) {
         ) : (
           /* Batch Mode Input */
           <View style={styles.card}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <Text style={[styles.label, { marginBottom: 0 }]}>Paste Multiple Ticket Numbers</Text>
-              <TouchableOpacity
-                style={styles.scanTextLink}
-                onPress={() => setIsScannerVisible(true)}
-              >
-                <Ionicons name="camera-outline" size={16} color={COLORS.primary} />
-                <Text style={styles.scanTextLinkText}>Scan Tickets</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.label}>Paste Multiple Ticket Numbers</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Enter tickets separated by newlines e.g.:&#10;BT 263322&#10;SS 192842&#10;3322"
@@ -200,40 +184,47 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
 
-
         {/* Single Search Results */}
         {mode === "single" && singleResults !== null && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsHeader}>Results for &quot;{query}&quot;</Text>
+            <Text style={styles.resultsHeader}>Search Results for &quot;{query}&quot;</Text>
 
             {singleResults.length > 0 ? (
               singleResults.map((match, idx) => (
-                <View key={idx} style={styles.resultCard}>
+                <View key={idx} style={[styles.resultCard, styles.winnerCardBorder]}>
                   <View style={styles.resultBadgeRow}>
                     <View style={styles.winBadge}>
                       <Ionicons name="trophy" size={14} color={COLORS.successText} />
                       <Text style={styles.winBadgeText}>{match.prize_tier}</Text>
                     </View>
-                    {match.prize_amount && <Text style={styles.prizeAmount}>{match.prize_amount}</Text>}
+                    {match.prize_amount && (
+                      <Text style={styles.prizeAmount}>{match.prize_amount}</Text>
+                    )}
                   </View>
 
                   <Text style={styles.drawTitle}>{match.draw_name} ({match.draw_code})</Text>
-                  <Text style={styles.drawMeta}>Draw Date: {match.draw_date}</Text>
-                  <Text style={styles.drawMeta}>Winning Number Matched: {match.ticket_matched}</Text>
+                  <Text style={styles.drawMeta}>Draw Date: {match.draw_date} • Ticket Matched: {match.ticket_matched}</Text>
 
                   <TouchableOpacity
                     style={styles.detailsBtn}
-                    onPress={() => navigation.navigate("DrawBreakdown", { code: match.lottery_code, date: match.draw_date })}
+                    onPress={() =>
+                      navigation.navigate("DrawBreakdown", {
+                        code: match.lottery_code,
+                        date: match.draw_date,
+                      })
+                    }
                   >
-                    <Text style={styles.detailsBtnText}>View Breakdown →</Text>
+                    <Text style={styles.detailsBtnText}>View Complete Official Draw Results →</Text>
                   </TouchableOpacity>
                 </View>
               ))
             ) : (
               <View style={styles.noMatchCard}>
-                <Ionicons name="alert-circle-outline" size={24} color={COLORS.textMuted} />
-                <Text style={styles.noMatchTitle}>No Prize Match</Text>
-                <Text style={styles.noMatchSub}>Ticket &quot;{query}&quot; did not match any prize tier in published results.</Text>
+                <Ionicons name="close-circle-outline" size={32} color={COLORS.textMuted} />
+                <Text style={styles.noMatchTitle}>No Prize Match Found</Text>
+                <Text style={styles.noMatchSub}>
+                  The ticket number &quot;{query}&quot; did not match any published winning prize tiers.
+                </Text>
               </View>
             )}
           </View>
@@ -242,22 +233,27 @@ export default function SearchScreen({ navigation }: any) {
         {/* Batch Search Results */}
         {mode === "batch" && batchResults !== null && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsHeader}>Bundle Search Results ({batchResults.length} Tickets)</Text>
+            <Text style={styles.resultsHeader}>Batch Search Results ({batchResults.length} Tickets)</Text>
 
-            {batchResults.map((item, index) => {
-              const hasMatch = item.matches.length > 0;
+            {batchResults.map((item, idx) => {
+              const hasWin = item.matches.length > 0;
               return (
-                <View key={index} style={[styles.resultCard, hasMatch && styles.winnerCardBorder]}>
+                <View
+                  key={idx}
+                  style={[styles.resultCard, hasWin && styles.winnerCardBorder]}
+                >
                   <View style={styles.resultBadgeRow}>
                     <Text style={styles.ticketLabel}>Ticket: {item.ticket}</Text>
-                    <Text style={hasMatch ? styles.matchFoundText : styles.noMatchText}>
-                      {hasMatch ? `🎉 ${item.matches.length} WIN MATCH!` : "No Match"}
-                    </Text>
+                    {hasWin ? (
+                      <Text style={styles.matchFoundText}>🎉 {item.matches.length} MATCH FOUND</Text>
+                    ) : (
+                      <Text style={styles.noMatchText}>No Win</Text>
+                    )}
                   </View>
 
-                  {hasMatch ? (
-                    item.matches.map((m, idx) => (
-                      <View key={idx} style={styles.batchMatchBox}>
+                  {hasWin ? (
+                    item.matches.map((m, mIdx) => (
+                      <View key={mIdx} style={styles.batchMatchBox}>
                         <Text style={styles.batchMatchTier}>{m.prize_tier} — {m.prize_amount || ""}</Text>
                         <Text style={styles.batchMatchSub}>{m.draw_name} ({m.draw_code}) on {m.draw_date}</Text>
                       </View>
@@ -271,16 +267,9 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
-
-      <CameraScannerModal
-        visible={isScannerVisible}
-        onClose={() => setIsScannerVisible(false)}
-        onScanSuccess={handleScanSuccess}
-      />
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
@@ -323,18 +312,4 @@ const styles = StyleSheet.create({
   batchMatchBox: { backgroundColor: COLORS.white, padding: 8, borderRadius: 6, marginTop: 6, borderWidth: 1, borderColor: COLORS.border },
   batchMatchTier: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
   batchMatchSub: { fontSize: 11, color: COLORS.textMuted },
-  inputRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  scanIconButton: {
-    width: 46,
-    height: 46,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primaryLight,
-  },
-  scanTextLink: { flexDirection: "row", alignItems: "center", gap: 4 },
-  scanTextLinkText: { fontSize: 13, fontWeight: "700", color: COLORS.primary },
 });
-
