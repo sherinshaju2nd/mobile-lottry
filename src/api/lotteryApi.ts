@@ -261,3 +261,27 @@ export async function searchTicketNumber(queryTicket: string): Promise<SearchMat
 
   return matches;
 }
+
+/**
+ * Fetch all lotteries master data directly from Supabase
+ */
+export async function fetchLotteries(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from("lotteries")
+      .select("*")
+      .order("id", { ascending: true });
+    if (!error && data && data.length > 0) {
+      return data.map((d: any) => ({
+        day: d.day,
+        name: d.name,
+        nameMl: d.name_ml || d.name,
+        code: d.code,
+        drawTime: d.draw_time || "3:00 PM",
+      }));
+    }
+  } catch (e) {
+    console.warn("Supabase fetchLotteries error:", e);
+  }
+  return [];
+}

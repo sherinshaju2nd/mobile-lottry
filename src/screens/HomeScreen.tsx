@@ -14,10 +14,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
-import { fetchAllDraws, DrawResult, searchTicketNumber, SearchMatch, supabase } from "../api/lotteryApi";
+import { fetchAllDraws, DrawResult, searchTicketNumber, SearchMatch, supabase, fetchLotteries } from "../api/lotteryApi";
 
 export default function HomeScreen({ navigation }: any) {
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
+  const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -31,8 +32,14 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadData = async () => {
     try {
-      const draws = await fetchAllDraws();
+      const [draws, lotteries] = await Promise.all([
+        fetchAllDraws(),
+        fetchLotteries()
+      ]);
       setAllDraws(draws);
+      if (lotteries && lotteries.length > 0) {
+        setLotteriesList(lotteries);
+      }
     } catch {
       setAllDraws([]);
     } finally {
@@ -90,9 +97,9 @@ export default function HomeScreen({ navigation }: any) {
   });
 
   const todayLottery =
-    WEEKLY_LOTTERIES.find(
+    lotteriesList.find(
       (l) => l.day.toLowerCase() === istDayName.toLowerCase()
-    ) || WEEKLY_LOTTERIES[1];
+    ) || lotteriesList[1];
 
   const todayDraw = allDraws.find((d) => d.draw_date === todayISTDate) || null;
   const previousDraw =
@@ -378,7 +385,7 @@ export default function HomeScreen({ navigation }: any) {
           <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
         ) : (
           <View style={styles.scheduleGrid}>
-            {WEEKLY_LOTTERIES.map((lottery) => {
+            {lotteriesList.map((lottery) => {
               const latest = recentDrawsMap[lottery.code];
               return (
                 <TouchableOpacity
