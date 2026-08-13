@@ -9,7 +9,13 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  ChevronRight,
+  ArrowLeft,
+  Search,
+  XCircle,
+  FileText,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
@@ -102,7 +108,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 
       <View style={styles.cardFooter}>
         <Text style={styles.footerText}>View Full Results & Breakdown</Text>
-        <Ionicons name="chevron-forward" size={16} color={COLORS.primary} />
+        <ChevronRight size={16} color={COLORS.primary} />
       </View>
     </TouchableOpacity>
   );
@@ -113,7 +119,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
         {/* Top Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={20} color={COLORS.textDark} />
+            <ArrowLeft size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>
@@ -125,7 +131,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 
         {/* Filter Input */}
         <View style={styles.filterContainer}>
-          <Ionicons name="search" size={16} color={COLORS.textLight} style={{ marginRight: 8 }} />
+          <Search size={16} color={COLORS.textLight} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.filterInput}
             placeholder="Filter by date (e.g. 2026-08-10) or ticket..."
@@ -135,7 +141,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           />
           {searchFilter !== "" && (
             <TouchableOpacity onPress={() => setSearchFilter("")}>
-              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+              <XCircle size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -152,7 +158,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           />
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={32} color={COLORS.textMuted} />
+            <FileText size={32} color={COLORS.textMuted} />
             <Text style={styles.emptyText}>No historical draws matched your filter.</Text>
           </View>
         )}

@@ -11,7 +11,15 @@ import {
   Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Trophy,
+  Clock,
+  Search,
+  Camera,
+  AlertCircle,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
   WEEKLY_LOTTERIES,
@@ -246,8 +254,7 @@ export default function HomeScreen({ navigation }: any) {
                     ]}
                     onPress={() => setHeroTab(1)}
                   >
-                    <Ionicons
-                      name="trophy-outline"
+                    <Trophy
                       size={14}
                       color={heroTab === 1 ? COLORS.white : COLORS.gold}
                     />
@@ -269,8 +276,7 @@ export default function HomeScreen({ navigation }: any) {
                   ]}
                   onPress={() => setHeroTab(0)}
                 >
-                  <Ionicons
-                    name="time-outline"
+                  <Clock
                     size={14}
                     color={heroTab === 0 ? COLORS.white : COLORS.primary}
                   />
@@ -297,8 +303,7 @@ export default function HomeScreen({ navigation }: any) {
                   ]}
                   onPress={() => setHeroTab(0)}
                 >
-                  <Ionicons
-                    name="time-outline"
+                  <Clock
                     size={14}
                     color={heroTab === 0 ? COLORS.white : COLORS.primary}
                   />
@@ -324,8 +329,7 @@ export default function HomeScreen({ navigation }: any) {
                     ]}
                     onPress={() => setHeroTab(1)}
                   >
-                    <Ionicons
-                      name="trophy-outline"
+                    <Trophy
                       size={14}
                       color={heroTab === 1 ? COLORS.white : COLORS.gold}
                     />
@@ -358,7 +362,7 @@ export default function HomeScreen({ navigation }: any) {
                 <View
                   style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
                 >
-                  <Ionicons name="search" size={18} color={COLORS.primary} />
+                  <Search size={18} color={COLORS.primary} />
                   <Text style={styles.checkerTitle}>
                     {heroTab === 0
                       ? todayDraw
@@ -375,8 +379,7 @@ export default function HomeScreen({ navigation }: any) {
                   onPress={() => setIsScannerOpen(true)}
                   disabled={isScannerDisabled}
                 >
-                  <Ionicons
-                    name="camera"
+                  <Camera
                     size={15}
                     color={
                       isScannerDisabled ? COLORS.textLight : COLORS.primary
@@ -426,8 +429,7 @@ export default function HomeScreen({ navigation }: any) {
                   onPress={() => setIsScannerOpen(true)}
                   disabled={isScannerDisabled}
                 >
-                  <Ionicons
-                    name="camera"
+                  <Camera
                     size={22}
                     color={
                       isScannerDisabled ? COLORS.textLight : COLORS.primary
@@ -474,8 +476,7 @@ export default function HomeScreen({ navigation }: any) {
                     ))
                   ) : (
                     <Text style={styles.noMatchText}>
-                      No winning prize match found for &quot;{ticketInput}
-                      &quot;. Try checking all lotteries.
+                      No winning prize match found for "{ticketInput}". Try checking all lotteries.
                     </Text>
                   )}
                 </View>
@@ -489,7 +490,7 @@ export default function HomeScreen({ navigation }: any) {
             /* Today's Draw Published Card */
             <View style={styles.winnerCard}>
               <View style={styles.winnerHeader}>
-                <Ionicons name="trophy" size={16} color={COLORS.successText} />
+                <Trophy size={16} color={COLORS.successText} />
                 <Text style={styles.winnerTextBadge}>
                   LATEST DRAW • {todayDraw.draw_date}
                 </Text>
@@ -606,7 +607,7 @@ export default function HomeScreen({ navigation }: any) {
               ]}
             >
               <View style={styles.scheduledBadgeRow}>
-                <Ionicons name="alert-circle" size={14} color="#3B82F6" />
+                <AlertCircle size={14} color="#3B82F6" />
                 <Text style={[styles.scheduledBadgeText, { color: "#1E40AF" }]}>
                   DRAWING IN PROGRESS
                 </Text>
@@ -629,7 +630,7 @@ export default function HomeScreen({ navigation }: any) {
             /* Today's Draw Coming Soon Scheduled Card */
             <View style={styles.scheduledCard}>
               <View style={styles.scheduledBadgeRow}>
-                <Ionicons name="time" size={14} color={COLORS.gold} />
+                <Clock size={14} color={COLORS.gold} />
                 <Text style={styles.scheduledBadgeText}>
                   RESULT COMING SOON
                 </Text>
@@ -654,7 +655,7 @@ export default function HomeScreen({ navigation }: any) {
         {heroTab === 1 && previousDraw && (
           <View style={[styles.winnerCard, styles.winnerCardGold]}>
             <View style={styles.winnerHeader}>
-              <Ionicons name="trophy" size={16} color={COLORS.gold} />
+              <Trophy size={16} color={COLORS.gold} />
               <Text style={[styles.winnerTextBadge, { color: COLORS.gold }]}>
                 PREVIOUS DRAW RESULT • {previousDraw.draw_date}
               </Text>
@@ -747,8 +748,7 @@ export default function HomeScreen({ navigation }: any) {
                       ]}
                     >
                       {isTodayLottery && (
-                        <Ionicons
-                          name="sparkles"
+                        <Sparkles
                           size={11}
                           color={COLORS.white}
                         />
@@ -789,8 +789,7 @@ export default function HomeScreen({ navigation }: any) {
                             }}
                             disabled={isCardScannerDisabled}
                           >
-                            <Ionicons
-                              name="camera"
+                            <Camera
                               size={13}
                               color={
                                 isCardScannerDisabled
@@ -818,7 +817,7 @@ export default function HomeScreen({ navigation }: any) {
 
                   {isTodayLottery && (
                     <View style={styles.todayTicketTag}>
-                      <Ionicons name="time" size={13} color={COLORS.primary} />
+                      <Clock size={13} color={COLORS.primary} />
                       <Text style={styles.todayTicketTagText}>
                         TODAY&apos;S TICKET • DRAW AT 3:00 PM
                       </Text>
@@ -890,8 +889,7 @@ export default function HomeScreen({ navigation }: any) {
                     <Text style={styles.footerText}>
                       View Archives & Results
                     </Text>
-                    <Ionicons
-                      name="chevron-forward"
+                    <ChevronRight
                       size={14}
                       color={COLORS.primary}
                     />

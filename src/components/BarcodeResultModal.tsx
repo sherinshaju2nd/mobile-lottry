@@ -9,9 +9,20 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Scan,
+  X,
+  Calendar,
+  Sparkles,
+  Globe,
+  ChevronRight,
+  Trophy,
+  Frown,
+  Camera,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { searchTicketNumber, SearchMatch, DrawResult } from "../api/lotteryApi";
+import ModernDatePickerModal from "./ModernDatePickerModal";
 
 interface BarcodeResultModalProps {
   visible: boolean;
@@ -36,15 +47,14 @@ export default function BarcodeResultModal({
   const [allMatches, setAllMatches] = useState<SearchMatch[] | null>(null);
   const [matchedDrawDetails, setMatchedDrawDetails] = useState<DrawResult | null>(null);
   const [step, setStep] = useState<"select_date" | "result">("select_date");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  // Filter draws by target lottery code if specified
   const filteredDraws = targetLotteryCode
     ? availableDraws.filter((d) => d.lottery_code.toUpperCase() === targetLotteryCode.toUpperCase())
     : availableDraws;
 
   const relevantDraws = filteredDraws.length > 0 ? filteredDraws : availableDraws;
 
-  // Extract unique draw dates available
   const dateOptions = Array.from(new Set(relevantDraws.map((d) => d.draw_date)));
 
   useEffect(() => {
@@ -83,7 +93,6 @@ export default function BarcodeResultModal({
 
       setAllMatches(filtered);
 
-      // Find matched draw details if date specified
       const drawDateToFind =
         targetDate !== "ALL"
           ? targetDate
@@ -103,15 +112,15 @@ export default function BarcodeResultModal({
     }
   };
 
-  if (!visible || !scannedBarcode) return null;
+  const isWinner = allMatches !== null && allMatches.length > 0;
 
-  const isWinner = allMatches && allMatches.length > 0;
+  if (!visible) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      transparent={true}
+      animationType="fade"
+      transparent
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
@@ -119,14 +128,14 @@ export default function BarcodeResultModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.barcodeChip}>
-              <Ionicons name="barcode-outline" size={16} color={COLORS.primary} />
+              <Scan size={16} color={COLORS.primary} />
               <Text style={styles.barcodeChipText}>{scannedBarcode}</Text>
               {targetLotteryCode && (
                 <Text style={styles.lotteryCodeBadge}>[{targetLotteryCode}]</Text>
               )}
             </View>
             <TouchableOpacity style={styles.closeIconBtn} onPress={onClose}>
-              <Ionicons name="close" size={22} color={COLORS.textDark} />
+              <X size={22} color={COLORS.textDark} />
             </TouchableOpacity>
           </View>
 
@@ -136,33 +145,35 @@ export default function BarcodeResultModal({
               <View style={styles.dateStepContainer}>
                 <View style={styles.dateStepHeader}>
                   <View style={styles.calendarIconBg}>
-                    <Ionicons name="calendar-outline" size={24} color={COLORS.primary} />
+                    <Calendar size={24} color={COLORS.primary} />
                   </View>
                   <Text style={styles.dateStepTitle}>Select Draw Date</Text>
                   <Text style={styles.dateStepSub}>
-                    Select the draw date for ticket &quot;{scannedBarcode}&quot;
+                    Select the draw date for ticket "{scannedBarcode}"
                     {targetLotteryCode ? ` (${targetLotteryCode})` : ""} to fetch accurate results.
                   </Text>
                 </View>
 
-                {/* Custom Date Picker Field */}
+                {/* Custom Visual Date Picker Field */}
                 <View style={styles.customDateContainer}>
-                  <Text style={styles.chipSectionLabel}>Pick / Enter Draw Date:</Text>
+                  <Text style={styles.chipSectionLabel}>Pick Draw Date:</Text>
                   <View style={styles.datePickerInputRow}>
-                    <Ionicons name="calendar" size={18} color={COLORS.primary} />
-                    <TextInput
-                      style={styles.dateInput}
-                      placeholder="YYYY-MM-DD (e.g. 2026-08-12)"
-                      placeholderTextColor={COLORS.textLight}
-                      value={customDateInput}
-                      onChangeText={setCustomDateInput}
-                      keyboardType="numbers-and-punctuation"
-                    />
+                    <TouchableOpacity
+                      style={[styles.dateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                      onPress={() => setIsDatePickerOpen(true)}
+                    >
+                      <Calendar size={18} color={COLORS.primary} />
+                      <Text style={{ flex: 1, fontSize: 13, color: customDateInput ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
+                        {customDateInput ? customDateInput : "Select from calendar..."}
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.fetchDateBtn}
                       onPress={() => {
                         if (customDateInput.trim()) {
                           handleVerifyTicket(customDateInput.trim());
+                        } else {
+                          setIsDatePickerOpen(true);
                         }
                       }}
                     >
@@ -190,11 +201,11 @@ export default function BarcodeResultModal({
                           handleVerifyTicket(dateStr);
                         }}
                       >
-                        <Ionicons
-                          name={idx === 0 ? "sparkles" : "calendar"}
-                          size={14}
-                          color={COLORS.primary}
-                        />
+                        {idx === 0 ? (
+                          <Sparkles size={14} color={COLORS.primary} />
+                        ) : (
+                          <Calendar size={14} color={COLORS.primary} />
+                        )}
                         <View style={{ flex: 1 }}>
                           <Text style={styles.dateChipText}>{dateStr}</Text>
                           {drawForDate && (
@@ -211,7 +222,7 @@ export default function BarcodeResultModal({
                     style={[styles.dateChip, styles.allDrawsChip]}
                     onPress={() => handleVerifyTicket("ALL")}
                   >
-                    <Ionicons name="globe-outline" size={16} color={COLORS.gold} />
+                    <Globe size={16} color={COLORS.gold} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.dateChipText, { color: COLORS.gold }]}>
                         Check All Draw History
@@ -220,7 +231,7 @@ export default function BarcodeResultModal({
                         Search across all published draw records
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.gold} />
+                    <ChevronRight size={16} color={COLORS.gold} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -250,7 +261,7 @@ export default function BarcodeResultModal({
                 {allMatches?.map((match, i) => (
                   <View key={i} style={styles.prizeCard}>
                     <View style={styles.prizeHeaderRow}>
-                      <Ionicons name="trophy" size={20} color={COLORS.gold} />
+                      <Trophy size={20} color={COLORS.gold} />
                       <Text style={styles.prizeTierText}>{match.prize_tier}</Text>
                     </View>
 
@@ -302,10 +313,10 @@ export default function BarcodeResultModal({
               /* NON-WINNING RESULT */
               <View style={styles.resultContainer}>
                 <View style={styles.noWinBanner}>
-                  <Ionicons name="sad-outline" size={44} color="#6B7280" />
+                  <Frown size={44} color="#6B7280" />
                   <Text style={styles.noWinTitle}>No Prize Match Found</Text>
                   <Text style={styles.noWinSub}>
-                    Scanned Ticket &quot;{scannedBarcode}&quot; did not win any prize in{" "}
+                    Scanned Ticket "{scannedBarcode}" did not win any prize in{" "}
                     {selectedDate === "ALL"
                       ? "any published draws"
                       : `the draw for date ${selectedDate}`}
@@ -332,7 +343,7 @@ export default function BarcodeResultModal({
                   style={styles.changeDateBtn}
                   onPress={() => setStep("select_date")}
                 >
-                  <Ionicons name="calendar-outline" size={16} color={COLORS.primary} />
+                  <Calendar size={16} color={COLORS.primary} />
                   <Text style={styles.changeDateBtnText}>Pick / Change Draw Date</Text>
                 </TouchableOpacity>
               </View>
@@ -342,7 +353,7 @@ export default function BarcodeResultModal({
           {/* Bottom Action Footer */}
           <View style={styles.footer}>
             <TouchableOpacity style={styles.rescanBtn} onPress={onRescan}>
-              <Ionicons name="camera-outline" size={18} color={COLORS.primary} />
+              <Camera size={18} color={COLORS.primary} />
               <Text style={styles.rescanBtnText}>Scan Another Barcode</Text>
             </TouchableOpacity>
 
@@ -352,6 +363,18 @@ export default function BarcodeResultModal({
           </View>
         </View>
       </View>
+
+      <ModernDatePickerModal
+        visible={isDatePickerOpen}
+        selectedDate={customDateInput || null}
+        onClose={() => setIsDatePickerOpen(false)}
+        onSelectDate={(dateStr) => {
+          if (dateStr) {
+            setCustomDateInput(dateStr);
+            handleVerifyTicket(dateStr);
+          }
+        }}
+      />
     </Modal>
   );
 }

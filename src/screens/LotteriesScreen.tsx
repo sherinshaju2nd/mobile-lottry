@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { ChevronRight } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES, LotteryMeta } from "../constants/lotteries";
 
@@ -24,7 +24,7 @@ export default function LotteriesScreen({ navigation }: any) {
           </View>
           <Text style={styles.dayText}>{item.day}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
+        <ChevronRight size={18} color={COLORS.primary} />
       </View>
 
       <Text style={styles.title}>

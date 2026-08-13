@@ -4,8 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Ionicons } from "@expo/vector-icons";
-import { useFonts } from "expo-font";
+import { Home, Ticket, Search as SearchIcon, Clock, Camera } from "lucide-react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { Asset } from "expo-asset";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -98,7 +97,7 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
             },
           ]}
         >
-          <Ionicons name="camera" size={24} color={COLORS.white} />
+          <Camera size={24} color={COLORS.white} />
         </Animated.View>
       </TouchableOpacity>
       <Text style={tabStyles.tabLabelText}>Scan</Text>
@@ -127,19 +126,16 @@ function BottomTabNavigator() {
           fontWeight: "700",
         },
         tabBarIcon: ({ color, size }: { color: string; size: number }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = "home";
-
           if (route.name === "HomeTab") {
-            iconName = "home";
+            return <Home size={size} color={color} />;
           } else if (route.name === "LotteriesTab") {
-            iconName = "ticket";
+            return <Ticket size={size} color={color} />;
           } else if (route.name === "SearchTab") {
-            iconName = "search";
+            return <SearchIcon size={size} color={color} />;
           } else if (route.name === "ArchiveTab") {
-            iconName = "time";
+            return <Clock size={size} color={color} />;
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return null;
         },
       })}
     >
@@ -221,40 +217,26 @@ const tabStyles = StyleSheet.create({
 });
 
 export default function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    ...Ionicons.font,
-  });
-
   useEffect(() => {
     async function loadAssets() {
       try {
-        // Cache the brand icon
         await Asset.loadAsync([
           require("./assets/icon.png"),
           require("./assets/adaptive-icon.png"),
         ]);
       } catch (e) {
         console.warn("Asset caching error:", e);
+      } finally {
+        await SplashScreen.hideAsync();
       }
     }
     loadAssets();
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError) {
-      // Hide splash screen after vector icon fonts are loaded
-      await SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   return (
     <SafeAreaProvider>
       <ScannerProvider>
-        <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <View style={{ flex: 1 }}>
           <NavigationContainer>
             <StatusBar style="dark" />
             <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -268,3 +250,4 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+

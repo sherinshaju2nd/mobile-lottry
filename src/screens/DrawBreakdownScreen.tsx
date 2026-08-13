@@ -9,7 +9,12 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  ArrowLeft,
+  Trophy,
+  Camera,
+  AlertCircle,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
 import {
@@ -196,7 +201,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={20} color={COLORS.textDark} />
+            <ArrowLeft size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>
@@ -219,7 +224,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             {/* 1st Prize Winner Highlights Card */}
             <View style={styles.winnerCard}>
               <View style={styles.winnerBadgeRow}>
-                <Ionicons name="trophy" size={16} color={COLORS.successText} />
+                <Trophy size={16} color={COLORS.successText} />
                 <Text style={styles.winnerBadgeText}>1ST PRIZE WINNER</Text>
               </View>
 
@@ -248,17 +253,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
             {/* In-page Ticket Verification Widget with Barcode Scanner */}
             <View style={styles.verifierCard}>
-              {/* <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <Text style={styles.verifierTitle}>Verify Ticket for This Draw</Text>
-                <TouchableOpacity
-                  style={styles.scanChipBtn}
-                  onPress={() => setIsScannerOpen(true)}
-                >
-                  <Ionicons name="camera" size={14} color={COLORS.primary} />
-                  <Text style={styles.scanChipText}>Scan Barcode</Text>
-                </TouchableOpacity>
-              </View> */}
-
               <View style={styles.verifierInputRow}>
                 <TextInput
                   style={styles.verifierInput}
@@ -273,7 +267,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   style={styles.cameraIconBtn}
                   onPress={() => setIsScannerOpen(true)}
                 >
-                  <Ionicons name="camera" size={20} color={COLORS.primary} />
+                  <Camera size={20} color={COLORS.primary} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -347,8 +341,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons
-              name="alert-circle-outline"
+            <AlertCircle
               size={32}
               color={COLORS.textMuted}
             />

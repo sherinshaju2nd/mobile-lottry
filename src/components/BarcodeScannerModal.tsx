@@ -12,7 +12,14 @@ import {
   Platform,
 } from "react-native";
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from "expo-camera";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  X,
+  Scan,
+  Zap,
+  ZapOff,
+  Camera,
+  CheckCircle,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 
 const { width } = Dimensions.get("window");
@@ -92,34 +99,34 @@ export default function BarcodeScannerModal({
         {/* Header Overlay */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <Ionicons name="close" size={26} color={COLORS.white} />
+            <X size={26} color={COLORS.white} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Ionicons name="barcode-outline" size={20} color={COLORS.gold} />
+            <Scan size={20} color={COLORS.gold} />
             <Text style={styles.headerTitle}>Barcode Ticket Reader</Text>
           </View>
           <TouchableOpacity
             style={[styles.torchBtn, torchOn && styles.torchBtnActive]}
             onPress={() => setTorchOn(!torchOn)}
           >
-            <Ionicons
-              name={torchOn ? "flash" : "flash-outline"}
-              size={22}
-              color={torchOn ? COLORS.gold : COLORS.white}
-            />
+            {torchOn ? (
+              <Zap size={22} color={COLORS.gold} />
+            ) : (
+              <ZapOff size={22} color={COLORS.white} />
+            )}
           </TouchableOpacity>
         </View>
 
         {/* Camera View or Permission Prompt / Web Simulator */}
         {!permission || !permission.granted ? (
           <View style={styles.centerContainer}>
-            <Ionicons name="barcode-outline" size={64} color={COLORS.primary} />
+            <Scan size={64} color={COLORS.primary} />
             <Text style={styles.permissionTitle}>Barcode Camera Reader</Text>
             <Text style={styles.permissionSub}>
               Point camera at lottery ticket barcode or test scan sample barcodes below:
             </Text>
             <TouchableOpacity style={styles.grantBtn} onPress={requestPermission}>
-              <Ionicons name="camera" size={18} color={COLORS.white} style={{ marginRight: 6 }} />
+              <Camera size={18} color={COLORS.white} style={{ marginRight: 6 }} />
               <Text style={styles.grantBtnText}>Enable Live Camera Access</Text>
             </TouchableOpacity>
 
@@ -232,7 +239,7 @@ export default function BarcodeScannerModal({
 
                   {scanned && (
                     <View style={styles.scannedOverlay}>
-                      <Ionicons name="checkmark-circle" size={48} color={COLORS.successText} />
+                      <CheckCircle size={48} color={COLORS.successText} />
                       <Text style={styles.scannedText}>Barcode Scanned!</Text>
                     </View>
                   )}

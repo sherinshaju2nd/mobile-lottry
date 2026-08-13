@@ -9,7 +9,19 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Ticket,
+  Layers,
+  AlertCircle,
+  Calendar,
+  Database,
+  Filter,
+  Sparkles,
+  Camera,
+  RotateCw,
+  Trophy,
+  XCircle,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
   searchTicketNumber,
@@ -19,6 +31,7 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
+import ModernDatePickerModal from "../components/ModernDatePickerModal";
 
 export default function SearchScreen({ navigation }: any) {
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -35,6 +48,10 @@ export default function SearchScreen({ navigation }: any) {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
 
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [customDateInput, setCustomDateInput] = useState<string>("");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+
   React.useEffect(() => {
     fetchAllDraws()
       .then(setAllDraws)
@@ -47,10 +64,6 @@ export default function SearchScreen({ navigation }: any) {
     setQuery(scannedValue);
     setIsBarcodeResultOpen(true);
   };
-
-  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
-  const [customDateInput, setCustomDateInput] = useState<string>("");
-  const [showDatePickerInput, setShowDatePickerInput] = useState<boolean>(false);
 
   interface BatchItem {
     ticket: string;
@@ -134,8 +147,7 @@ export default function SearchScreen({ navigation }: any) {
               handleReset();
             }}
           >
-            <Ionicons
-              name="ticket-outline"
+            <Ticket
               size={16}
               color={mode === "single" ? COLORS.white : COLORS.textDark}
             />
@@ -156,8 +168,7 @@ export default function SearchScreen({ navigation }: any) {
               handleReset();
             }}
           >
-            <Ionicons
-              name="layers-outline"
+            <Layers
               size={16}
               color={mode === "batch" ? COLORS.white : COLORS.textDark}
             />
@@ -183,7 +194,7 @@ export default function SearchScreen({ navigation }: any) {
               gap: 8,
             }}
           >
-            <Ionicons name="alert-circle" size={20} color="#DC2626" />
+            <AlertCircle size={20} color="#DC2626" />
             <Text
               style={{
                 color: "#991B1B",
@@ -197,151 +208,12 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Date Filter & Search Scope Selector */}
-        <View style={styles.dateFilterCard}>
-          <Text style={styles.dateFilterTitle}>
-            <Ionicons name="calendar" size={14} color={COLORS.primary} /> Select Draw Date Filter (Or Search Full DB):
-          </Text>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.dateChipsScroll}
-            contentContainerStyle={{ gap: 6 }}
-          >
-            <TouchableOpacity
-              style={[
-                styles.dateChip,
-                selectedDateFilter === null && !showDatePickerInput && styles.activeDateChip,
-              ]}
-              onPress={() => {
-                setSelectedDateFilter(null);
-                setShowDatePickerInput(false);
-              }}
-            >
-              <Ionicons
-                name="server"
-                size={12}
-                color={selectedDateFilter === null && !showDatePickerInput ? COLORS.white : COLORS.primary}
-              />
-              <Text
-                style={[
-                  styles.dateChipText,
-                  selectedDateFilter === null && !showDatePickerInput && styles.activeDateChipText,
-                ]}
-              >
-                Full DB (All Draws)
-              </Text>
-            </TouchableOpacity>
-
-            {Array.from(new Set(allDraws.map((d) => d.draw_date))).slice(0, 6).map((dDate) => (
-              <TouchableOpacity
-                key={dDate}
-                style={[
-                  styles.dateChip,
-                  selectedDateFilter === dDate && !showDatePickerInput && styles.activeDateChip,
-                ]}
-                onPress={() => {
-                  setSelectedDateFilter(dDate);
-                  setShowDatePickerInput(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dateChipText,
-                    selectedDateFilter === dDate && !showDatePickerInput && styles.activeDateChipText,
-                  ]}
-                >
-                  {dDate}
-                </Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              style={[
-                styles.dateChip,
-                showDatePickerInput && styles.activeDateChip,
-              ]}
-              onPress={() => setShowDatePickerInput(!showDatePickerInput)}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={12}
-                color={showDatePickerInput ? COLORS.white : COLORS.primary}
-              />
-              <Text
-                style={[
-                  styles.dateChipText,
-                  showDatePickerInput && styles.activeDateChipText,
-                ]}
-              >
-                Custom Date...
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-
-          {showDatePickerInput && (
-            <View style={styles.customDateRow}>
-              <TextInput
-                style={styles.customDateInput}
-                placeholder="YYYY-MM-DD (e.g. 2026-08-10)"
-                placeholderTextColor={COLORS.textLight}
-                value={customDateInput}
-                onChangeText={(txt) => {
-                  setCustomDateInput(txt);
-                  if (/^\d{4}-\d{2}-\d{2}$/.test(txt.trim())) {
-                    setSelectedDateFilter(txt.trim());
-                  }
-                }}
-              />
-              <TouchableOpacity
-                style={styles.applyDateBtn}
-                onPress={() => {
-                  if (customDateInput.trim()) {
-                    setSelectedDateFilter(customDateInput.trim());
-                  }
-                }}
-              >
-                <Text style={styles.applyDateBtnText}>Set</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={styles.activeFilterBanner}>
-            <Ionicons
-              name={selectedDateFilter ? "funnel" : "sparkles"}
-              size={13}
-              color={selectedDateFilter ? COLORS.primary : COLORS.gold}
-            />
-            <Text style={styles.activeFilterBannerText}>
-              {selectedDateFilter
-                ? `Filtered to Date: ${selectedDateFilter}`
-                : "Searching Full Database (All Published Draws)"}
-            </Text>
-            {selectedDateFilter && (
-              <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
-                <Text style={styles.clearFilterText}>Reset (Full DB)</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Single Mode Input */}
+        {/* Single Mode Input Card */}
         {mode === "single" ? (
           <View style={styles.card}>
-            {/* <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <Text style={styles.label}>Ticket Number</Text>
-              <TouchableOpacity
-                style={styles.scanChipBtn}
-                onPress={() => setIsScannerOpen(true)}
-              >
-                <Ionicons name="camera" size={14} color={COLORS.primary} />
-                <Text style={styles.scanChipText}>Scan Barcode</Text>
-              </TouchableOpacity>
-            </View> */}
-
+            <Text style={styles.label}>Ticket Number</Text>
             <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+              style={{ flexDirection: "row", gap: 8, alignItems: "center", marginBottom: 12 }}
             >
               <TextInput
                 style={[styles.input, { flex: 1 }]}
@@ -355,7 +227,32 @@ export default function SearchScreen({ navigation }: any) {
                 style={styles.cameraIconBtn}
                 onPress={() => setIsScannerOpen(true)}
               >
-                <Ionicons name="camera" size={22} color={COLORS.primary} />
+                <Camera size={22} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Date Filter Selection */}
+            <Text style={styles.label}>Draw Date Filter (Optional)</Text>
+            <View style={styles.customDateRow}>
+              <TouchableOpacity
+                style={[styles.customDateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                onPress={() => setIsDatePickerOpen(true)}
+              >
+                <Calendar size={16} color={COLORS.primary} />
+                <Text style={{ flex: 1, fontSize: 13, color: selectedDateFilter ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
+                  {selectedDateFilter ? selectedDateFilter : "All Draws (Full DB)"}
+                </Text>
+                {selectedDateFilter && (
+                  <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
+                    <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: "700" }}>Reset</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyDateBtn}
+                onPress={() => setIsDatePickerOpen(true)}
+              >
+                <Text style={styles.applyDateBtnText}>Pick Date</Text>
               </TouchableOpacity>
             </View>
 
@@ -374,16 +271,16 @@ export default function SearchScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-                <Ionicons name="refresh" size={18} color={COLORS.textMuted} />
+                <RotateCw size={18} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          /* Batch Mode Input */
+          /* Batch Mode Input Card */
           <View style={styles.card}>
             <Text style={styles.label}>Paste Multiple Ticket Numbers</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { marginBottom: 12 }]}
               placeholder="Enter tickets separated by newlines e.g.:&#10;BT 263322&#10;SS 192842&#10;3322"
               placeholderTextColor={COLORS.textLight}
               value={batchInput}
@@ -392,6 +289,30 @@ export default function SearchScreen({ navigation }: any) {
               numberOfLines={4}
               autoCapitalize="characters"
             />
+
+            <Text style={styles.label}>Draw Date Filter (Optional)</Text>
+            <View style={styles.customDateRow}>
+              <TouchableOpacity
+                style={[styles.customDateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                onPress={() => setIsDatePickerOpen(true)}
+              >
+                <Calendar size={16} color={COLORS.primary} />
+                <Text style={{ flex: 1, fontSize: 13, color: selectedDateFilter ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
+                  {selectedDateFilter ? selectedDateFilter : "All Draws (Full DB)"}
+                </Text>
+                {selectedDateFilter && (
+                  <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
+                    <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: "700" }}>Reset</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyDateBtn}
+                onPress={() => setIsDatePickerOpen(true)}
+              >
+                <Text style={styles.applyDateBtnText}>Pick Date</Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.btnRow}>
               <TouchableOpacity
@@ -408,7 +329,7 @@ export default function SearchScreen({ navigation }: any) {
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
-                <Ionicons name="refresh" size={18} color={COLORS.textMuted} />
+                <RotateCw size={18} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -418,7 +339,7 @@ export default function SearchScreen({ navigation }: any) {
         {mode === "single" && singleResults !== null && (
           <View style={styles.resultsSection}>
             <Text style={styles.resultsHeader}>
-              Search Results for &quot;{query}&quot;
+              Search Results for "{query}"
             </Text>
 
             {singleResults.length > 0 ? (
@@ -429,8 +350,7 @@ export default function SearchScreen({ navigation }: any) {
                 >
                   <View style={styles.resultBadgeRow}>
                     <View style={styles.winBadge}>
-                      <Ionicons
-                        name="trophy"
+                      <Trophy
                         size={14}
                         color={COLORS.successText}
                       />
@@ -470,15 +390,13 @@ export default function SearchScreen({ navigation }: any) {
               ))
             ) : (
               <View style={styles.noMatchCard}>
-                <Ionicons
-                  name="close-circle-outline"
+                <XCircle
                   size={32}
                   color={COLORS.textMuted}
                 />
                 <Text style={styles.noMatchTitle}>No Prize Match Found</Text>
                 <Text style={styles.noMatchSub}>
-                  The ticket number &quot;{query}&quot; did not match any
-                  published winning prize tiers.
+                  The ticket number "{query}" did not match any published winning prize tiers.
                 </Text>
               </View>
             )}
@@ -552,6 +470,14 @@ export default function SearchScreen({ navigation }: any) {
           setIsBarcodeResultOpen(false);
           setIsScannerOpen(true);
         }}
+      />
+
+      {/* Modern Visual Calendar Date Picker Modal */}
+      <ModernDatePickerModal
+        visible={isDatePickerOpen}
+        selectedDate={selectedDateFilter}
+        onClose={() => setIsDatePickerOpen(false)}
+        onSelectDate={(dateStr) => setSelectedDateFilter(dateStr)}
       />
     </SafeAreaView>
   );
