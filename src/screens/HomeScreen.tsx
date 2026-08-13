@@ -1437,7 +1437,7 @@ const styles = StyleSheet.create({
   todayLotteryCard: {
     borderColor: COLORS.primary,
     borderWidth: 2,
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "#EBF5FF",
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

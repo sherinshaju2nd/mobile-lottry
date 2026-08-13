@@ -13,7 +13,7 @@ export const COLORS = {
   border: "#E2E8F0",
   chipBlueBg: "#E0F2FE",
   chipBlueText: "#0369A1",
-  successBg: "#DCFCE7",
-  successText: "#15803D",
+  successBg: "#EBF5FF",
+  successText: "#0B3C5D",
   white: "#FFFFFF",
 };

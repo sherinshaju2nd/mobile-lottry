@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   },
   dateChipLatest: {
     borderColor: COLORS.primary,
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "#EBF5FF",
   },
   dateChipText: {
     fontSize: 14,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   resultContainer: {},
   winBanner: {
-    backgroundColor: "#15803D",
+    backgroundColor: COLORS.primary,
     padding: 20,
     borderRadius: 16,
     alignItems: "center",
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   winSubtitle: {
-    color: "#DCFCE7",
+    color: "#EBF5FF",
     fontSize: 13,
     textAlign: "center",
     marginTop: 4,
