@@ -32,8 +32,10 @@ import {
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ModernDatePickerModal from "../components/ModernDatePickerModal";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function SearchScreen({ navigation }: any) {
+  const { t, language } = useLanguage();
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [query, setQuery] = useState("");
   const [batchInput, setBatchInput] = useState("");
@@ -48,7 +50,9 @@ export default function SearchScreen({ navigation }: any) {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
 
-  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(
+    null,
+  );
   const [customDateInput, setCustomDateInput] = useState<string>("");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
@@ -131,10 +135,21 @@ export default function SearchScreen({ navigation }: any) {
         contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Ticket Result Checker</Text>
-          <Text style={styles.headerSubtitle}>
-            Verify single tickets or batch bundles against official Kerala state
-            lottery results.
+          <Text
+            style={[
+              styles.headerTitle,
+              language === "ml" && { fontSize: 20, lineHeight: 28 },
+            ]}
+          >
+            {t("checker_title")}
+          </Text>
+          <Text
+            style={[
+              styles.headerSubtitle,
+              language === "ml" && { fontSize: 12, lineHeight: 18 },
+            ]}
+          >
+            {t("checker_subtitle")}
           </Text>
         </View>
 
@@ -148,16 +163,18 @@ export default function SearchScreen({ navigation }: any) {
             }}
           >
             <Ticket
-              size={16}
+              size={15}
               color={mode === "single" ? COLORS.white : COLORS.textDark}
             />
             <Text
               style={[
                 styles.tabText,
                 mode === "single" && styles.activeTabText,
+                language === "ml" && { fontSize: 12 },
               ]}
+              numberOfLines={1}
             >
-              Single Ticket Search
+              {t("single_search")}
             </Text>
           </TouchableOpacity>
 
@@ -169,13 +186,18 @@ export default function SearchScreen({ navigation }: any) {
             }}
           >
             <Layers
-              size={16}
+              size={15}
               color={mode === "batch" ? COLORS.white : COLORS.textDark}
             />
             <Text
-              style={[styles.tabText, mode === "batch" && styles.activeTabText]}
+              style={[
+                styles.tabText,
+                mode === "batch" && styles.activeTabText,
+                language === "ml" && { fontSize: 12 },
+              ]}
+              numberOfLines={1}
             >
-              Bundle / Batch Search
+              {t("batch_search")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -211,13 +233,18 @@ export default function SearchScreen({ navigation }: any) {
         {/* Single Mode Input Card */}
         {mode === "single" ? (
           <View style={styles.card}>
-            <Text style={styles.label}>Ticket Number</Text>
+            <Text style={styles.label}>{t("ticket_number")}</Text>
             <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center", marginBottom: 12 }}
+              style={{
+                flexDirection: "row",
+                gap: 8,
+                alignItems: "center",
+                marginBottom: 12,
+              }}
             >
               <TextInput
                 style={[styles.input, { flex: 1 }]}
-                placeholder="e.g. BT 263322 or 3322"
+                placeholder={t("enter_ticket_placeholder")}
                 placeholderTextColor={COLORS.textLight}
                 value={query}
                 onChangeText={setQuery}
@@ -232,41 +259,58 @@ export default function SearchScreen({ navigation }: any) {
             </View>
 
             {/* Date Filter Selection */}
-            <Text style={styles.label}>Draw Date Filter (Optional)</Text>
+            <Text style={styles.label}>{t("draw_date_filter")}</Text>
             <View style={styles.customDateRow}>
               <TouchableOpacity
-                style={[styles.customDateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                style={[
+                  styles.customDateInput,
+                  { flexDirection: "row", alignItems: "center", gap: 8 },
+                ]}
                 onPress={() => setIsDatePickerOpen(true)}
               >
                 <Calendar size={16} color={COLORS.primary} />
-                <Text style={{ flex: 1, fontSize: 13, color: selectedDateFilter ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
-                  {selectedDateFilter ? selectedDateFilter : "All Draws (Full DB)"}
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 13,
+                    color: selectedDateFilter
+                      ? COLORS.textDark
+                      : COLORS.textMuted,
+                    fontWeight: "600",
+                  }}
+                >
+                  {selectedDateFilter ? selectedDateFilter : t("all_draws")}
                 </Text>
                 {selectedDateFilter && (
                   <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
-                    <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: "700" }}>Reset</Text>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: COLORS.primary,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {t("reset")}
+                    </Text>
                   </TouchableOpacity>
                 )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.applyDateBtn}
-                onPress={() => setIsDatePickerOpen(true)}
-              >
-                <Text style={styles.applyDateBtnText}>Pick Date</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.btnRow}>
               <TouchableOpacity
-                style={styles.primaryBtn}
+                style={[
+                  styles.primaryBtn,
+                  (!query.trim() || isSearching) && { backgroundColor: "#94A3B8" },
+                ]}
                 onPress={handleSingleSearch}
-                disabled={isSearching}
+                disabled={!query.trim() || isSearching}
               >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
                 ) : (
                   <Text style={styles.primaryBtnText}>
-                    Check Winning Ticket
+                    {t("check_ticket_btn")}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -278,10 +322,10 @@ export default function SearchScreen({ navigation }: any) {
         ) : (
           /* Batch Mode Input Card */
           <View style={styles.card}>
-            <Text style={styles.label}>Paste Multiple Ticket Numbers</Text>
+            <Text style={styles.label}>{t("batch_search")}</Text>
             <TextInput
               style={[styles.input, styles.textArea, { marginBottom: 12 }]}
-              placeholder="Enter tickets separated by newlines e.g.:&#10;BT 263322&#10;SS 192842&#10;3322"
+              placeholder={t("paste_multiple_placeholder")}
               placeholderTextColor={COLORS.textLight}
               value={batchInput}
               onChangeText={setBatchInput}
@@ -290,41 +334,58 @@ export default function SearchScreen({ navigation }: any) {
               autoCapitalize="characters"
             />
 
-            <Text style={styles.label}>Draw Date Filter (Optional)</Text>
+            <Text style={styles.label}>{t("draw_date_filter")}</Text>
             <View style={styles.customDateRow}>
               <TouchableOpacity
-                style={[styles.customDateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                style={[
+                  styles.customDateInput,
+                  { flexDirection: "row", alignItems: "center", gap: 8 },
+                ]}
                 onPress={() => setIsDatePickerOpen(true)}
               >
                 <Calendar size={16} color={COLORS.primary} />
-                <Text style={{ flex: 1, fontSize: 13, color: selectedDateFilter ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
-                  {selectedDateFilter ? selectedDateFilter : "All Draws (Full DB)"}
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 13,
+                    color: selectedDateFilter
+                      ? COLORS.textDark
+                      : COLORS.textMuted,
+                    fontWeight: "600",
+                  }}
+                >
+                  {selectedDateFilter ? selectedDateFilter : t("all_draws")}
                 </Text>
                 {selectedDateFilter && (
                   <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
-                    <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: "700" }}>Reset</Text>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        color: COLORS.primary,
+                        fontWeight: "700",
+                      }}
+                    >
+                      {t("reset")}
+                    </Text>
                   </TouchableOpacity>
                 )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.applyDateBtn}
-                onPress={() => setIsDatePickerOpen(true)}
-              >
-                <Text style={styles.applyDateBtnText}>Pick Date</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.btnRow}>
               <TouchableOpacity
-                style={styles.primaryBtn}
+                style={[
+                  styles.primaryBtn,
+                  (!batchInput.trim() || isSearching) && { backgroundColor: "#94A3B8" },
+                ]}
                 onPress={handleBatchSearch}
-                disabled={isSearching}
+                disabled={!batchInput.trim() || isSearching}
               >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
                 ) : (
                   <Text style={styles.primaryBtnText}>
-                    Check All Bundle Tickets
+                    {t("check_batch_btn")}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -339,7 +400,7 @@ export default function SearchScreen({ navigation }: any) {
         {mode === "single" && singleResults !== null && (
           <View style={styles.resultsSection}>
             <Text style={styles.resultsHeader}>
-              Search Results for "{query}"
+              {t("search_results_for")} "{query}"
             </Text>
 
             {singleResults.length > 0 ? (
@@ -350,10 +411,7 @@ export default function SearchScreen({ navigation }: any) {
                 >
                   <View style={styles.resultBadgeRow}>
                     <View style={styles.winBadge}>
-                      <Trophy
-                        size={14}
-                        color={COLORS.successText}
-                      />
+                      <Trophy size={14} color={COLORS.successText} />
                       <Text style={styles.winBadgeText}>
                         {match.prize_tier}
                       </Text>
@@ -369,7 +427,7 @@ export default function SearchScreen({ navigation }: any) {
                     {match.draw_name} ({match.draw_code})
                   </Text>
                   <Text style={styles.drawMeta}>
-                    Draw Date: {match.draw_date} • Ticket Matched:{" "}
+                    {t("draw_date")}: {match.draw_date} • {t("ticket_number")}:{" "}
                     {match.ticket_matched}
                   </Text>
 
@@ -383,20 +441,17 @@ export default function SearchScreen({ navigation }: any) {
                     }
                   >
                     <Text style={styles.detailsBtnText}>
-                      View Complete Official Draw Results →
+                      {t("view_breakdown")}
                     </Text>
                   </TouchableOpacity>
                 </View>
               ))
             ) : (
               <View style={styles.noMatchCard}>
-                <XCircle
-                  size={32}
-                  color={COLORS.textMuted}
-                />
-                <Text style={styles.noMatchTitle}>No Prize Match Found</Text>
+                <XCircle size={32} color={COLORS.textMuted} />
+                <Text style={styles.noMatchTitle}>{t("no_prize_found")}</Text>
                 <Text style={styles.noMatchSub}>
-                  The ticket number "{query}" did not match any published winning prize tiers.
+                  "{query}" {t("no_prize_desc")}
                 </Text>
               </View>
             )}
@@ -613,7 +668,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: "700",
     color: COLORS.textDark,
     marginBottom: 8,
@@ -638,7 +693,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: 10,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 13.5,
     color: COLORS.textDark,
     backgroundColor: COLORS.background,
   },
@@ -661,8 +716,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 10,
   },
-  primaryBtnText: { color: COLORS.white, fontWeight: "800", fontSize: 14 },
+  primaryBtnText: {
+    color: COLORS.white,
+    fontWeight: "800",
+    fontSize: 13.5,
+    textAlign: "center",
+  },
   resetBtn: {
     width: 46,
     height: 46,

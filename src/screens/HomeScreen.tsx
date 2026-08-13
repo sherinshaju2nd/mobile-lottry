@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Sparkles,
   ChevronRight,
+  Globe,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -35,8 +36,10 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function HomeScreen({ navigation }: any) {
+  const { language, setShowLanguageModal, t } = useLanguage();
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,8 +135,9 @@ export default function HomeScreen({ navigation }: any) {
     checkTime();
 
     // Realtime listener for live cron job updates
+    const channelName = `realtime-mobile-home-${Date.now()}`;
     const channel = supabase
-      .channel("realtime-mobile-home")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
@@ -216,11 +220,20 @@ export default function HomeScreen({ navigation }: any) {
           <View
             style={[
               styles.brandRow,
-              { justifyContent: "space-between", flex: 1 },
+              {
+                justifyContent: "space-between",
+                flex: 1,
+                alignItems: "center",
+              },
             ]}
           >
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                flex: 1,
+              }}
             >
               <View style={styles.logoBadge}>
                 <Image
@@ -229,11 +242,51 @@ export default function HomeScreen({ navigation }: any) {
                   resizeMode="contain"
                 />
               </View>
-              <View>
-                <Text style={styles.appName}>Kerala Lottery Results</Text>
-                <Text style={styles.appSubtitle}>Live Updates & Checker</Text>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={[
+                    styles.appName,
+                    language === "ml" && { fontSize: 15, lineHeight: 22 },
+                  ]}
+                >
+                  {t("app_header_title")}
+                </Text>
+                <Text
+                  style={[
+                    styles.appSubtitle,
+                    language === "ml" && { fontSize: 10.5, lineHeight: 15 },
+                  ]}
+                >
+                  {t("app_header_subtitle")}
+                </Text>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 5,
+                backgroundColor: COLORS.primaryLight,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: COLORS.primary,
+              }}
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <Globe size={14} color={COLORS.primary} />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "800",
+                  color: COLORS.primary,
+                }}
+              >
+                {language === "ml" ? "മലയാളം" : "EN"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -250,21 +303,25 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={[
                       styles.heroTab,
-                      heroTab === 1 && styles.heroTabActiveGold,
+                      heroTab === 1 && styles.heroTabActiveGreen,
                     ]}
                     onPress={() => setHeroTab(1)}
                   >
                     <Trophy
                       size={14}
-                      color={heroTab === 1 ? COLORS.white : COLORS.gold}
+                      color={heroTab === 1 ? COLORS.white : COLORS.primary}
                     />
                     <Text
                       style={[
                         styles.heroTabText,
                         heroTab === 1 && styles.heroTabActiveText,
                       ]}
+                      numberOfLines={1}
                     >
-                      Yesterday&apos;s Result ({previousDraw.draw_date})
+                      {language === "ml"
+                        ? "ഇന്നലത്തെ ഫലം"
+                        : "Yesterday's Result"}{" "}
+                      ({previousDraw.draw_date})
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -285,11 +342,12 @@ export default function HomeScreen({ navigation }: any) {
                       styles.heroTabText,
                       heroTab === 0 && styles.heroTabActiveText,
                     ]}
+                    numberOfLines={1}
                   >
-                    Today&apos;s Draw (
+                    {language === "ml" ? "ഇന്നത്തെ ഫലം" : "Today's Draw"} (
                     {todayDraw
-                      ? `${todayDraw.draw_name} ${todayDraw.lottery_code}`
-                      : `${todayLottery.name} ${todayLottery.code}`}
+                      ? `${todayDraw.lottery_code}`
+                      : `${todayLottery.code}`}
                     )
                   </Text>
                 </TouchableOpacity>
@@ -301,7 +359,11 @@ export default function HomeScreen({ navigation }: any) {
                     styles.heroTab,
                     heroTab === 0 && styles.heroTabActiveGreen,
                   ]}
-                  onPress={() => setHeroTab(0)}
+                  onPress={() => {
+                    setHeroTab(0);
+                    setTicketInput("");
+                    setSearchResults(null);
+                  }}
                 >
                   <Clock
                     size={14}
@@ -312,11 +374,12 @@ export default function HomeScreen({ navigation }: any) {
                       styles.heroTabText,
                       heroTab === 0 && styles.heroTabActiveText,
                     ]}
+                    numberOfLines={1}
                   >
-                    Today&apos;s Draw (
+                    {language === "ml" ? "ഇന്നത്തെ ഫലം" : "Today's Draw"} (
                     {todayDraw
-                      ? `${todayDraw.draw_name} ${todayDraw.lottery_code}`
-                      : `${todayLottery.name} ${todayLottery.code}`}
+                      ? `${todayDraw.lottery_code}`
+                      : `${todayLottery.code}`}
                     )
                   </Text>
                 </TouchableOpacity>
@@ -325,21 +388,29 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={[
                       styles.heroTab,
-                      heroTab === 1 && styles.heroTabActiveGold,
+                      heroTab === 1 && styles.heroTabActiveGreen,
                     ]}
-                    onPress={() => setHeroTab(1)}
+                    onPress={() => {
+                      setHeroTab(1);
+                      setTicketInput("");
+                      setSearchResults(null);
+                    }}
                   >
                     <Trophy
                       size={14}
-                      color={heroTab === 1 ? COLORS.white : COLORS.gold}
+                      color={heroTab === 1 ? COLORS.white : COLORS.primary}
                     />
                     <Text
                       style={[
                         styles.heroTabText,
                         heroTab === 1 && styles.heroTabActiveText,
                       ]}
+                      numberOfLines={1}
                     >
-                      Yesterday&apos;s Result ({previousDraw.draw_date})
+                      {language === "ml"
+                        ? "ഇന്നലത്തെ ഫലം"
+                        : "Yesterday's Result"}{" "}
+                      ({previousDraw.draw_date})
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -351,58 +422,42 @@ export default function HomeScreen({ navigation }: any) {
         {/* Quick Ticket Checker Card */}
         {(() => {
           const isScannerDisabled = heroTab === 0 && !todayDraw;
+          const isSearchDisabled = isChecking || !ticketInput.trim() || (heroTab === 0 && !todayDraw);
+          const lotteryDisplayName =
+            heroTab === 0
+              ? todayDraw
+                ? language === "ml" &&
+                  getLotteryMalayalamName(todayDraw.lottery_code)
+                  ? getLotteryMalayalamName(todayDraw.lottery_code)
+                  : todayDraw.draw_name
+                : language === "ml" && todayLottery.nameMl
+                  ? todayLottery.nameMl
+                  : todayLottery.name
+              : previousDraw
+                ? language === "ml" &&
+                  getLotteryMalayalamName(previousDraw.lottery_code)
+                  ? getLotteryMalayalamName(previousDraw.lottery_code)
+                  : previousDraw.draw_name
+                : language === "ml"
+                  ? "മുൻ"
+                  : "Previous";
+
           return (
             <View style={styles.checkerCard}>
-              <View
-                style={[
-                  styles.checkerTitleRow,
-                  { justifyContent: "space-between" },
-                ]}
-              >
-                <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                >
-                  <Search size={18} color={COLORS.primary} />
-                  <Text style={styles.checkerTitle}>
-                    {heroTab === 0
-                      ? todayDraw
-                        ? `Check ${todayDraw.draw_name} Ticket`
-                        : `Check ${todayLottery.name} Ticket`
-                      : `Check ${previousDraw?.draw_name || "Previous"} Ticket`}
-                  </Text>
-                </View>
-                <TouchableOpacity
+              <View style={styles.checkerTitleRow}>
+                <Search size={18} color={COLORS.primary} />
+                <Text
                   style={[
-                    styles.scanChipBtn,
-                    isScannerDisabled && styles.disabledScanChipBtn,
+                    styles.checkerTitle,
+                    language === "ml" && { fontSize: 13, lineHeight: 18 },
                   ]}
-                  onPress={() => setIsScannerOpen(true)}
-                  disabled={isScannerDisabled}
+                  numberOfLines={1}
                 >
-                  <Camera
-                    size={15}
-                    color={
-                      isScannerDisabled ? COLORS.textLight : COLORS.primary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.scanChipText,
-                      isScannerDisabled && styles.disabledScanChipText,
-                    ]}
-                  >
-                    {isScannerDisabled ? "Scanner Active Soon" : "Scan Barcode"}
-                  </Text>
-                </TouchableOpacity>
+                  {language === "ml"
+                    ? `${lotteryDisplayName} ടിക്കറ്റ് പരിശോധിക്കുക`
+                    : `Check ${lotteryDisplayName} Ticket`}
+                </Text>
               </View>
-
-              <Text style={styles.checkerSubtitle}>
-                {heroTab === 0
-                  ? todayDraw
-                    ? `Checking ticket against ${todayDraw.draw_name} (${todayDraw.draw_code}) from ${todayDraw.draw_date}.`
-                    : `Ticket checker for ${todayLottery.name} (${todayLottery.code}) will be active at Soon  once results are published.`
-                  : `Checking ticket against ${previousDraw?.draw_name} (${previousDraw?.draw_code}) from ${previousDraw?.draw_date}.`}
-              </Text>
 
               <View style={styles.inputRow}>
                 <TextInput
@@ -410,9 +465,15 @@ export default function HomeScreen({ navigation }: any) {
                   placeholder={
                     heroTab === 0
                       ? todayDraw
-                        ? `Enter ticket for ${todayDraw.draw_code}...`
-                        : `Enter ticket for ${todayLottery.code}...`
-                      : `Enter ticket for ${previousDraw?.draw_code || "draw"}...`
+                        ? language === "ml"
+                          ? `${todayDraw.draw_code} ടിക്കറ്റ് നമ്പർ നൽകുക...`
+                          : `Enter ticket for ${todayDraw.draw_code}...`
+                        : language === "ml"
+                          ? `${todayLottery.code} ടിക്കറ്റ് നമ്പർ നൽകുക...`
+                          : `Enter ticket for ${todayLottery.code}...`
+                      : language === "ml"
+                        ? `${previousDraw?.draw_code || "ടിക്കറ്റ്"} നമ്പർ നൽകുക...`
+                        : `Enter ticket for ${previousDraw?.draw_code || "draw"}...`
                   }
                   placeholderTextColor={COLORS.textLight}
                   value={ticketInput}
@@ -423,37 +484,27 @@ export default function HomeScreen({ navigation }: any) {
 
                 <TouchableOpacity
                   style={[
-                    styles.cameraIconBtn,
-                    isScannerDisabled && styles.disabledCameraIconBtn,
-                  ]}
-                  onPress={() => setIsScannerOpen(true)}
-                  disabled={isScannerDisabled}
-                >
-                  <Camera
-                    size={22}
-                    color={
-                      isScannerDisabled ? COLORS.textLight : COLORS.primary
-                    }
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
                     styles.checkButton,
-                    heroTab === 0 &&
-                      !todayDraw && { backgroundColor: COLORS.textLight },
-                    heroTab === 1 && { backgroundColor: COLORS.gold },
+                    isSearchDisabled && { backgroundColor: "#94A3B8" },
+                    language === "ml" && { paddingHorizontal: 12 },
                   ]}
                   onPress={handleQuickCheck}
-                  disabled={isChecking || (heroTab === 0 && !todayDraw)}
+                  disabled={isSearchDisabled}
                 >
                   {isChecking ? (
                     <ActivityIndicator size="small" color={COLORS.white} />
                   ) : (
-                    <Text style={styles.checkButtonText}>
+                    <Text
+                      style={[
+                        styles.checkButtonText,
+                        language === "ml" && { fontSize: 11.5 },
+                      ]}
+                    >
                       {heroTab === 0 && !todayDraw
-                        ? "Coming Soon"
-                        : "Check Now"}
+                        ? language === "ml"
+                          ? "ഉടൻ വരും"
+                          : "Coming Soon"
+                        : t("check_now")}
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -470,13 +521,16 @@ export default function HomeScreen({ navigation }: any) {
                         </Text>
                         <Text style={styles.matchDetail}>
                           {m.draw_name} ({m.draw_code}) on {m.draw_date} •
-                          Ticket: {m.ticket_matched}
+                          {language === "ml" ? "ടിക്കറ്റ്:" : "Ticket:"}{" "}
+                          {m.ticket_matched}
                         </Text>
                       </View>
                     ))
                   ) : (
                     <Text style={styles.noMatchText}>
-                      No winning prize match found for "{ticketInput}". Try checking all lotteries.
+                      {language === "ml"
+                        ? `"${ticketInput}" നമ്പർ സമ്മാനാർഹമായ ഫലങ്ങളിൽ ലഭിച്ചില്ല. എല്ലാ ലോട്ടറികളും പരിശോധിക്കുക.`
+                        : `No winning prize match found for "${ticketInput}". Try checking all lotteries.`}
                     </Text>
                   )}
                 </View>
@@ -489,47 +543,66 @@ export default function HomeScreen({ navigation }: any) {
           (todayDraw && todayDraw.first?.ticket ? (
             /* Today's Draw Published Card */
             <View style={styles.winnerCard}>
-              <View style={styles.winnerHeader}>
-                <Trophy size={16} color={COLORS.successText} />
-                <Text style={styles.winnerTextBadge}>
-                  LATEST DRAW • {todayDraw.draw_date}
-                </Text>
-              </View>
+              <View style={styles.winnerHeroSection}>
+                <View style={styles.winnerHeader}>
+                  <Trophy size={15} color={COLORS.primary} />
+                  <Text style={styles.winnerTextBadge}>
+                    {t("latest_draw_badge")} • {todayDraw.draw_date}
+                  </Text>
+                </View>
 
-              <Text style={styles.winnerTitle}>
-                {todayDraw.draw_name} ({todayDraw.draw_code})
-              </Text>
-              <Text
-                style={[styles.winnerPrizeLabel, { color: COLORS.primary }]}
-              >
-                1ST PRIZE ({todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
-              </Text>
-              <Text style={styles.winnerTicketNumber}>
-                {todayDraw.first?.ticket || "N/A"}
-              </Text>
-              {((todayDraw.first?.location &&
-                todayDraw.first.location.toLowerCase() !== "n/a" &&
-                todayDraw.first.location.toLowerCase() !== "nan" &&
-                todayDraw.first.location.toLowerCase() !== "null") ||
-                (todayDraw.first?.agent &&
-                  todayDraw.first.agent.toLowerCase() !== "n/a" &&
-                  todayDraw.first.agent.toLowerCase() !== "nan" &&
-                  todayDraw.first.agent.toLowerCase() !== "null")) && (
-                <Text style={styles.winnerMeta}>
-                  {todayDraw.first?.location &&
+                <Text
+                  style={[
+                    styles.winnerTitle,
+                    language === "ml" && { fontSize: 17.5, lineHeight: 25 },
+                  ]}
+                >
+                  {language === "ml" &&
+                  getLotteryMalayalamName(todayDraw.lottery_code)
+                    ? getLotteryMalayalamName(todayDraw.lottery_code)
+                    : todayDraw.draw_name}{" "}
+                  ({todayDraw.draw_code})
+                </Text>
+
+                <View style={styles.prizeBadgeContainer}>
+                  <Text style={styles.winnerPrizeLabel}>
+                    {t("first_prize")} (
+                    {todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+                  </Text>
+                </View>
+
+                <View style={styles.heroTicketBox}>
+                  <Text style={styles.winnerTicketNumber}>
+                    {todayDraw.first?.ticket || "N/A"}
+                  </Text>
+                </View>
+
+                {((todayDraw.first?.location &&
                   todayDraw.first.location.toLowerCase() !== "n/a" &&
                   todayDraw.first.location.toLowerCase() !== "nan" &&
-                  todayDraw.first.location.toLowerCase() !== "null"
-                    ? `Location: ${todayDraw.first.location}`
-                    : ""}
-                  {todayDraw.first?.agent &&
-                  todayDraw.first.agent.toLowerCase() !== "n/a" &&
-                  todayDraw.first.agent.toLowerCase() !== "nan" &&
-                  todayDraw.first.agent.toLowerCase() !== "null"
-                    ? `${todayDraw.first?.location && todayDraw.first.location.toLowerCase() !== "n/a" && todayDraw.first.location.toLowerCase() !== "nan" && todayDraw.first.location.toLowerCase() !== "null" ? "  |  " : ""}Agent: ${todayDraw.first.agent}`
-                    : ""}
-                </Text>
-              )}
+                  todayDraw.first.location.toLowerCase() !== "null") ||
+                  (todayDraw.first?.agent &&
+                    todayDraw.first.agent.toLowerCase() !== "n/a" &&
+                    todayDraw.first.agent.toLowerCase() !== "nan" &&
+                    todayDraw.first.agent.toLowerCase() !== "null")) && (
+                  <View style={styles.winnerMetaBox}>
+                    <Text style={styles.winnerMeta}>
+                      {todayDraw.first?.location &&
+                      todayDraw.first.location.toLowerCase() !== "n/a" &&
+                      todayDraw.first.location.toLowerCase() !== "nan" &&
+                      todayDraw.first.location.toLowerCase() !== "null"
+                        ? `${t("location")}: ${todayDraw.first.location}`
+                        : ""}
+                      {todayDraw.first?.agent &&
+                      todayDraw.first.agent.toLowerCase() !== "n/a" &&
+                      todayDraw.first.agent.toLowerCase() !== "nan" &&
+                      todayDraw.first.agent.toLowerCase() !== "null"
+                        ? `${todayDraw.first?.location && todayDraw.first.location.toLowerCase() !== "n/a" && todayDraw.first.location.toLowerCase() !== "nan" && todayDraw.first.location.toLowerCase() !== "null" ? "  |  " : ""}${t("agent")}: ${todayDraw.first.agent}`
+                        : ""}
+                    </Text>
+                  </View>
+                )}
+              </View>
 
               <Text
                 style={[
@@ -537,22 +610,57 @@ export default function HomeScreen({ navigation }: any) {
                   { marginTop: 12, marginBottom: 6 },
                 ]}
               >
-                Complete Prize Breakdown
+                {t("complete_prize_breakdown")}
               </Text>
               {[
                 {
                   key: "consolation",
-                  label: "Consolation Prize",
-                  color: "#7F8C8D",
+                  label:
+                    language === "ml"
+                      ? "സമാശ്വാസ സമ്മാനം"
+                      : "Consolation Prize",
+                  color: "#64748B",
                 },
-                { key: "2nd", label: "2nd Prize", color: "#D4AF37" },
-                { key: "3rd", label: "3rd Prize", color: "#2980B9" },
-                { key: "4th", label: "4th Prize", color: "#8E44AD" },
-                { key: "5th", label: "5th Prize", color: "#2C3E50" },
-                { key: "6th", label: "6th Prize", color: "#16A085" },
-                { key: "7th", label: "7th Prize", color: "#D35400" },
-                { key: "8th", label: "8th Prize", color: "#C0392B" },
-                { key: "9th", label: "9th Prize", color: "#7F8C8D" },
+                {
+                  key: "2nd",
+                  label: language === "ml" ? "രണ്ടാം സമ്മാനം" : "2nd Prize",
+                  color: "#D97706",
+                },
+                {
+                  key: "3rd",
+                  label: language === "ml" ? "മൂന്നാം സമ്മാനം" : "3rd Prize",
+                  color: "#2563EB",
+                },
+                {
+                  key: "4th",
+                  label: language === "ml" ? "നാലാം സമ്മാനം" : "4th Prize",
+                  color: "#9333EA",
+                },
+                {
+                  key: "5th",
+                  label: language === "ml" ? "അഞ്ചാം സമ്മാനം" : "5th Prize",
+                  color: "#334155",
+                },
+                {
+                  key: "6th",
+                  label: language === "ml" ? "ആറാം സമ്മാനം" : "6th Prize",
+                  color: "#0D9488",
+                },
+                {
+                  key: "7th",
+                  label: language === "ml" ? "ഏഴാം സമ്മാനം" : "7th Prize",
+                  color: "#EA580C",
+                },
+                {
+                  key: "8th",
+                  label: language === "ml" ? "എട്ടാം സമ്മാനം" : "8th Prize",
+                  color: "#DC2626",
+                },
+                {
+                  key: "9th",
+                  label: language === "ml" ? "ഒൻപതാം സമ്മാനം" : "9th Prize",
+                  color: "#475569",
+                },
               ].map((tier) => {
                 const numbers = (todayDraw.prizes as any)?.[tier.key] as
                   | string[]
@@ -563,9 +671,7 @@ export default function HomeScreen({ navigation }: any) {
                 return (
                   <View key={tier.key} style={styles.tierCard}>
                     <View style={styles.tierHeader}>
-                      <Text style={[styles.tierTitle, { color: tier.color }]}>
-                        {tier.label}
-                      </Text>
+                      <Text style={styles.tierTitle}>{tier.label}</Text>
                       {amount && (
                         <Text style={styles.tierAmount}>{amount}</Text>
                       )}
@@ -573,24 +679,8 @@ export default function HomeScreen({ navigation }: any) {
 
                     <View style={styles.numbersGrid}>
                       {numbers.map((num, idx) => (
-                        <View
-                          key={idx}
-                          style={[
-                            styles.numberChip,
-                            {
-                              backgroundColor: tier.color,
-                              borderColor: tier.color,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.numberChipText,
-                              { color: "#FFFFFF" },
-                            ]}
-                          >
-                            {num}
-                          </Text>
+                        <View key={idx} style={styles.numberChip}>
+                          <Text style={styles.numberChipText}>{num}</Text>
                         </View>
                       ))}
                     </View>
@@ -609,90 +699,105 @@ export default function HomeScreen({ navigation }: any) {
               <View style={styles.scheduledBadgeRow}>
                 <AlertCircle size={14} color="#3B82F6" />
                 <Text style={[styles.scheduledBadgeText, { color: "#1E40AF" }]}>
-                  DRAWING IN PROGRESS
+                  {language === "ml"
+                    ? "നറുക്കെടുപ്പ് നടക്കുന്നു"
+                    : "DRAWING IN PROGRESS"}
                 </Text>
               </View>
 
               <Text style={styles.scheduledTitle}>
-                {todayLottery.name}{" "}
-                {todayLottery.nameMl ? `(${todayLottery.nameMl})` : ""} (
-                {todayLottery.code})
+                {todayLottery.nameMl || todayLottery.name} ({todayLottery.code})
               </Text>
               <Text style={[styles.scheduledSubtitle, { color: "#1E40AF" }]}>
-                Result will update shortly
+                {language === "ml"
+                  ? "ഫലം ഉടൻ അപ്‌ഡേറ്റ് ചെയ്യും"
+                  : "Result will update shortly"}
               </Text>
               <Text style={[styles.scheduledDesc, { color: "#1E40AF" }]}>
-                The live draw is currently in progress. Results will update
-                automatically shortly on this page.
+                {language === "ml"
+                  ? "തത്സമയ നറുക്കെടുപ്പ് ഇപ്പോൾ നടന്നു കൊണ്ടിരിക്കുന്നു. ഫലം ഉടൻ ലൈവായി ലഭ്യമാകും."
+                  : "The live draw is currently in progress. Results will update automatically shortly on this page."}
               </Text>
             </View>
           ) : (
             /* Today's Draw Coming Soon Scheduled Card */
             <View style={styles.scheduledCard}>
               <View style={styles.scheduledBadgeRow}>
-                <Clock size={14} color={COLORS.gold} />
-                <Text style={styles.scheduledBadgeText}>
-                  RESULT COMING SOON
+                <Clock size={14} color={COLORS.primary} />
+                <Text
+                  style={[styles.scheduledBadgeText, { color: COLORS.primary }]}
+                >
+                  {language === "ml"
+                    ? "ഫലം ഉടൻ ലഭ്യമാകും"
+                    : "RESULT COMING SOON"}
                 </Text>
               </View>
 
               <Text style={styles.scheduledTitle}>
-                {todayLottery.name}{" "}
-                {todayLottery.nameMl ? `(${todayLottery.nameMl})` : ""} (
-                {todayLottery.code})
+                {todayLottery.nameMl || todayLottery.name} ({todayLottery.code})
               </Text>
-              <Text style={styles.scheduledSubtitle}>
-                Draw Scheduled Today at 3:00 PM
+              <Text
+                style={[styles.scheduledSubtitle, { color: COLORS.primary }]}
+              >
+                {language === "ml"
+                  ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്"
+                  : "Draw Scheduled Today at 3:00 PM"}
               </Text>
               <Text style={styles.scheduledDesc}>
-                Winning results for {todayLottery.name} ({todayLottery.code})
-                will be published automatically.
+                {language === "ml"
+                  ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
+                  : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`}
               </Text>
             </View>
           ))}
 
         {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
         {heroTab === 1 && previousDraw && (
-          <View style={[styles.winnerCard, styles.winnerCardGold]}>
+          <View style={styles.winnerCard}>
             <View style={styles.winnerHeader}>
-              <Trophy size={16} color={COLORS.gold} />
-              <Text style={[styles.winnerTextBadge, { color: COLORS.gold }]}>
-                PREVIOUS DRAW RESULT • {previousDraw.draw_date}
+              <Trophy size={15} color={COLORS.primary} />
+              <Text style={styles.winnerTextBadge}>
+                {language === "ml"
+                  ? "മുൻകാല നറുക്കെടുപ്പ് ഫലം"
+                  : "PREVIOUS DRAW RESULT"}{" "}
+                • {previousDraw.draw_date}
               </Text>
             </View>
 
             <Text style={styles.winnerTitle}>
-              {previousDraw.draw_name}{" "}
-              {getLotteryMalayalamName(previousDraw.lottery_code)
-                ? `(${getLotteryMalayalamName(previousDraw.lottery_code)})`
-                : ""}{" "}
+              {language === "ml" &&
+              getLotteryMalayalamName(previousDraw.lottery_code)
+                ? getLotteryMalayalamName(previousDraw.lottery_code)
+                : previousDraw.draw_name}{" "}
               ({previousDraw.draw_code})
             </Text>
-            <Text style={styles.winnerPrizeLabel}>
-              1ST PRIZE ({previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
-            </Text>
 
-            <Text style={[styles.winnerTicketNumber, { color: COLORS.gold }]}>
-              {previousDraw.first?.ticket || "N/A"}
-            </Text>
+            <View style={styles.prizeBadgeContainer}>
+              <Text style={styles.winnerPrizeLabel}>
+                {t("first_prize")} (
+                {previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+              </Text>
+            </View>
+
+            <View style={styles.heroTicketBox}>
+              <Text style={styles.winnerTicketNumber}>
+                {previousDraw.first?.ticket || "N/A"}
+              </Text>
+            </View>
 
             {previousDraw.first?.location && (
-              <Text style={styles.winnerMeta}>
-                Location:{" "}
-                <Text style={styles.boldText}>
-                  {previousDraw.first.location}
+              <View style={styles.winnerMetaBox}>
+                <Text style={styles.winnerMeta}>
+                  {t("location")}: {previousDraw.first.location}
+                  {previousDraw.first?.agent
+                    ? `  |  ${t("agent")}: ${previousDraw.first.agent}`
+                    : ""}
                 </Text>
-                {previousDraw.first?.agent
-                  ? `  |  Agent: ${previousDraw.first.agent}`
-                  : ""}
-              </Text>
+              </View>
             )}
 
             <TouchableOpacity
-              style={[
-                styles.viewBreakdownBtn,
-                { backgroundColor: COLORS.goldLight },
-              ]}
+              style={styles.viewBreakdownBtn}
               onPress={() =>
                 navigation.navigate("DrawBreakdown", {
                   code: previousDraw.lottery_code,
@@ -700,22 +805,22 @@ export default function HomeScreen({ navigation }: any) {
                 })
               }
             >
-              <Text style={[styles.viewBreakdownText, { color: COLORS.gold }]}>
-                View Full Breakdown for {previousDraw.draw_date} →
+              <Text style={styles.viewBreakdownText}>
+                {language === "ml"
+                  ? `${previousDraw.draw_date} തീയതിയിലെ സമ്പൂർണ്ണ ഫലം കാണുക →`
+                  : `View Full Breakdown for ${previousDraw.draw_date} →`}
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Weekly Schedule Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Weekly Lottery Schedule</Text>
-          <Text style={styles.sectionSubtitle}>
-            Daily draws conducted by Kerala State Lotteries Dept
-          </Text>
-        </View>
+        {/* <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t("weekly_schedule")}</Text>
+          <Text style={styles.sectionSubtitle}>{t("weekly_schedule_sub")}</Text>
+        </View> */}
 
-        {isLoading ? (
+        {/* {isLoading ? (
           <ActivityIndicator
             size="large"
             color={COLORS.primary}
@@ -748,10 +853,7 @@ export default function HomeScreen({ navigation }: any) {
                       ]}
                     >
                       {isTodayLottery && (
-                        <Sparkles
-                          size={11}
-                          color={COLORS.white}
-                        />
+                        <Sparkles size={11} color={COLORS.white} />
                       )}
                       <Text
                         style={[
@@ -759,7 +861,26 @@ export default function HomeScreen({ navigation }: any) {
                           isTodayLottery && styles.todayDayChipText,
                         ]}
                       >
-                        {lottery.day} {isTodayLottery ? "• TODAY" : ""}
+                        {language === "ml"
+                          ? lottery.day.toLowerCase() === "monday"
+                            ? "തിങ്കൾ"
+                            : lottery.day.toLowerCase() === "tuesday"
+                              ? "ചൊവ്വ"
+                              : lottery.day.toLowerCase() === "wednesday"
+                                ? "ബുധൻ"
+                                : lottery.day.toLowerCase() === "thursday"
+                                  ? "വ്യാഴം"
+                                  : lottery.day.toLowerCase() === "friday"
+                                    ? "വെള്ളി"
+                                    : lottery.day.toLowerCase() === "saturday"
+                                      ? "ശനി"
+                                      : "ഞായർ"
+                          : lottery.day}{" "}
+                        {isTodayLottery
+                          ? language === "ml"
+                            ? "• ഇന്ന്"
+                            : "• TODAY"
+                          : ""}
                       </Text>
                     </View>
                     <View
@@ -804,7 +925,13 @@ export default function HomeScreen({ navigation }: any) {
                                   styles.disabledCardScanBtnText,
                               ]}
                             >
-                              {isCardScannerDisabled ? "Active Soon" : "Scan"}
+                              {isCardScannerDisabled
+                                ? language === "ml"
+                                  ? "ഉടൻ വരും"
+                                  : "Active Soon"
+                                : language === "ml"
+                                  ? "സ്‌കാൻ"
+                                  : "Scan"}
                             </Text>
                           </TouchableOpacity>
                         );
@@ -812,14 +939,24 @@ export default function HomeScreen({ navigation }: any) {
                     </View>
                   </View>
 
-                  <Text style={styles.lotteryName}>{lottery.name}</Text>
-                  <Text style={styles.drawTimeText}>Draw: 3:00 PM</Text>
+                  <Text style={styles.lotteryName}>
+                    {language === "ml" && lottery.nameMl
+                      ? lottery.nameMl
+                      : lottery.name}
+                  </Text>
+                  <Text style={styles.drawTimeText}>
+                    {language === "ml"
+                      ? "നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി"
+                      : "Draw: 3:00 PM"}
+                  </Text>
 
                   {isTodayLottery && (
                     <View style={styles.todayTicketTag}>
                       <Clock size={13} color={COLORS.primary} />
                       <Text style={styles.todayTicketTagText}>
-                        TODAY&apos;S TICKET • DRAW AT 3:00 PM
+                        {language === "ml"
+                          ? "ഇന്നത്തെ ടിക്കറ്റ് • ഉച്ചയ്ക്ക് 3 മണിക്ക്"
+                          : "TODAY'S TICKET • DRAW AT 3:00 PM"}
                       </Text>
                     </View>
                   )}
@@ -842,7 +979,9 @@ export default function HomeScreen({ navigation }: any) {
                               { color: COLORS.primary },
                             ]}
                           >
-                            TODAY&apos;S RESULT PUBLISHED
+                            {language === "ml"
+                              ? "ഇന്നത്തെ ഫലം പ്രസിദ്ധീകരിച്ചു"
+                              : "TODAY'S RESULT PUBLISHED"}
                           </Text>
                           <Text
                             style={[
@@ -861,14 +1000,18 @@ export default function HomeScreen({ navigation }: any) {
                             marginTop: 4,
                           }}
                         >
-                          Search ticket or tap below to view result →
+                          {language === "ml"
+                            ? "ഫലം കാണാൻ തട്ടുക →"
+                            : "Search ticket or tap below to view result →"}
                         </Text>
                       </View>
                     ) : (
                       <View style={styles.latestHighlight}>
                         <View style={styles.latestHeaderRow}>
                           <Text style={styles.highlightLabel}>
-                            LATEST 1ST PRIZE
+                            {language === "ml"
+                              ? "അവസാന 1-ാം സമ്മാനം"
+                              : "LATEST 1ST PRIZE"}
                           </Text>
                           <Text style={styles.highlightDate}>
                             {latest.draw_date}
@@ -881,27 +1024,30 @@ export default function HomeScreen({ navigation }: any) {
                     )
                   ) : (
                     <View style={styles.archiveNoticeBox}>
-                      <Text style={styles.archiveNotice}>Daily Updates</Text>
+                      <Text style={styles.archiveNotice}>
+                        {language === "ml"
+                          ? "ദിനംപ്രതിയുള്ള ഫലങ്ങൾ"
+                          : "Daily Updates"}
+                      </Text>
                     </View>
                   )}
 
                   <View style={styles.cardFooter}>
                     <Text style={styles.footerText}>
-                      View Archives & Results
+                      {language === "ml"
+                        ? "പഴയ ഫലങ്ങൾ കാണുക"
+                        : "View Archives & Results"}
                     </Text>
-                    <ChevronRight
-                      size={14}
-                      color={COLORS.primary}
-                    />
+                    <ChevronRight size={14} color={COLORS.primary} />
                   </View>
                 </TouchableOpacity>
               );
             })}
           </View>
-        )}
+        )} */}
 
         {/* Information Section */}
-        <View style={styles.seoContainer}>
+        {/* <View style={styles.seoContainer}>
           <Text style={styles.seoTitle}>
             Kerala Lottery Results Today – Live Winning Numbers & Details
           </Text>
@@ -955,7 +1101,7 @@ export default function HomeScreen({ navigation }: any) {
           </Text>
 
           <Text style={styles.seoSubtitle}>A Note on Accuracy</Text>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* Barcode Scanner Modal */}
@@ -994,8 +1140,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  appName: { fontSize: 18, fontWeight: "800", color: COLORS.primary },
-  appSubtitle: { fontSize: 12, color: COLORS.textMuted, fontWeight: "500" },
+  appName: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: COLORS.primary,
+    lineHeight: 24,
+  },
+  appSubtitle: {
+    fontSize: 11.5,
+    color: COLORS.textMuted,
+    fontWeight: "500",
+    lineHeight: 16,
+  },
   heroTabScrollView: { marginBottom: 14 },
   heroTabBar: { flexDirection: "row", gap: 8 },
   heroTab: {
@@ -1019,7 +1175,7 @@ const styles = StyleSheet.create({
   winnerCard: {
     backgroundColor: COLORS.cardBg,
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     borderWidth: 2,
     borderColor: COLORS.primary,
     marginBottom: 16,
@@ -1029,49 +1185,105 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  winnerCardGold: {
-    borderColor: COLORS.gold,
-    shadowColor: COLORS.gold,
+  winnerHeroSection: {
+    alignItems: "center",
+    width: "100%",
   },
   winnerHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    marginBottom: 8,
+    marginBottom: 10,
+    backgroundColor: "#EBF5FF",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    alignSelf: "center",
   },
   winnerTextBadge: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: "800",
-    color: COLORS.successText,
+    color: COLORS.primary,
   },
   winnerTitle: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: "900",
-    color: COLORS.textDark,
-    marginBottom: 4,
-  },
-  winnerPrizeLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: COLORS.gold,
+    color: "#0F172A",
+    textAlign: "center",
     marginBottom: 6,
   },
-  winnerTicketNumber: {
-    fontSize: 26,
-    fontWeight: "900",
-    fontFamily: "monospace",
-    color: COLORS.primary,
-    marginBottom: 8,
+  prizeBadgeContainer: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    alignSelf: "center",
+    marginBottom: 12,
   },
-  winnerMeta: { fontSize: 12, color: COLORS.textMuted, marginBottom: 12 },
-  boldText: { fontWeight: "700", color: COLORS.textDark },
+  winnerPrizeLabel: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#B45309",
+    textAlign: "center",
+  },
+  heroTicketBox: {
+    width: "100%",
+    backgroundColor: "#EBF5FF",
+    borderWidth: 2,
+    borderColor: "#BFDBFE",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  winnerTicketNumber: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#0B3C5D",
+    letterSpacing: 1.5,
+    textAlign: "center",
+  },
+  winnerMetaBox: {
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  winnerMeta: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#475569",
+    textAlign: "center",
+    lineHeight: 16,
+  },
   viewBreakdownBtn: {
     backgroundColor: COLORS.primaryLight,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 10,
     alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    marginTop: 8,
+    width: "100%",
   },
-  viewBreakdownText: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
+  viewBreakdownText: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: COLORS.primary,
+    textAlign: "center",
+  },
   scheduledCard: {
     backgroundColor: COLORS.goldLight,
     borderRadius: 16,
@@ -1300,7 +1512,6 @@ const styles = StyleSheet.create({
   highlightTicket: {
     fontSize: 16,
     fontWeight: "900",
-    fontFamily: "monospace",
     color: COLORS.gold,
   },
   archiveNoticeBox: {
@@ -1364,21 +1575,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.background,
   },
-  tierTitle: { fontSize: 14, fontWeight: "800", color: COLORS.primary },
-  tierAmount: { fontSize: 13, fontWeight: "900", color: COLORS.gold },
-  numbersGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  tierTitle: { fontSize: 16, fontWeight: "900", color: "#0F172A" },
+  tierAmount: { fontSize: 16, fontWeight: "900", color: "#B45309" },
+  numbersGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 8,
+  },
   numberChip: {
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    width: "48%",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   numberChipText: {
-    fontSize: 12,
-    fontFamily: "monospace",
-    fontWeight: "700",
-    color: COLORS.textDark,
+    fontSize: 14.5,
+    fontWeight: "900",
+    color: "#0F172A",
+    letterSpacing: 0.5,
+    textAlign: "center",
   },
 });

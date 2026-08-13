@@ -19,8 +19,10 @@ import {
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
+  const { t, language } = useLanguage();
   const { code } = route.params || { code: "BT" };
   const codeUpper = code.toUpperCase();
 
@@ -53,8 +55,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     }
     loadHistory();
 
+    const channelName = `realtime-archive-${codeUpper}-${Date.now()}`;
     const channel = supabase
-      .channel(`realtime-archive-${codeUpper}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
@@ -101,13 +104,21 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       </Text>
 
       <View style={styles.winnerBox}>
-        <Text style={styles.winnerLabel}>1ST PRIZE WINNING TICKET</Text>
+        <Text style={styles.winnerLabel}>
+          {language === "ml" ? "1-ാം സമ്മാന വിജയിച്ച ടിക്കറ്റ്" : "1ST PRIZE WINNING TICKET"}
+        </Text>
         <Text style={styles.winnerTicket}>{item.first?.ticket || "N/A"}</Text>
-        {item.first?.location && <Text style={styles.winnerMeta}>Location: {item.first.location}</Text>}
+        {item.first?.location && (
+          <Text style={styles.winnerMeta}>
+            {t("location")}: {item.first.location}
+          </Text>
+        )}
       </View>
 
       <View style={styles.cardFooter}>
-        <Text style={styles.footerText}>View Full Results & Breakdown</Text>
+        <Text style={styles.footerText}>
+          {language === "ml" ? "സമ്പൂർണ്ണ ഫലങ്ങൾ കാണുക" : "View Full Results & Breakdown"}
+        </Text>
         <ChevronRight size={16} color={COLORS.primary} />
       </View>
     </TouchableOpacity>
@@ -122,10 +133,22 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             <ArrowLeft size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>
-              {lotteryMeta.name} {lotteryMeta.nameMl ? `(${lotteryMeta.nameMl})` : ""} ({codeUpper})
+            <Text
+              style={[
+                styles.title,
+                language === "ml" && { fontSize: 16.5, lineHeight: 24 },
+              ]}
+            >
+              {language === "ml" && lotteryMeta.nameMl ? lotteryMeta.nameMl : lotteryMeta.name} ({codeUpper})
             </Text>
-            <Text style={styles.subtitle}>Draw Day: {lotteryMeta.day} • {filteredHistory.length} Draws</Text>
+            <Text
+              style={[
+                styles.subtitle,
+                language === "ml" && { fontSize: 11.5 },
+              ]}
+            >
+              {language === "ml" ? "നറുക്കെടുപ്പ് ദിനം:" : "Draw Day:"} {lotteryMeta.day} • {filteredHistory.length} {language === "ml" ? "ഫലങ്ങൾ" : "Draws"}
+            </Text>
           </View>
         </View>
 
@@ -134,7 +157,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           <Search size={16} color={COLORS.textLight} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.filterInput}
-            placeholder="Filter by date (e.g. 2026-08-10) or ticket..."
+            placeholder={language === "ml" ? "തീയതിയോ ടിക്കറ്റോ നൽകി തിരയുക..." : "Filter by date (e.g. 2026-08-10) or ticket..."}
             placeholderTextColor={COLORS.textLight}
             value={searchFilter}
             onChangeText={setSearchFilter}
@@ -185,7 +208,7 @@ const styles = StyleSheet.create({
   drawName: { fontSize: 16, fontWeight: "800", color: COLORS.primary, marginBottom: 8 },
   winnerBox: { backgroundColor: COLORS.goldLight, padding: 10, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: COLORS.goldBorder },
   winnerLabel: { fontSize: 10, fontWeight: "800", color: COLORS.gold, marginBottom: 2 },
-  winnerTicket: { fontSize: 18, fontWeight: "900", fontFamily: "monospace", color: COLORS.gold },
+  winnerTicket: { fontSize: 18, fontWeight: "900", color: COLORS.gold },
   winnerMeta: { fontSize: 11, color: COLORS.textDark, marginTop: 2 },
   cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.background },
   footerText: { fontSize: 12, fontWeight: "800", color: COLORS.primary },

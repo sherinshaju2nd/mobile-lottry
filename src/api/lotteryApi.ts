@@ -177,6 +177,48 @@ export async function fetchDrawByDate(code: string, date: string): Promise<DrawR
 }
 
 /**
+ * Fetch draw result for any lottery by date
+ */
+export async function fetchDrawResultByAnyDate(date: string): Promise<DrawResult | null> {
+  try {
+    const { data, error } = await supabase
+      .from("draw_results")
+      .select("*")
+      .eq("draw_date", date)
+      .limit(1);
+
+    if (!error && data && data.length > 0) {
+      const row = data[0];
+      let firstObj: WinnerInfo = {};
+      let prizesObj: PrizeBreakdown = {};
+      try {
+        firstObj = typeof row.first_prize === "string" ? JSON.parse(row.first_prize) : (row.first_prize || {});
+      } catch {
+        firstObj = {};
+      }
+      try {
+        prizesObj = typeof row.prizes === "string" ? JSON.parse(row.prizes) : (row.prizes || {});
+      } catch {
+        prizesObj = {};
+      }
+      return {
+        id: row.id,
+        draw_date: row.draw_date,
+        draw_name: row.draw_name,
+        draw_code: row.draw_code,
+        lottery_code: row.lottery_code,
+        first: firstObj,
+        prizes: prizesObj,
+        created_at: row.created_at,
+      };
+    }
+  } catch (e) {
+    console.warn("Supabase fetchDrawResultByAnyDate error:", e);
+  }
+  return null;
+}
+
+/**
  * Search winning ticket number against all published draws directly in Supabase
  */
 export async function searchTicketNumber(queryTicket: string, targetDate?: string): Promise<SearchMatch[]> {
