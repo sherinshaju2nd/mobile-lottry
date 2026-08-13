@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -14,6 +14,7 @@ import {
   Trophy,
   Camera,
   AlertCircle,
+  RotateCw,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
@@ -29,7 +30,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { t, language } = useLanguage();
-  const { code, date } = route.params || { code: "BT", date: "2026-08-10" };
+  const { code, date, highlight } = route.params || { code: "BT", date: "2026-08-10" };
   const codeUpper = code.toUpperCase();
 
   const lotteryMeta = WEEKLY_LOTTERIES.find((l) => l.code === codeUpper) || {
@@ -54,6 +55,10 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
+
+  // Refs for auto-scroll to checker
+  const scrollViewRef = useRef<ScrollView>(null);
+  const checkerYOffset = useRef<number>(0);
 
   useEffect(() => {
     fetchAllDraws()
@@ -108,75 +113,160 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     };
   }, [codeUpper, date]);
 
-  const handleVerifyTicket = (overrideTicket?: string) => {
-    const targetTicket = overrideTicket || checkTicket;
-    if (!targetTicket.trim() || !drawResult || !drawResult.prizes) return;
-    const query = targetTicket.trim().toUpperCase();
+  // Auto-highlight: when draw data loads and a highlight ticket was passed in route params
+  useEffect(() => {
+    if (!highlight || !drawResult) return;
+    const query = String(highlight).trim();
     const queryDigits = query.replace(/\D/g, "");
+    if (queryDigits.length < 4) return;
 
-    if (!queryDigits) return;
+    // Auto-fill and run verify
+    setCheckTicket(query);
+    handleVerifyTicket(query);
 
-    let isWin = false;
-    let winTier = "";
-    let winAmount = "";
+    // Scroll to checker section after a short delay
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: checkerYOffset.current, animated: true });
+    }, 500);
+  }, [drawResult, highlight]);
 
-    // 1st Prize check
-    const firstTicket = (drawResult.first?.ticket || "").toUpperCase();
-    if (
-      firstTicket.includes(query) ||
-      (queryDigits.length === 6 && firstTicket.includes(queryDigits))
-    ) {
-      isWin = true;
-      winTier = "1st Prize Winner!";
-      winAmount = drawResult.prizes.amounts?.["1st"] || "₹70 Lakhs";
+  const [checkMatches, setCheckMatches] = useState<Array<{
+    tier: string;
+    amount?: string;
+    matchedNumber: string;
+    seriesNote?: string;
+  }> | null>(null);
+  const [checkErrorMsg, setCheckErrorMsg] = useState<string | null>(null);
+
+  const validateTicketMatch = (queryInput: string, prizeNumberStr: string) => {
+    const rawQuery = queryInput.trim().toUpperCase();
+    const rawPrize = prizeNumberStr.trim().toUpperCase();
+
+    const queryDigits = rawQuery.replace(/\D/g, "");
+    const querySeries = rawQuery.replace(/[^A-Z]/gi, "").trim();
+
+    const prizeDigits = rawPrize.replace(/\D/g, "");
+    const prizeSeries = rawPrize.replace(/[^A-Z]/gi, "").trim();
+
+    if (!queryDigits || !prizeDigits || queryDigits.length < 4) {
+      return { isMatch: false, exactSeriesMatch: false };
     }
 
-    if (!isWin) {
-      const tiers = [
-        "consolation",
-        "2nd",
-        "3rd",
-        "4th",
-        "5th",
-        "6th",
-        "7th",
-        "8th",
-        "9th",
-      ] as const;
+    let digitsMatch = false;
 
-      for (const t of tiers) {
-        const nums = (drawResult.prizes as any)[t] as string[] | undefined;
-        if (nums && Array.isArray(nums)) {
-          for (const num of nums) {
-            const normNum = num.trim().toUpperCase();
-            const numDigits = normNum.replace(/\D/g, "");
-            if (
-              normNum.includes(queryDigits) ||
-              (queryDigits.length >= 2 &&
-                queryDigits.length <= 6 &&
-                numDigits.endsWith(queryDigits))
-            ) {
-              isWin = true;
-              winTier = `${t === "consolation" ? "Consolation" : t} Prize Winner!`;
-              winAmount = drawResult.prizes.amounts?.[t] || "";
-              break;
-            }
-          }
+    if (queryDigits === prizeDigits) {
+      digitsMatch = true;
+    } else if (queryDigits.length === 6 && prizeDigits.length < 6 && prizeDigits.length >= 2) {
+      digitsMatch = queryDigits.endsWith(prizeDigits);
+    } else if (queryDigits.length < 6 && prizeDigits.length === 6 && queryDigits.length >= 4) {
+      digitsMatch = prizeDigits.endsWith(queryDigits);
+    } else if (queryDigits.length < 6 && prizeDigits.length < 6 && queryDigits.length >= 4 && prizeDigits.length >= 4) {
+      digitsMatch = queryDigits.endsWith(prizeDigits) || prizeDigits.endsWith(queryDigits);
+    }
+
+    if (!digitsMatch) {
+      return { isMatch: false, exactSeriesMatch: false };
+    }
+
+    if (prizeSeries) {
+      if (querySeries) {
+        if (querySeries === prizeSeries) {
+          return { isMatch: true, exactSeriesMatch: true };
+        } else {
+          return { isMatch: false, exactSeriesMatch: false };
         }
-        if (isWin) break;
+      } else {
+        return {
+          isMatch: true,
+          exactSeriesMatch: false,
+          seriesNote: `Requires series '${prizeSeries}'`,
+        };
       }
     }
 
-    if (isWin) {
-      setCheckMessage({
-        win: true,
-        text: `🎉 WINNER! ${winTier} ${winAmount ? `Prize: ${winAmount}` : ""}`,
-      });
+    return { isMatch: true, exactSeriesMatch: true };
+  };
+
+  const handleVerifyTicket = (overrideTicket?: string) => {
+    const targetTicket = overrideTicket || checkTicket;
+    if (!targetTicket.trim() || !drawResult || !drawResult.prizes) return;
+    const query = targetTicket.trim();
+
+    // Require at least 4 digits
+    const queryDigits = query.replace(/\D/g, "");
+    if (queryDigits.length < 4) {
+      setCheckMatches(null);
+      setCheckErrorMsg(
+        language === "ml"
+          ? "തിരയാൻ കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935)"
+          : "Please enter at least 4 digits to search (e.g. 6935, BT 236935)."
+      );
+      return;
+    }
+
+    const matchesList: Array<{
+      tier: string;
+      amount?: string;
+      matchedNumber: string;
+      seriesNote?: string;
+    }> = [];
+
+    // 1st Prize check
+    if (drawResult.first?.ticket) {
+      const matchRes = validateTicketMatch(query, drawResult.first.ticket);
+      if (matchRes.isMatch) {
+        matchesList.push({
+          tier: language === "ml" ? "1-ാം സമ്മാന വിജയി" : "1st Prize Winner",
+          amount: drawResult.prizes.amounts?.["1st"] || "₹70 Lakhs",
+          matchedNumber: drawResult.first.ticket,
+          seriesNote: matchRes.seriesNote,
+        });
+      }
+    }
+
+    // Check Other Tiers
+    const tiers = [
+      "consolation",
+      "2nd",
+      "3rd",
+      "4th",
+      "5th",
+      "6th",
+      "7th",
+      "8th",
+      "9th",
+    ] as const;
+
+    for (const t of tiers) {
+      const nums = (drawResult.prizes as any)[t] as string[] | undefined;
+      const amount = drawResult.prizes.amounts?.[t] || "";
+      const label = t === "consolation" ? (language === "ml" ? "സമാശ്വാസ സമ്മാനം" : "Consolation Prize") : `${t} Prize`;
+
+      if (nums && Array.isArray(nums)) {
+        for (const num of nums) {
+          const matchRes = validateTicketMatch(query, num);
+          if (matchRes.isMatch) {
+            matchesList.push({
+              tier: label,
+              amount: amount,
+              matchedNumber: num,
+              seriesNote: matchRes.seriesNote,
+            });
+          }
+        }
+      }
+    }
+
+    if (matchesList.length > 0) {
+      setCheckMatches(matchesList);
+      setCheckErrorMsg(null);
     } else {
-      setCheckMessage({
-        win: false,
-        text: `Ticket "${checkTicket}" did not win a prize in this draw.`,
-      });
+      setCheckMatches(null);
+      setCheckErrorMsg(
+        language === "ml"
+          ? `ടിക്കറ്റ് "${targetTicket}" ലോട്ടറി ഫലത്തിൽ സമ്മാനം ഒന്നും നേടിയിട്ടില്ല.`
+          : `Ticket "${targetTicket}" did not win a prize in this draw.`
+      );
     }
   };
 
@@ -195,6 +285,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
       >
@@ -266,7 +357,32 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </View>
 
             {/* In-page Ticket Verification Widget with Barcode Scanner */}
-            <View style={styles.verifierCard}>
+            <View
+              style={styles.verifierCard}
+              onLayout={(e) => { checkerYOffset.current = e.nativeEvent.layout.y; }}
+            >
+              {/* Header row: title + reset */}
+              <View style={styles.verifierHeader}>
+                <Text style={styles.verifierTitle}>
+                  {language === "ml" ? "കാരുണ്യ ടിക്കറ്റ് പരിശോധിക്കുക" : "Verify Your Ticket"}
+                </Text>
+                {(checkTicket.trim().length > 0 || checkMatches || checkErrorMsg) && (
+                  <TouchableOpacity
+                    style={styles.resetBtn}
+                    onPress={() => {
+                      setCheckTicket("");
+                      setCheckMatches(null);
+                      setCheckErrorMsg(null);
+                    }}
+                  >
+                    <RotateCw size={13} color={COLORS.primary} />
+                    <Text style={styles.resetBtnText}>
+                      {language === "ml" ? "മായ്ക്കുക" : "Reset"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <View style={styles.verifierInputRow}>
                 <TextInput
                   style={styles.verifierInput}
@@ -285,8 +401,12 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.verifyBtn}
+                  style={[
+                    styles.verifyBtn,
+                    checkTicket.replace(/\D/g, "").length < 4 && styles.verifyBtnDisabled,
+                  ]}
                   onPress={() => handleVerifyTicket()}
+                  disabled={checkTicket.replace(/\D/g, "").length < 4}
                 >
                   <Text style={styles.verifyBtnText}>
                     {language === "ml" ? "പരിശോധിക്കുക" : "Verify"}
@@ -294,22 +414,103 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               </View>
 
-              {checkMessage && (
-                <View
-                  style={[
-                    styles.msgBox,
-                    checkMessage.win ? styles.winMsgBox : styles.noWinMsgBox,
-                  ]}
-                >
-                  <Text
-                    style={
-                      checkMessage.win ? styles.winMsgText : styles.noWinMsgText
-                    }
-                  >
-                    {checkMessage.text}
-                  </Text>
-                </View>
+              {/* 4-digit validation hint */}
+              {checkTicket.trim().length > 0 && checkTicket.replace(/\D/g, "").length < 4 && (
+                <Text style={styles.validationHint}>
+                  {language === "ml"
+                    ? "കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935)"
+                    : "Enter at least 4 digits (e.g. 6935 or BT 263322)"}
+                </Text>
               )}
+
+              {checkMatches && checkMatches.length > 0 ? (() => {
+                const firstPrize = checkMatches.find(m => m.tier.toLowerCase().includes("1st"));
+                const consolations = checkMatches.filter(m => m.tier.toLowerCase().includes("consolation"));
+                const others = checkMatches.filter(m => !m.tier.toLowerCase().includes("1st") && !m.tier.toLowerCase().includes("consolation"));
+
+                return (
+                  <View style={styles.winMsgBox}>
+                    {/* Header */}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                      <Text style={{ fontSize: 22 }}>🎉</Text>
+                      <View>
+                        <Text style={styles.winMsgTitle}>
+                          {language === "ml" ? "വിജയി!" : "WINNER!"}
+                        </Text>
+                        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, fontWeight: "700" }}>
+                          {checkMatches.length} {checkMatches.length > 1 ? (language === "ml" ? "ഫലങ്ങൾ" : "matching results") : (language === "ml" ? "ഫലം" : "matching result")}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* 1st Prize Hero Card */}
+                    {firstPrize && (
+                      <View style={styles.firstPrizeCard}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                          <Text style={{ fontSize: 16 }}>🏆</Text>
+                          <Text style={styles.firstPrizeLabel}>{firstPrize.tier}</Text>
+                        </View>
+                        <Text style={styles.firstPrizeAmount}>{firstPrize.amount}</Text>
+                        <Text style={styles.firstPrizeTicket}>{firstPrize.matchedNumber}</Text>
+                        {firstPrize.seriesNote && (
+                          <View style={styles.seriesNoteChip}>
+                            <Text style={{ fontSize: 10, color: "#92400E", fontWeight: "800" }}>⚠ {firstPrize.seriesNote}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Consolation Prizes — grouped chips */}
+                    {consolations.length > 0 && (
+                      <View style={styles.consolationGroup}>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <Text style={styles.consolationGroupTitle}>
+                            🎫 {language === "ml" ? "സമാശ്വാസ സമ്മാനം" : "Consolation Prize"}
+                          </Text>
+                          <Text style={styles.consolationAmount}>
+                            {consolations[0]?.amount || ""}
+                          </Text>
+                        </View>
+                        <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 10, fontWeight: "600", marginBottom: 6 }}>
+                          {language === "ml" ? "പൊരുത്തപ്പെടുന്ന ടിക്കറ്റുകൾ" : "Matched tickets"}
+                        </Text>
+                        <View style={styles.consolationGrid}>
+                          {consolations.map((c, ci) => (
+                            <View key={ci} style={styles.consolationChip}>
+                              <Text style={styles.consolationChipText}>{c.matchedNumber}</Text>
+                            </View>
+                          ))}
+                        </View>
+                        {consolations[0]?.seriesNote && (
+                          <Text style={{ color: "#FEF3C7", fontSize: 10, fontWeight: "700", marginTop: 6 }}>
+                            ⚠ {language === "ml" ? "ഓരോ ടിക്കറ്റിനും ശരിയായ സീരിസ് ആവശ്യമാണ്" : "Each requires matching series letter"}
+                          </Text>
+                        )}
+                      </View>
+                    )}
+
+                    {/* Other Prizes */}
+                    {others.map((m, i) => (
+                      <View key={i} style={styles.otherPrizeRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.otherPrizeTier}>✔ {m.tier}</Text>
+                          <Text style={styles.otherPrizeTicket}>{m.matchedNumber}</Text>
+                          {m.seriesNote && (
+                            <Text style={styles.seriesNoteText}>⚠ {m.seriesNote}</Text>
+                          )}
+                        </View>
+                        {m.amount && (
+                          <Text style={styles.otherPrizeAmount}>{m.amount}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                );
+              })() : checkErrorMsg ? (
+                <View style={styles.noWinMsgBox}>
+                  <Text style={styles.noWinMsgText}>{checkErrorMsg}</Text>
+                </View>
+              ) : null}
             </View>
 
             {/* Full Prize Tiers Breakdown Table */}
@@ -534,10 +735,107 @@ const styles = StyleSheet.create({
   },
   verifyBtnText: { color: COLORS.white, fontWeight: "800", fontSize: 13 },
   msgBox: { marginTop: 10, padding: 10, borderRadius: 8 },
-  winMsgBox: { backgroundColor: COLORS.successBg },
-  noWinMsgBox: { backgroundColor: COLORS.goldLight },
-  winMsgText: { color: COLORS.successText, fontWeight: "800", fontSize: 13 },
+  verifierHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  resetBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  resetBtnText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.primary,
+  },
+  validationHint: {
+    fontSize: 11,
+    color: "#EF4444",
+    fontWeight: "700",
+    marginTop: 5,
+    marginLeft: 2,
+  },
+  verifyBtnDisabled: {
+    backgroundColor: "#94A3B8",
+  },
+  winMsgBox: { backgroundColor: COLORS.primary, marginTop: 10, padding: 14, borderRadius: 14 },
+  noWinMsgBox: { backgroundColor: COLORS.goldLight, marginTop: 10, padding: 12, borderRadius: 10 },
+  winMsgTitle: { color: COLORS.white, fontWeight: "900", fontSize: 16, marginBottom: 0 },
+  winItemRow: { marginBottom: 6 },
+  winMsgText: { color: COLORS.white, fontWeight: "800", fontSize: 13 },
+  seriesNoteText: { color: "#FEF3C7", fontWeight: "700", fontSize: 10, marginLeft: 12, marginTop: 2 },
   noWinMsgText: { color: COLORS.gold, fontWeight: "700", fontSize: 13 },
+  // First Prize Hero
+  firstPrizeCard: {
+    backgroundColor: "rgba(255,255,255,0.13)",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  firstPrizeLabel: { color: "#FDE68A", fontWeight: "900", fontSize: 13 },
+  firstPrizeAmount: { color: "#FFFFFF", fontWeight: "900", fontSize: 20, marginTop: 2, letterSpacing: 0.5 },
+  firstPrizeTicket: { color: "rgba(255,255,255,0.85)", fontWeight: "800", fontSize: 13, marginTop: 2, fontFamily: "monospace" },
+  seriesNoteChip: {
+    marginTop: 6,
+    backgroundColor: "#FEF3C7",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+  },
+  // Consolation Group
+  consolationGroup: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  consolationGroupTitle: { color: "#FFFFFF", fontWeight: "800", fontSize: 12 },
+  consolationAmount: { color: "#FDE68A", fontWeight: "900", fontSize: 12 },
+  consolationGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 2,
+  },
+  consolationChip: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  consolationChipText: { color: "#FFFFFF", fontWeight: "800", fontSize: 11, fontFamily: "monospace" },
+  // Other prizes
+  otherPrizeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+  otherPrizeTier: { color: "#FFFFFF", fontWeight: "800", fontSize: 12 },
+  otherPrizeTicket: { color: "rgba(255,255,255,0.8)", fontWeight: "700", fontSize: 11, marginTop: 2, fontFamily: "monospace" },
+  otherPrizeAmount: { color: "#FDE68A", fontWeight: "900", fontSize: 12, marginLeft: 8 },
   sectionHeader: {
     fontSize: 16,
     fontWeight: "800",

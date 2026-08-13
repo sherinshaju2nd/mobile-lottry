@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronRight,
   Globe,
+  RotateCw,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -37,6 +38,7 @@ import {
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import { useLanguage } from "../context/LanguageContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }: any) {
   const { language, setShowLanguageModal, t } = useLanguage();
@@ -159,6 +161,8 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleQuickCheck = async () => {
     if (!ticketInput.trim()) return;
+    const digits = ticketInput.replace(/\D/g, "");
+    if (digits.length < 4) return;
     setIsChecking(true);
     try {
       const matches = await searchTicketNumber(ticketInput.trim());
@@ -169,6 +173,16 @@ export default function HomeScreen({ navigation }: any) {
       setIsChecking(false);
     }
   };
+
+  // Reset checker state when navigating away from HomeScreen
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setTicketInput("");
+        setSearchResults(null);
+      };
+    }, [])
+  );
 
   // Identify Today's Lottery metadata based on IST weekday
   const todayISTDate = new Date().toLocaleDateString("en-CA", {
@@ -422,7 +436,10 @@ export default function HomeScreen({ navigation }: any) {
         {/* Quick Ticket Checker Card */}
         {(() => {
           const isScannerDisabled = heroTab === 0 && !todayDraw;
-          const isSearchDisabled = isChecking || !ticketInput.trim() || (heroTab === 0 && !todayDraw);
+          const ticketDigits = ticketInput.replace(/\D/g, "");
+          const hasMinDigits = ticketDigits.length >= 4;
+          const isSearchDisabled =
+            isChecking || !ticketInput.trim() || !hasMinDigits || (heroTab === 0 && !todayDraw);
           const lotteryDisplayName =
             heroTab === 0
               ? todayDraw
@@ -510,6 +527,21 @@ export default function HomeScreen({ navigation }: any) {
                 </TouchableOpacity>
               </View>
 
+              {/* Validation hint label */}
+              {ticketInput.trim().length > 0 && !hasMinDigits && (
+                <Text style={{
+                  fontSize: 11,
+                  color: "#EF4444",
+                  fontWeight: "700",
+                  marginTop: 4,
+                  marginLeft: 2,
+                }}>
+                  {language === "ml"
+                    ? "കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക"
+                    : "Enter at least 4 digits"}
+                </Text>
+              )}
+
               {/* Quick Search Result Display */}
               {searchResults !== null && (
                 <View style={styles.searchResultsContainer}>
@@ -529,10 +561,32 @@ export default function HomeScreen({ navigation }: any) {
                   ) : (
                     <Text style={styles.noMatchText}>
                       {language === "ml"
-                        ? `"${ticketInput}" നമ്പർ സമ്മാനാർഹമായ ഫലങ്ങളിൽ ലഭിച്ചില്ല. എല്ലാ ലോട്ടറികളും പരിശോധിക്കുക.`
-                        : `No winning prize match found for "${ticketInput}". Try checking all lotteries.`}
+                        ? `"${ticketInput}" നമ്പർ സമ്മാനാർഹമായ ഫലങ്ങളിൽ ലഭിച്ചില്ല.`
+                        : `No winning prize match found for "${ticketInput}"`}
                     </Text>
                   )}
+                  {/* Reset button after results */}
+                  <TouchableOpacity
+                    onPress={() => { setTicketInput(""); setSearchResults(null); }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 5,
+                      alignSelf: "flex-start",
+                      marginTop: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: COLORS.border,
+                      backgroundColor: COLORS.background,
+                    }}
+                  >
+                    <RotateCw size={13} color={COLORS.textMuted} />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.textMuted }}>
+                      {language === "ml" ? "മായ്ക്കുക" : "Reset"}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>

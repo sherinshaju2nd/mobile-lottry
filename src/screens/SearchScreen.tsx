@@ -77,6 +77,15 @@ export default function SearchScreen({ navigation }: any) {
 
   const handleSingleSearch = async () => {
     if (!query.trim()) return;
+    const digits = query.replace(/\D/g, "");
+    if (digits.length < 4) {
+      setErrorMessage(
+        language === "ml"
+          ? "തിരയാൻ കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935)"
+          : "Please enter at least 4 digits to search (e.g. 6935, BT 236935)."
+      );
+      return;
+    }
     setIsSearching(true);
     setErrorMessage(null);
     try {
@@ -97,9 +106,16 @@ export default function SearchScreen({ navigation }: any) {
     const rawList = batchInput
       .split(/[\n,;]+/)
       .map((t) => t.trim())
-      .filter((t) => t.length >= 2);
+      .filter((t) => t.replace(/\D/g, "").length >= 4);
 
-    if (rawList.length === 0) return;
+    if (rawList.length === 0) {
+      setErrorMessage(
+        language === "ml"
+          ? "ഓരോ ടിക്കറ്റ് നമ്പറിലും കുറഞ്ഞത് 4 അക്കങ്ങൾ ഉണ്ടായിരിക്കണം"
+          : "Each ticket must have at least 4 digits (e.g. 6935, BT 236935)."
+      );
+      return;
+    }
     setIsSearching(true);
     setErrorMessage(null);
     try {
@@ -405,8 +421,16 @@ export default function SearchScreen({ navigation }: any) {
 
             {singleResults.length > 0 ? (
               singleResults.map((match, idx) => (
-                <View
+                <TouchableOpacity
                   key={idx}
+                  activeOpacity={0.75}
+                  onPress={() =>
+                    navigation.navigate("DrawBreakdown", {
+                      code: match.lottery_code,
+                      date: match.draw_date,
+                      highlight: match.ticket_matched,
+                    })
+                  }
                   style={[styles.resultCard, styles.winnerCardBorder]}
                 >
                   <View style={styles.resultBadgeRow}>
@@ -431,20 +455,10 @@ export default function SearchScreen({ navigation }: any) {
                     {match.ticket_matched}
                   </Text>
 
-                  <TouchableOpacity
-                    style={styles.detailsBtn}
-                    onPress={() =>
-                      navigation.navigate("DrawBreakdown", {
-                        code: match.lottery_code,
-                        date: match.draw_date,
-                      })
-                    }
-                  >
-                    <Text style={styles.detailsBtnText}>
-                      {t("view_breakdown")}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                  <Text style={[styles.detailsBtnText, { marginTop: 8, fontSize: 12, color: COLORS.primary }]}>
+                    Tap to view full prize breakdown →
+                  </Text>
+                </TouchableOpacity>
               ))
             ) : (
               <View style={styles.noMatchCard}>
@@ -487,14 +501,32 @@ export default function SearchScreen({ navigation }: any) {
 
                   {hasWin ? (
                     item.matches.map((m, mIdx) => (
-                      <View key={mIdx} style={styles.batchMatchBox}>
-                        <Text style={styles.batchMatchTier}>
-                          {m.prize_tier} — {m.prize_amount || ""}
-                        </Text>
-                        <Text style={styles.batchMatchSub}>
-                          {m.draw_name} ({m.draw_code}) on {m.draw_date}
-                        </Text>
-                      </View>
+                      <TouchableOpacity
+                        key={mIdx}
+                        activeOpacity={0.72}
+                        onPress={() =>
+                          navigation.navigate("DrawBreakdown", {
+                            code: m.lottery_code,
+                            date: m.draw_date,
+                            highlight: m.ticket_matched,
+                          })
+                        }
+                        style={[styles.batchMatchBox, {
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.batchMatchTier}>
+                            {m.prize_tier} — {m.prize_amount || ""}
+                          </Text>
+                          <Text style={styles.batchMatchSub}>
+                            {m.draw_name} ({m.draw_code}) on {m.draw_date}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 18, color: COLORS.primary, fontWeight: "900", marginLeft: 8 }}>›</Text>
+                      </TouchableOpacity>
                     ))
                   ) : (
                     <Text style={styles.noMatchSub}>
