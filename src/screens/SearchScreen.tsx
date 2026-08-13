@@ -11,15 +11,46 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
-import { searchTicketNumber, SearchMatch } from "../api/lotteryApi";
+import {
+  searchTicketNumber,
+  SearchMatch,
+  fetchAllDraws,
+  DrawResult,
+} from "../api/lotteryApi";
+import BarcodeScannerModal from "../components/BarcodeScannerModal";
+import BarcodeResultModal from "../components/BarcodeResultModal";
 
 export default function SearchScreen({ navigation }: any) {
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [query, setQuery] = useState("");
   const [batchInput, setBatchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [singleResults, setSingleResults] = useState<SearchMatch[] | null>(null);
+  const [singleResults, setSingleResults] = useState<SearchMatch[] | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
+
+  React.useEffect(() => {
+    fetchAllDraws()
+      .then(setAllDraws)
+      .catch(() => setAllDraws([]));
+  }, []);
+
+  const handleBarcodeScanned = (scannedValue: string) => {
+    setIsScannerOpen(false);
+    setScannedBarcode(scannedValue);
+    setQuery(scannedValue);
+    setIsBarcodeResultOpen(true);
+  };
+
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
+  const [customDateInput, setCustomDateInput] = useState<string>("");
+  const [showDatePickerInput, setShowDatePickerInput] = useState<boolean>(false);
 
   interface BatchItem {
     ticket: string;
@@ -32,7 +63,10 @@ export default function SearchScreen({ navigation }: any) {
     setIsSearching(true);
     setErrorMessage(null);
     try {
-      const matches = await searchTicketNumber(query.trim());
+      const matches = await searchTicketNumber(
+        query.trim(),
+        selectedDateFilter || undefined,
+      );
       setSingleResults(matches);
     } catch (err: any) {
       setSingleResults([]);
@@ -54,7 +88,10 @@ export default function SearchScreen({ navigation }: any) {
     try {
       const compiled: BatchItem[] = [];
       for (const ticket of rawList) {
-        const matches = await searchTicketNumber(ticket);
+        const matches = await searchTicketNumber(
+          ticket,
+          selectedDateFilter || undefined,
+        );
         compiled.push({ ticket, matches });
       }
       setBatchResults(compiled);
@@ -76,11 +113,15 @@ export default function SearchScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Ticket Result Checker</Text>
           <Text style={styles.headerSubtitle}>
-            Verify single tickets or batch bundles against official Kerala state lottery results.
+            Verify single tickets or batch bundles against official Kerala state
+            lottery results.
           </Text>
         </View>
 
@@ -98,7 +139,12 @@ export default function SearchScreen({ navigation }: any) {
               size={16}
               color={mode === "single" ? COLORS.white : COLORS.textDark}
             />
-            <Text style={[styles.tabText, mode === "single" && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                mode === "single" && styles.activeTabText,
+              ]}
+            >
               Single Ticket Search
             </Text>
           </TouchableOpacity>
@@ -115,38 +161,216 @@ export default function SearchScreen({ navigation }: any) {
               size={16}
               color={mode === "batch" ? COLORS.white : COLORS.textDark}
             />
-            <Text style={[styles.tabText, mode === "batch" && styles.activeTabText]}>
+            <Text
+              style={[styles.tabText, mode === "batch" && styles.activeTabText]}
+            >
               Bundle / Batch Search
             </Text>
           </TouchableOpacity>
         </View>
 
         {errorMessage && (
-          <View style={{ backgroundColor: "#FEE2E2", borderColor: "#EF4444", borderWidth: 1, padding: 12, borderRadius: 10, marginBottom: 14, flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <View
+            style={{
+              backgroundColor: "#FEE2E2",
+              borderColor: "#EF4444",
+              borderWidth: 1,
+              padding: 12,
+              borderRadius: 10,
+              marginBottom: 14,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             <Ionicons name="alert-circle" size={20} color="#DC2626" />
-            <Text style={{ color: "#991B1B", fontWeight: "700", flex: 1, fontSize: 13 }}>{errorMessage}</Text>
+            <Text
+              style={{
+                color: "#991B1B",
+                fontWeight: "700",
+                flex: 1,
+                fontSize: 13,
+              }}
+            >
+              {errorMessage}
+            </Text>
           </View>
         )}
+
+        {/* Date Filter & Search Scope Selector */}
+        <View style={styles.dateFilterCard}>
+          <Text style={styles.dateFilterTitle}>
+            <Ionicons name="calendar" size={14} color={COLORS.primary} /> Select Draw Date Filter (Or Search Full DB):
+          </Text>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.dateChipsScroll}
+            contentContainerStyle={{ gap: 6 }}
+          >
+            <TouchableOpacity
+              style={[
+                styles.dateChip,
+                selectedDateFilter === null && !showDatePickerInput && styles.activeDateChip,
+              ]}
+              onPress={() => {
+                setSelectedDateFilter(null);
+                setShowDatePickerInput(false);
+              }}
+            >
+              <Ionicons
+                name="server"
+                size={12}
+                color={selectedDateFilter === null && !showDatePickerInput ? COLORS.white : COLORS.primary}
+              />
+              <Text
+                style={[
+                  styles.dateChipText,
+                  selectedDateFilter === null && !showDatePickerInput && styles.activeDateChipText,
+                ]}
+              >
+                Full DB (All Draws)
+              </Text>
+            </TouchableOpacity>
+
+            {Array.from(new Set(allDraws.map((d) => d.draw_date))).slice(0, 6).map((dDate) => (
+              <TouchableOpacity
+                key={dDate}
+                style={[
+                  styles.dateChip,
+                  selectedDateFilter === dDate && !showDatePickerInput && styles.activeDateChip,
+                ]}
+                onPress={() => {
+                  setSelectedDateFilter(dDate);
+                  setShowDatePickerInput(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.dateChipText,
+                    selectedDateFilter === dDate && !showDatePickerInput && styles.activeDateChipText,
+                  ]}
+                >
+                  {dDate}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={[
+                styles.dateChip,
+                showDatePickerInput && styles.activeDateChip,
+              ]}
+              onPress={() => setShowDatePickerInput(!showDatePickerInput)}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={12}
+                color={showDatePickerInput ? COLORS.white : COLORS.primary}
+              />
+              <Text
+                style={[
+                  styles.dateChipText,
+                  showDatePickerInput && styles.activeDateChipText,
+                ]}
+              >
+                Custom Date...
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {showDatePickerInput && (
+            <View style={styles.customDateRow}>
+              <TextInput
+                style={styles.customDateInput}
+                placeholder="YYYY-MM-DD (e.g. 2026-08-10)"
+                placeholderTextColor={COLORS.textLight}
+                value={customDateInput}
+                onChangeText={(txt) => {
+                  setCustomDateInput(txt);
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(txt.trim())) {
+                    setSelectedDateFilter(txt.trim());
+                  }
+                }}
+              />
+              <TouchableOpacity
+                style={styles.applyDateBtn}
+                onPress={() => {
+                  if (customDateInput.trim()) {
+                    setSelectedDateFilter(customDateInput.trim());
+                  }
+                }}
+              >
+                <Text style={styles.applyDateBtnText}>Set</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.activeFilterBanner}>
+            <Ionicons
+              name={selectedDateFilter ? "funnel" : "sparkles"}
+              size={13}
+              color={selectedDateFilter ? COLORS.primary : COLORS.gold}
+            />
+            <Text style={styles.activeFilterBannerText}>
+              {selectedDateFilter
+                ? `Filtered to Date: ${selectedDateFilter}`
+                : "Searching Full Database (All Published Draws)"}
+            </Text>
+            {selectedDateFilter && (
+              <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
+                <Text style={styles.clearFilterText}>Reset (Full DB)</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {/* Single Mode Input */}
         {mode === "single" ? (
           <View style={styles.card}>
-            <Text style={styles.label}>Ticket Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. BT 263322 or 3322"
-              placeholderTextColor={COLORS.textLight}
-              value={query}
-              onChangeText={setQuery}
-              autoCapitalize="characters"
-            />
+            {/* <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <Text style={styles.label}>Ticket Number</Text>
+              <TouchableOpacity
+                style={styles.scanChipBtn}
+                onPress={() => setIsScannerOpen(true)}
+              >
+                <Ionicons name="camera" size={14} color={COLORS.primary} />
+                <Text style={styles.scanChipText}>Scan Barcode</Text>
+              </TouchableOpacity>
+            </View> */}
+
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+            >
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="e.g. BT 263322 or 3322"
+                placeholderTextColor={COLORS.textLight}
+                value={query}
+                onChangeText={setQuery}
+                autoCapitalize="characters"
+              />
+              <TouchableOpacity
+                style={styles.cameraIconBtn}
+                onPress={() => setIsScannerOpen(true)}
+              >
+                <Ionicons name="camera" size={22} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.primaryBtn} onPress={handleSingleSearch} disabled={isSearching}>
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={handleSingleSearch}
+                disabled={isSearching}
+              >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
                 ) : (
-                  <Text style={styles.primaryBtnText}>Check Winning Ticket</Text>
+                  <Text style={styles.primaryBtnText}>
+                    Check Winning Ticket
+                  </Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
@@ -170,11 +394,17 @@ export default function SearchScreen({ navigation }: any) {
             />
 
             <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.primaryBtn} onPress={handleBatchSearch} disabled={isSearching}>
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={handleBatchSearch}
+                disabled={isSearching}
+              >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
                 ) : (
-                  <Text style={styles.primaryBtnText}>Check All Bundle Tickets</Text>
+                  <Text style={styles.primaryBtnText}>
+                    Check All Bundle Tickets
+                  </Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.resetBtn} onPress={handleReset}>
@@ -187,23 +417,41 @@ export default function SearchScreen({ navigation }: any) {
         {/* Single Search Results */}
         {mode === "single" && singleResults !== null && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsHeader}>Search Results for &quot;{query}&quot;</Text>
+            <Text style={styles.resultsHeader}>
+              Search Results for &quot;{query}&quot;
+            </Text>
 
             {singleResults.length > 0 ? (
               singleResults.map((match, idx) => (
-                <View key={idx} style={[styles.resultCard, styles.winnerCardBorder]}>
+                <View
+                  key={idx}
+                  style={[styles.resultCard, styles.winnerCardBorder]}
+                >
                   <View style={styles.resultBadgeRow}>
                     <View style={styles.winBadge}>
-                      <Ionicons name="trophy" size={14} color={COLORS.successText} />
-                      <Text style={styles.winBadgeText}>{match.prize_tier}</Text>
+                      <Ionicons
+                        name="trophy"
+                        size={14}
+                        color={COLORS.successText}
+                      />
+                      <Text style={styles.winBadgeText}>
+                        {match.prize_tier}
+                      </Text>
                     </View>
                     {match.prize_amount && (
-                      <Text style={styles.prizeAmount}>{match.prize_amount}</Text>
+                      <Text style={styles.prizeAmount}>
+                        {match.prize_amount}
+                      </Text>
                     )}
                   </View>
 
-                  <Text style={styles.drawTitle}>{match.draw_name} ({match.draw_code})</Text>
-                  <Text style={styles.drawMeta}>Draw Date: {match.draw_date} • Ticket Matched: {match.ticket_matched}</Text>
+                  <Text style={styles.drawTitle}>
+                    {match.draw_name} ({match.draw_code})
+                  </Text>
+                  <Text style={styles.drawMeta}>
+                    Draw Date: {match.draw_date} • Ticket Matched:{" "}
+                    {match.ticket_matched}
+                  </Text>
 
                   <TouchableOpacity
                     style={styles.detailsBtn}
@@ -214,16 +462,23 @@ export default function SearchScreen({ navigation }: any) {
                       })
                     }
                   >
-                    <Text style={styles.detailsBtnText}>View Complete Official Draw Results →</Text>
+                    <Text style={styles.detailsBtnText}>
+                      View Complete Official Draw Results →
+                    </Text>
                   </TouchableOpacity>
                 </View>
               ))
             ) : (
               <View style={styles.noMatchCard}>
-                <Ionicons name="close-circle-outline" size={32} color={COLORS.textMuted} />
+                <Ionicons
+                  name="close-circle-outline"
+                  size={32}
+                  color={COLORS.textMuted}
+                />
                 <Text style={styles.noMatchTitle}>No Prize Match Found</Text>
                 <Text style={styles.noMatchSub}>
-                  The ticket number &quot;{query}&quot; did not match any published winning prize tiers.
+                  The ticket number &quot;{query}&quot; did not match any
+                  published winning prize tiers.
                 </Text>
               </View>
             )}
@@ -233,7 +488,9 @@ export default function SearchScreen({ navigation }: any) {
         {/* Batch Search Results */}
         {mode === "batch" && batchResults !== null && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsHeader}>Batch Search Results ({batchResults.length} Tickets)</Text>
+            <Text style={styles.resultsHeader}>
+              Batch Search Results ({batchResults.length} Tickets)
+            </Text>
 
             {batchResults.map((item, idx) => {
               const hasWin = item.matches.length > 0;
@@ -243,9 +500,13 @@ export default function SearchScreen({ navigation }: any) {
                   style={[styles.resultCard, hasWin && styles.winnerCardBorder]}
                 >
                   <View style={styles.resultBadgeRow}>
-                    <Text style={styles.ticketLabel}>Ticket: {item.ticket}</Text>
+                    <Text style={styles.ticketLabel}>
+                      Ticket: {item.ticket}
+                    </Text>
                     {hasWin ? (
-                      <Text style={styles.matchFoundText}>🎉 {item.matches.length} MATCH FOUND</Text>
+                      <Text style={styles.matchFoundText}>
+                        🎉 {item.matches.length} MATCH FOUND
+                      </Text>
                     ) : (
                       <Text style={styles.noMatchText}>No Win</Text>
                     )}
@@ -254,12 +515,18 @@ export default function SearchScreen({ navigation }: any) {
                   {hasWin ? (
                     item.matches.map((m, mIdx) => (
                       <View key={mIdx} style={styles.batchMatchBox}>
-                        <Text style={styles.batchMatchTier}>{m.prize_tier} — {m.prize_amount || ""}</Text>
-                        <Text style={styles.batchMatchSub}>{m.draw_name} ({m.draw_code}) on {m.draw_date}</Text>
+                        <Text style={styles.batchMatchTier}>
+                          {m.prize_tier} — {m.prize_amount || ""}
+                        </Text>
+                        <Text style={styles.batchMatchSub}>
+                          {m.draw_name} ({m.draw_code}) on {m.draw_date}
+                        </Text>
                       </View>
                     ))
                   ) : (
-                    <Text style={styles.noMatchSub}>No winning prize match found in database.</Text>
+                    <Text style={styles.noMatchSub}>
+                      No winning prize match found in database.
+                    </Text>
                   )}
                 </View>
               );
@@ -267,6 +534,25 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        visible={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onBarcodeScanned={handleBarcodeScanned}
+      />
+
+      {/* Barcode Result Modal */}
+      <BarcodeResultModal
+        visible={isBarcodeResultOpen}
+        scannedBarcode={scannedBarcode}
+        availableDraws={allDraws}
+        onClose={() => setIsBarcodeResultOpen(false)}
+        onRescan={() => {
+          setIsBarcodeResultOpen(false);
+          setIsScannerOpen(true);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -276,40 +562,266 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   contentContainer: { padding: 16, paddingBottom: 32 },
   header: { marginBottom: 16 },
-  headerTitle: { fontSize: 22, fontWeight: "900", color: COLORS.textDark, marginBottom: 4 },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: COLORS.textDark,
+    marginBottom: 4,
+  },
   headerSubtitle: { fontSize: 13, color: COLORS.textMuted },
-  tabBar: { flexDirection: "row", backgroundColor: COLORS.border, borderRadius: 12, padding: 4, marginBottom: 16 },
-  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 10, borderRadius: 8, gap: 6 },
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: COLORS.border,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
   activeTab: { backgroundColor: COLORS.primary },
   tabText: { fontSize: 13, fontWeight: "700", color: COLORS.textDark },
   activeTabText: { color: COLORS.white },
-  card: { backgroundColor: COLORS.cardBg, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: COLORS.border, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: "700", color: COLORS.textDark, marginBottom: 8 },
-  input: { height: 46, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingHorizontal: 12, fontSize: 14, color: COLORS.textDark, backgroundColor: COLORS.background },
+  dateFilterCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+  },
+  dateFilterTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  dateChipsScroll: {
+    marginBottom: 8,
+  },
+  dateChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  activeDateChip: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  dateChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+  activeDateChipText: {
+    color: COLORS.white,
+  },
+  customDateRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  customDateInput: {
+    flex: 1,
+    height: 38,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    fontSize: 12,
+    backgroundColor: COLORS.background,
+  },
+  applyDateBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  applyDateBtnText: {
+    color: COLORS.white,
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  activeFilterBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: COLORS.background,
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  activeFilterBannerText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.textDark,
+  },
+  clearFilterText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.primary,
+    textDecorationLine: "underline",
+  },
+  card: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  scanChipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  scanChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+  input: {
+    height: 46,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: COLORS.textDark,
+    backgroundColor: COLORS.background,
+  },
+  cameraIconBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 10,
+    backgroundColor: COLORS.primaryLight,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   textArea: { height: 90, textAlignVertical: "top", paddingTop: 10 },
   btnRow: { flexDirection: "row", gap: 10, marginTop: 14 },
-  primaryBtn: { flex: 1, height: 46, backgroundColor: COLORS.primary, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  primaryBtn: {
+    flex: 1,
+    height: 46,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   primaryBtnText: { color: COLORS.white, fontWeight: "800", fontSize: 14 },
-  resetBtn: { width: 46, height: 46, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  resetBtn: {
+    width: 46,
+    height: 46,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   resultsSection: { marginTop: 8, gap: 12 },
   resultsHeader: { fontSize: 16, fontWeight: "800", color: COLORS.textDark },
-  resultCard: { backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: COLORS.border },
-  winnerCardBorder: { borderColor: COLORS.primary, borderWidth: 2, backgroundColor: COLORS.primaryLight },
-  resultBadgeRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  winBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: COLORS.successBg, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  resultCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  winnerCardBorder: {
+    borderColor: COLORS.primary,
+    borderWidth: 2,
+    backgroundColor: COLORS.primaryLight,
+  },
+  resultBadgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  winBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.successBg,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   winBadgeText: { fontSize: 12, fontWeight: "800", color: COLORS.successText },
   prizeAmount: { fontSize: 14, fontWeight: "900", color: COLORS.primary },
-  drawTitle: { fontSize: 16, fontWeight: "800", color: COLORS.textDark, marginBottom: 2 },
+  drawTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.textDark,
+    marginBottom: 2,
+  },
   drawMeta: { fontSize: 12, color: COLORS.textMuted },
-  detailsBtn: { marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.border },
+  detailsBtn: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
   detailsBtnText: { fontSize: 12, fontWeight: "800", color: COLORS.primary },
-  noMatchCard: { backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 20, alignItems: "center", borderWidth: 1, borderColor: COLORS.border },
-  noMatchTitle: { fontSize: 15, fontWeight: "800", color: COLORS.textDark, marginTop: 6 },
-  noMatchSub: { fontSize: 12, color: COLORS.textMuted, textAlign: "center", marginTop: 2 },
+  noMatchCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  noMatchTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.textDark,
+    marginTop: 6,
+  },
+  noMatchSub: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginTop: 2,
+  },
   ticketLabel: { fontSize: 14, fontWeight: "800", color: COLORS.textDark },
   matchFoundText: { fontSize: 12, fontWeight: "900", color: COLORS.primary },
   noMatchText: { fontSize: 12, color: COLORS.textMuted },
-  batchMatchBox: { backgroundColor: COLORS.white, padding: 8, borderRadius: 6, marginTop: 6, borderWidth: 1, borderColor: COLORS.border },
+  batchMatchBox: {
+    backgroundColor: COLORS.white,
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   batchMatchTier: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
   batchMatchSub: { fontSize: 11, color: COLORS.textMuted },
 });

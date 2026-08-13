@@ -12,7 +12,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
-import { fetchDrawByDate, DrawResult, supabase } from "../api/lotteryApi";
+import {
+  fetchDrawByDate,
+  fetchAllDraws,
+  DrawResult,
+  supabase,
+} from "../api/lotteryApi";
+import BarcodeScannerModal from "../components/BarcodeScannerModal";
+import BarcodeResultModal from "../components/BarcodeResultModal";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { code, date } = route.params || { code: "BT", date: "2026-08-10" };
@@ -20,16 +27,40 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
   const lotteryMeta = WEEKLY_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
+    nameMl: "",
     code: codeUpper,
     day: "Scheduled Draw",
   };
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
+  const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // In-page ticket check
   const [checkTicket, setCheckTicket] = useState("");
-  const [checkMessage, setCheckMessage] = useState<{ win: boolean; text: string } | null>(null);
+  const [checkMessage, setCheckMessage] = useState<{
+    win: boolean;
+    text: string;
+  } | null>(null);
+
+  // Barcode scanner state
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
+
+  useEffect(() => {
+    fetchAllDraws()
+      .then(setAllDraws)
+      .catch(() => setAllDraws([]));
+  }, []);
+
+  const handleBarcodeScanned = (scannedValue: string) => {
+    setIsScannerOpen(false);
+    setScannedBarcode(scannedValue);
+    setCheckTicket(scannedValue);
+    setIsBarcodeResultOpen(true);
+    handleVerifyTicket(scannedValue);
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -53,14 +84,14 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           event: "*",
           schema: "public",
           table: "draw_results",
-          filter: `lottery_code=eq.${codeUpper}`
+          filter: `lottery_code=eq.${codeUpper}`,
         },
         (payload) => {
           const newRow = payload.new as any;
           if (newRow && newRow.draw_date === date) {
             loadData();
           }
-        }
+        },
       )
       .subscribe();
 
@@ -69,9 +100,10 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     };
   }, [codeUpper, date]);
 
-  const handleVerifyTicket = () => {
-    if (!checkTicket.trim() || !drawResult || !drawResult.prizes) return;
-    const query = checkTicket.trim().toUpperCase();
+  const handleVerifyTicket = (overrideTicket?: string) => {
+    const targetTicket = overrideTicket || checkTicket;
+    if (!targetTicket.trim() || !drawResult || !drawResult.prizes) return;
+    const query = targetTicket.trim().toUpperCase();
     const queryDigits = query.replace(/\D/g, "");
 
     if (!queryDigits) return;
@@ -82,7 +114,10 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
     // 1st Prize check
     const firstTicket = (drawResult.first?.ticket || "").toUpperCase();
-    if (firstTicket.includes(query) || (queryDigits.length === 6 && firstTicket.includes(queryDigits))) {
+    if (
+      firstTicket.includes(query) ||
+      (queryDigits.length === 6 && firstTicket.includes(queryDigits))
+    ) {
       isWin = true;
       winTier = "1st Prize Winner!";
       winAmount = drawResult.prizes.amounts?.["1st"] || "₹70 Lakhs";
@@ -90,7 +125,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
     if (!isWin) {
       const tiers = [
-        "consolation", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th",
+        "consolation",
+        "2nd",
+        "3rd",
+        "4th",
+        "5th",
+        "6th",
+        "7th",
+        "8th",
+        "9th",
       ] as const;
 
       for (const t of tiers) {
@@ -101,7 +144,9 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             const numDigits = normNum.replace(/\D/g, "");
             if (
               normNum.includes(queryDigits) ||
-              (queryDigits.length >= 2 && queryDigits.length <= 6 && numDigits.endsWith(queryDigits))
+              (queryDigits.length >= 2 &&
+                queryDigits.length <= 6 &&
+                numDigits.endsWith(queryDigits))
             ) {
               isWin = true;
               winTier = `${t === "consolation" ? "Consolation" : t} Prize Winner!`;
@@ -141,20 +186,34 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
         {/* Header Bar */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+          >
             <Ionicons name="arrow-back" size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>{lotteryMeta.name} Result</Text>
-            <Text style={styles.subtitle}>Draw Date: {date} (Code: {codeUpper})</Text>
+            <Text style={styles.title}>
+              {lotteryMeta.name} {lotteryMeta.nameMl ? `(${lotteryMeta.nameMl})` : ""} Result
+            </Text>
+            <Text style={styles.subtitle}>
+              Draw Date: {date} (Code: {codeUpper})
+            </Text>
           </View>
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator
+            size="large"
+            color={COLORS.primary}
+            style={{ marginTop: 40 }}
+          />
         ) : drawResult ? (
           <View style={styles.content}>
             {/* 1st Prize Winner Highlights Card */}
@@ -164,18 +223,42 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 <Text style={styles.winnerBadgeText}>1ST PRIZE WINNER</Text>
               </View>
 
-              <Text style={styles.prizeAmount}>{drawResult.prizes?.amounts?.["1st"] || "₹70 Lakhs"}</Text>
-              <Text style={styles.winnerTicket}>{drawResult.first?.ticket || "N/A"}</Text>
+              <Text style={styles.prizeAmount}>
+                {drawResult.prizes?.amounts?.["1st"] || "₹70 Lakhs"}
+              </Text>
+              <Text style={styles.winnerTicket}>
+                {drawResult.first?.ticket || "N/A"}
+              </Text>
 
               <View style={styles.winnerDetailsRow}>
-                <Text style={styles.winnerMeta}>Location: <Text style={styles.boldText}>{drawResult.first?.location || "N/A"}</Text></Text>
-                <Text style={styles.winnerMeta}>Agent: <Text style={styles.boldText}>{drawResult.first?.agent || "N/A"}</Text></Text>
+                <Text style={styles.winnerMeta}>
+                  Location:{" "}
+                  <Text style={styles.boldText}>
+                    {drawResult.first?.location || "N/A"}
+                  </Text>
+                </Text>
+                <Text style={styles.winnerMeta}>
+                  Agent:{" "}
+                  <Text style={styles.boldText}>
+                    {drawResult.first?.agent || "N/A"}
+                  </Text>
+                </Text>
               </View>
             </View>
 
-            {/* In-page Ticket Verification Widget */}
+            {/* In-page Ticket Verification Widget with Barcode Scanner */}
             <View style={styles.verifierCard}>
-              <Text style={styles.verifierTitle}>Verify Ticket for This Draw</Text>
+              {/* <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <Text style={styles.verifierTitle}>Verify Ticket for This Draw</Text>
+                <TouchableOpacity
+                  style={styles.scanChipBtn}
+                  onPress={() => setIsScannerOpen(true)}
+                >
+                  <Ionicons name="camera" size={14} color={COLORS.primary} />
+                  <Text style={styles.scanChipText}>Scan Barcode</Text>
+                </TouchableOpacity>
+              </View> */}
+
               <View style={styles.verifierInputRow}>
                 <TextInput
                   style={styles.verifierInput}
@@ -185,14 +268,36 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   onChangeText={setCheckTicket}
                   autoCapitalize="characters"
                 />
-                <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyTicket}>
+
+                <TouchableOpacity
+                  style={styles.cameraIconBtn}
+                  onPress={() => setIsScannerOpen(true)}
+                >
+                  <Ionicons name="camera" size={20} color={COLORS.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.verifyBtn}
+                  onPress={() => handleVerifyTicket()}
+                >
                   <Text style={styles.verifyBtnText}>Verify</Text>
                 </TouchableOpacity>
               </View>
 
               {checkMessage && (
-                <View style={[styles.msgBox, checkMessage.win ? styles.winMsgBox : styles.noWinMsgBox]}>
-                  <Text style={checkMessage.win ? styles.winMsgText : styles.noWinMsgText}>{checkMessage.text}</Text>
+                <View
+                  style={[
+                    styles.msgBox,
+                    checkMessage.win ? styles.winMsgBox : styles.noWinMsgBox,
+                  ]}
+                >
+                  <Text
+                    style={
+                      checkMessage.win ? styles.winMsgText : styles.noWinMsgText
+                    }
+                  >
+                    {checkMessage.text}
+                  </Text>
                 </View>
               )}
             </View>
@@ -201,21 +306,38 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             <Text style={styles.sectionHeader}>Complete Prize Breakdown</Text>
 
             {prizeTiers.map((tier) => {
-              const numbers = (drawResult.prizes as any)?.[tier.key] as string[] | undefined;
+              const numbers = (drawResult.prizes as any)?.[tier.key] as
+                | string[]
+                | undefined;
               const amount = drawResult.prizes?.amounts?.[tier.key];
               if (!numbers || numbers.length === 0) return null;
 
               return (
                 <View key={tier.key} style={styles.tierCard}>
                   <View style={styles.tierHeader}>
-                    <Text style={[styles.tierTitle, { color: tier.color }]}>{tier.label}</Text>
+                    <Text style={[styles.tierTitle, { color: tier.color }]}>
+                      {tier.label}
+                    </Text>
                     {amount && <Text style={styles.tierAmount}>{amount}</Text>}
                   </View>
 
                   <View style={styles.numbersGrid}>
                     {numbers.map((num, idx) => (
-                      <View key={idx} style={[styles.numberChip, { backgroundColor: tier.color, borderColor: tier.color }]}>
-                        <Text style={[styles.numberChipText, { color: "#FFFFFF" }]}>{num}</Text>
+                      <View
+                        key={idx}
+                        style={[
+                          styles.numberChip,
+                          {
+                            backgroundColor: tier.color,
+                            borderColor: tier.color,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.numberChipText, { color: "#FFFFFF" }]}
+                        >
+                          {num}
+                        </Text>
                       </View>
                     ))}
                   </View>
@@ -225,11 +347,37 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="alert-circle-outline" size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyText}>No draw result record found for date {date}.</Text>
+            <Ionicons
+              name="alert-circle-outline"
+              size={32}
+              color={COLORS.textMuted}
+            />
+            <Text style={styles.emptyText}>
+              No draw result record found for date {date}.
+            </Text>
           </View>
         )}
       </ScrollView>
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        visible={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onBarcodeScanned={handleBarcodeScanned}
+      />
+
+      {/* Barcode Result Modal */}
+      <BarcodeResultModal
+        visible={isBarcodeResultOpen}
+        scannedBarcode={scannedBarcode}
+        availableDraws={drawResult ? [drawResult, ...allDraws] : allDraws}
+        targetLotteryCode={codeUpper}
+        onClose={() => setIsBarcodeResultOpen(false)}
+        onRescan={() => {
+          setIsBarcodeResultOpen(false);
+          setIsScannerOpen(true);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -238,38 +386,160 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   container: { flex: 1 },
   contentContainer: { padding: 16, paddingBottom: 32 },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
-  backBtn: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.cardBg, borderWidth: 1, borderColor: COLORS.border, alignItems: "center", justifyContent: "center" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.cardBg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   title: { fontSize: 18, fontWeight: "900", color: COLORS.textDark },
   subtitle: { fontSize: 12, color: COLORS.textMuted },
   content: { gap: 16 },
-  winnerCard: { backgroundColor: COLORS.cardBg, borderRadius: 16, padding: 16, borderWidth: 2, borderColor: COLORS.primary },
-  winnerBadgeRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },
-  winnerBadgeText: { fontSize: 11, fontWeight: "800", color: COLORS.successText },
-  prizeAmount: { fontSize: 13, fontWeight: "800", color: COLORS.gold, marginBottom: 4 },
-  winnerTicket: { fontSize: 26, fontWeight: "900", fontFamily: "monospace", color: COLORS.primary, marginBottom: 8 },
-  winnerDetailsRow: { paddingTop: 8, borderTopWidth: 1, borderTopColor: COLORS.background, gap: 2 },
+  winnerCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  winnerBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  winnerBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.successText,
+  },
+  prizeAmount: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.gold,
+    marginBottom: 4,
+  },
+  winnerTicket: {
+    fontSize: 26,
+    fontWeight: "900",
+    fontFamily: "monospace",
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  winnerDetailsRow: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.background,
+    gap: 2,
+  },
   winnerMeta: { fontSize: 12, color: COLORS.textMuted },
   boldText: { fontWeight: "700", color: COLORS.textDark },
-  verifierCard: { backgroundColor: COLORS.cardBg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.border },
-  verifierTitle: { fontSize: 14, fontWeight: "800", color: COLORS.textDark, marginBottom: 8 },
-  verifierInputRow: { flexDirection: "row", gap: 8 },
-  verifierInput: { flex: 1, height: 42, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 10, fontSize: 13, backgroundColor: COLORS.background },
-  verifyBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 16, borderRadius: 8, alignItems: "center", justifyContent: "center" },
+  verifierCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  verifierTitle: { fontSize: 14, fontWeight: "800", color: COLORS.textDark },
+  scanChipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  scanChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+  verifierInputRow: { flexDirection: "row", gap: 8, alignItems: "center" },
+  verifierInput: {
+    flex: 1,
+    height: 42,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    fontSize: 13,
+    backgroundColor: COLORS.background,
+  },
+  cameraIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    backgroundColor: COLORS.primaryLight,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  verifyBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    height: 42,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   verifyBtnText: { color: COLORS.white, fontWeight: "800", fontSize: 13 },
   msgBox: { marginTop: 10, padding: 10, borderRadius: 8 },
   winMsgBox: { backgroundColor: COLORS.successBg },
   noWinMsgBox: { backgroundColor: COLORS.goldLight },
   winMsgText: { color: COLORS.successText, fontWeight: "800", fontSize: 13 },
   noWinMsgText: { color: COLORS.gold, fontWeight: "700", fontSize: 13 },
-  sectionHeader: { fontSize: 16, fontWeight: "800", color: COLORS.textDark, marginTop: 8 },
-  tierCard: { backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: COLORS.border },
-  tierHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: COLORS.background },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: COLORS.textDark,
+    marginTop: 8,
+  },
+  tierCard: {
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  tierHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.background,
+  },
   tierTitle: { fontSize: 14, fontWeight: "800", color: COLORS.primary },
   tierAmount: { fontSize: 13, fontWeight: "900", color: COLORS.gold },
   numbersGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  numberChip: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  numberChipText: { fontSize: 12, fontFamily: "monospace", fontWeight: "700", color: COLORS.textDark },
+  numberChip: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  numberChipText: {
+    fontSize: 12,
+    fontFamily: "monospace",
+    fontWeight: "700",
+    color: COLORS.textDark,
+  },
   emptyContainer: { alignItems: "center", marginTop: 40 },
   emptyText: { marginTop: 8, fontSize: 13, color: COLORS.textMuted },
 });

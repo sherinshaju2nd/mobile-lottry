@@ -179,7 +179,7 @@ export async function fetchDrawByDate(code: string, date: string): Promise<DrawR
 /**
  * Search winning ticket number against all published draws directly in Supabase
  */
-export async function searchTicketNumber(queryTicket: string): Promise<SearchMatch[]> {
+export async function searchTicketNumber(queryTicket: string, targetDate?: string): Promise<SearchMatch[]> {
   const rawQuery = queryTicket.trim().toUpperCase();
   const digitsOnly = rawQuery.replace(/\D/g, "");
   const normalizedQuery = rawQuery.replace(/\s+/g, "");
@@ -189,6 +189,9 @@ export async function searchTicketNumber(queryTicket: string): Promise<SearchMat
   const matches: SearchMatch[] = [];
 
   for (const draw of allResults) {
+    if (targetDate && draw.draw_date !== targetDate) {
+      continue;
+    }
     const firstTicketRaw = (draw.first?.ticket || "").trim().toUpperCase();
     const firstTicketNormalized = firstTicketRaw.replace(/\s+/g, "");
     const firstTicketDigits = firstTicketRaw.replace(/\D/g, "");

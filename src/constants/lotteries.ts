@@ -15,3 +15,11 @@ export const WEEKLY_LOTTERIES: LotteryMeta[] = [
   { day: "Saturday", name: "Karunya", nameMl: "കാരുണ്യ", code: "KR", drawTime: "3:00 PM" },
   { day: "Sunday", name: "Samrudhi", nameMl: "സമൃദ്ധി", code: "SM", drawTime: "3:00 PM" },
 ];
+
+export function getLotteryMalayalamName(code?: string): string {
+  if (!code) return "";
+  const match = WEEKLY_LOTTERIES.find(
+    (l) => l.code.toUpperCase() === code.toUpperCase()
+  );
+  return match?.nameMl || "";
+}

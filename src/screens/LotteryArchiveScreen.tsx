@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../constants/colors";
-import { WEEKLY_LOTTERIES } from "../constants/lotteries";
+import { WEEKLY_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
@@ -20,6 +20,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 
   const lotteryMeta = WEEKLY_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
+    nameMl: "",
     code: codeUpper,
     day: "Scheduled Draw",
     drawTime: "3:00 PM",
@@ -89,7 +90,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
         </View>
       </View>
 
-      <Text style={styles.drawName}>{item.draw_name}</Text>
+      <Text style={styles.drawName}>
+        {item.draw_name} {getLotteryMalayalamName(codeUpper) ? `(${getLotteryMalayalamName(codeUpper)})` : ""}
+      </Text>
 
       <View style={styles.winnerBox}>
         <Text style={styles.winnerLabel}>1ST PRIZE WINNING TICKET</Text>
@@ -113,7 +116,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             <Ionicons name="arrow-back" size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.title}>{lotteryMeta.name} ({codeUpper})</Text>
+            <Text style={styles.title}>
+              {lotteryMeta.name} {lotteryMeta.nameMl ? `(${lotteryMeta.nameMl})` : ""} ({codeUpper})
+            </Text>
             <Text style={styles.subtitle}>Draw Day: {lotteryMeta.day} • {filteredHistory.length} Draws</Text>
           </View>
         </View>

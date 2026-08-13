@@ -27,7 +27,9 @@ export default function LotteriesScreen({ navigation }: any) {
         <Ionicons name="chevron-forward" size={18} color={COLORS.primary} />
       </View>
 
-      <Text style={styles.title}>{item.name}</Text>
+      <Text style={styles.title}>
+        {item.name} {item.nameMl ? <Text style={styles.titleMl}>({item.nameMl})</Text> : null}
+      </Text>
       <Text style={styles.subtitle}>Scheduled Official Draw: {item.drawTime}</Text>
 
       <View style={styles.footer}>
@@ -77,6 +79,7 @@ const styles = StyleSheet.create({
   codeText: { fontSize: 12, fontWeight: "900", color: COLORS.chipBlueText },
   dayText: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
   title: { fontSize: 18, fontWeight: "800", color: COLORS.textDark, marginBottom: 4 },
+  titleMl: { fontSize: 16, fontWeight: "700", color: COLORS.primary },
   subtitle: { fontSize: 12, color: COLORS.textMuted, marginBottom: 12 },
   footer: { paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.background },
   footerLink: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
