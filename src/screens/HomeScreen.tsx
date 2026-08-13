@@ -144,13 +144,15 @@ export default function HomeScreen({ navigation }: any) {
       >
         {/* App Header */}
         <View style={styles.header}>
-          <View style={styles.brandRow}>
-            <View style={styles.logoBadge}>
-              <Image source={require('../../assets/icon.png')} style={{ width: 60, height: 60, borderRadius: 12 }} resizeMode="contain" />
-            </View>
-            <View>
-              <Text style={styles.appName}>Kerala Lottery Results</Text>
-              <Text style={styles.appSubtitle}>Live Updates & Checker</Text>
+          <View style={[styles.brandRow, { justifyContent: "space-between", flex: 1 }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={styles.logoBadge}>
+                <Image source={require('../../assets/icon.png')} style={{ width: 60, height: 60, borderRadius: 12 }} resizeMode="contain" />
+              </View>
+              <View>
+                <Text style={styles.appName}>Kerala Lottery Results</Text>
+                <Text style={styles.appSubtitle}>Live Updates & Checker</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -358,6 +360,13 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={styles.scheduledDesc}>
                   Winning results for {todayLottery.name} ({todayLottery.code}) will be published automatically at 3:10 PM.
                 </Text>
+
+                <TouchableOpacity
+                  style={[styles.viewBreakdownBtn, { backgroundColor: COLORS.gold, marginTop: 12 }]}
+                  onPress={() => navigation.navigate("LotteryDetail", { code: todayLottery.code.toLowerCase() })}
+                >
+                  <Text style={[styles.viewBreakdownText, { color: COLORS.white }]}>View Details & History</Text>
+                </TouchableOpacity>
               </View>
             )
           )
