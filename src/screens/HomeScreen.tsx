@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Globe,
   RotateCw,
+  Download,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -306,8 +307,61 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* Hero Tab Switcher: Today's Draw vs Yesterday's Result */}
-        <ScrollView
+        {/* Hero Banner Skeleton or Real Content */}
+        {isLoading ? (
+          <View style={{ gap: 16, marginTop: 8, paddingHorizontal: 4 }}>
+            {/* Tab Bar Skeleton */}
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ width: 140, height: 36, borderRadius: 20, backgroundColor: "#E2E8F0" }} />
+              <View style={{ width: 140, height: 36, borderRadius: 20, backgroundColor: "#E2E8F0" }} />
+            </View>
+
+            {/* Quick Check Card Skeleton */}
+            <View style={{
+              backgroundColor: "#F8FAFC",
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: "#E2E8F0",
+              padding: 16,
+            }}>
+              <View style={{ width: 180, height: 16, borderRadius: 4, backgroundColor: "#E2E8F0", marginBottom: 12 }} />
+              <View style={{ flexDirection: "row", gap: 10 }}>
+                <View style={{ flex: 1, height: 40, borderRadius: 8, backgroundColor: "#E2E8F0" }} />
+                <View style={{ width: 100, height: 40, borderRadius: 8, backgroundColor: "#E2E8F0" }} />
+              </View>
+            </View>
+
+            {/* Results Card Skeleton */}
+            <View style={{
+              backgroundColor: "#F8FAFC",
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: "#E2E8F0",
+              padding: 16,
+              gap: 12,
+            }}>
+              <View style={{ width: 100, height: 14, borderRadius: 4, backgroundColor: "#E2E8F0" }} />
+              <View style={{ width: 220, height: 22, borderRadius: 4, backgroundColor: "#E2E8F0" }} />
+              <View style={{ width: 150, height: 16, borderRadius: 4, backgroundColor: "#E2E8F0" }} />
+              
+              <View style={{
+                height: 60,
+                backgroundColor: "#E2E8F0",
+                borderRadius: 10,
+                justifyContent: "center",
+                alignItems: "center",
+              }}>
+                <View style={{ width: 120, height: 28, borderRadius: 4, backgroundColor: "#CBD5E1" }} />
+              </View>
+              
+              <View style={{ width: 200, height: 14, borderRadius: 4, backgroundColor: "#E2E8F0" }} />
+              <View style={{ width: 140, height: 36, borderRadius: 8, backgroundColor: "#E2E8F0" }} />
+            </View>
+          </View>
+        ) : (
+          <>
+            {/* Hero Tab Switcher: Today's Draw vs Yesterday's Result */}
+            <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.heroTabScrollView}
@@ -658,6 +712,17 @@ export default function HomeScreen({ navigation }: any) {
                     </Text>
                   </View>
                 )}
+
+                <TouchableOpacity
+                  style={styles.heroDownloadPdfBtn}
+                  activeOpacity={0.8}
+                  onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`)}
+                >
+                  <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.heroDownloadPdfBtnText}>
+                    {t("download_pdf")}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               <Text
@@ -853,6 +918,17 @@ export default function HomeScreen({ navigation }: any) {
             )}
 
             <TouchableOpacity
+              style={[styles.heroDownloadPdfBtn, { marginBottom: 14 }]}
+              activeOpacity={0.8}
+              onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
+            >
+              <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.heroDownloadPdfBtnText}>
+                {t("download_pdf")}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.viewBreakdownBtn}
               onPress={() =>
                 navigation.navigate("DrawBreakdown", {
@@ -869,6 +945,8 @@ export default function HomeScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
         )}
+      </>
+    )}
 
         {/* Weekly Schedule Section */}
         {/* <View style={styles.sectionHeader}>
@@ -1160,12 +1238,24 @@ export default function HomeScreen({ navigation }: any) {
         </View> */}
         
         <View style={styles.footer}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim")}>
+            <Text style={styles.footerLink}>Claim</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerBullet}>•</Text>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/guide")}>
+            <Text style={styles.footerLink}>Guide</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerBullet}>•</Text>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/faq")}>
+            <Text style={styles.footerLink}>FAQ</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions")}>
-            <Text style={styles.footerLink}>Terms &amp; Conditions</Text>
+            <Text style={styles.footerLink}>Terms</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy")}>
-            <Text style={styles.footerLink}>Privacy Policy</Text>
+            <Text style={styles.footerLink}>Privacy</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -1671,12 +1761,14 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 24,
     paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
+    paddingHorizontal: 16,
   },
   footerLink: {
     fontSize: 12,
@@ -1688,5 +1780,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textMuted,
     marginHorizontal: 12,
+  },
+  heroDownloadPdfBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginTop: 14,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    alignSelf: "stretch",
+  },
+  heroDownloadPdfBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
   },
 });

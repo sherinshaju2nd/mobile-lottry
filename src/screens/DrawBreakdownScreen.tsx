@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -15,6 +16,7 @@ import {
   Camera,
   AlertCircle,
   RotateCw,
+  Download,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { WEEKLY_LOTTERIES } from "../constants/lotteries";
@@ -315,6 +317,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               {t("draw_date")}: {date} ({t("draw_code")}: {codeUpper})
             </Text>
           </View>
+          {drawResult && (
+            <TouchableOpacity
+              style={styles.pdfDownloadBtn}
+              activeOpacity={0.8}
+              onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`)}
+            >
+              <Download size={18} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {isLoading ? (
@@ -886,4 +897,12 @@ const styles = StyleSheet.create({
   },
   emptyContainer: { alignItems: "center", marginTop: 40 },
   emptyText: { marginTop: 8, fontSize: 13, color: COLORS.textMuted },
+  pdfDownloadBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
 });

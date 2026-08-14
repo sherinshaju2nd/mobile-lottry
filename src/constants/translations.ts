@@ -54,6 +54,7 @@ export const translations = {
     results_not_yet_published: "Today's Draw Results Not Yet Published",
     results_pending_desc:
       "Draw results for today will be published live at 2:55 PM - 3:00 PM IST.",
+    download_pdf: "Download Result PDF",
 
     // Lotteries Screen
     lotteries_title: "Kerala Weekly Lotteries",
@@ -159,6 +160,7 @@ export const translations = {
       "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം പ്രസിദ്ധീകരിച്ചിട്ടില്ല",
     results_pending_desc:
       "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഉച്ചയ്ക്ക് 2:55 - 3:00 മണിക്ക് തത്സമയം പ്രസിദ്ധീകരിക്കും.",
+    download_pdf: "ഫലം PDF ഡൗൺലോഡ് ചെയ്യുക",
 
     // Lotteries Screen
     lotteries_title: "കേരള ലോട്ടറി പരമ്പരകൾ",
