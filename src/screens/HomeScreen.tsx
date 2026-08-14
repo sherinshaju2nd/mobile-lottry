@@ -23,6 +23,7 @@ import {
   Globe,
   RotateCw,
   Download,
+  Bell,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -279,31 +280,49 @@ export default function HomeScreen({ navigation }: any) {
               </View>
             </View>
 
-            <TouchableOpacity
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 5,
-                backgroundColor: COLORS.primaryLight,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: COLORS.primary,
-              }}
-              onPress={() => setShowLanguageModal(true)}
-            >
-              <Globe size={14} color={COLORS.primary} />
-              <Text
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <TouchableOpacity
                 style={{
-                  fontSize: 11,
-                  fontWeight: "800",
-                  color: COLORS.primary,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: COLORS.primaryLight,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: COLORS.primary,
                 }}
+                onPress={() => navigation.navigate("Reminders")}
               >
-                {language === "ml" ? "മലയാളം" : "EN"}
-              </Text>
-            </TouchableOpacity>
+                <Bell size={16} color={COLORS.primary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 5,
+                  backgroundColor: COLORS.primaryLight,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: COLORS.primary,
+                }}
+                onPress={() => setShowLanguageModal(true)}
+              >
+                <Globe size={14} color={COLORS.primary} />
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: "800",
+                    color: COLORS.primary,
+                  }}
+                >
+                  {language === "ml" ? "മലയാളം" : "EN"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

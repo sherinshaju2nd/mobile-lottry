@@ -42,6 +42,14 @@
             "gradleVersion": "8.8"
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0B3C5D",
+          "sounds": []
+        }
       ]
     ]
   }

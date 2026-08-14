@@ -16,6 +16,7 @@ import LotteriesScreen from "./src/screens/LotteriesScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
 import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
+import RemindersScreen from "./src/screens/RemindersScreen";
 import ModernDatePickerModal from "./src/components/ModernDatePickerModal";
 import { fetchDrawResultByAnyDate } from "./src/api/lotteryApi";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
@@ -23,7 +24,19 @@ import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { COLORS } from "./src/constants/colors";
+
+// Configure foreground notification display
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -259,8 +272,17 @@ const tabStyles = StyleSheet.create({
 
 function AppContent() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
+  const navigationRef = useRef<any>(null);
 
   useEffect(() => {
+    // Request notification permission early
+    Notifications.requestPermissionsAsync().catch(() => {});
+
+    // Handle tapping a notification → go to Reminders
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      navigationRef.current?.navigate("Reminders");
+    });
+
     async function loadAssetsAndCheckPrivacy() {
       try {
         await Asset.loadAsync([
@@ -277,6 +299,8 @@ function AppContent() {
       }
     }
     loadAssetsAndCheckPrivacy();
+
+    return () => sub.remove();
   }, []);
 
   const handleAcceptPrivacy = async () => {
@@ -295,12 +319,13 @@ function AppContent() {
 
   return (
     <View style={{ flex: 1 }}>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <StatusBar style="dark" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
           <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
           <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
+          <Stack.Screen name="Reminders" component={RemindersScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       {isPrivacyAccepted ? (
