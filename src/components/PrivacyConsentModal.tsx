@@ -10,7 +10,7 @@ import {
   StatusBar,
   Linking,
 } from "react-native";
-import { ShieldCheck, AlertTriangle, ExternalLink, CheckCircle2 } from "lucide-react-native";
+import { ShieldCheck, AlertTriangle, ExternalLink, CheckCircle2, Square, CheckSquare } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 
 interface PrivacyConsentModalProps {
@@ -19,6 +19,7 @@ interface PrivacyConsentModalProps {
 
 export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalProps) {
   const [visible, setVisible] = useState(true);
+  const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
 
   const openWebLink = (url: string) => {
     Linking.openURL(url).catch((err) =>
@@ -27,7 +28,9 @@ export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalPro
   };
 
   const handleAccept = () => {
-    onAccept();
+    if (isAgeConfirmed) {
+      onAccept();
+    }
   };
 
   return (
@@ -103,23 +106,43 @@ export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalPro
               </TouchableOpacity>
             </View>
 
+            {/* Explicit 18+ Age Checkbox */}
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              activeOpacity={0.8}
+              onPress={() => setIsAgeConfirmed(prev => !prev)}
+            >
+              {isAgeConfirmed ? (
+                <CheckSquare size={20} color={COLORS.primary} />
+              ) : (
+                <Square size={20} color="#9CA3AF" />
+              )}
+              <Text style={styles.checkboxText}>
+                I confirm that I am 18 years of age or older.
+              </Text>
+            </TouchableOpacity>
+
             <Text style={styles.acceptFootnote}>
-              By tapping &quot;Accept &amp; Agree&quot; below, you acknowledge that you are 18+ and accept the Terms &amp; Conditions and Privacy Policy.
+              By tapping &quot;Accept &amp; Agree&quot; below, you acknowledge that you accept the Terms &amp; Conditions and Privacy Policy.
             </Text>
           </ScrollView>
 
           <View style={styles.actionContainer}>
             <TouchableOpacity
-              style={styles.acceptButton}
+              style={[
+                styles.acceptButton,
+                !isAgeConfirmed && { backgroundColor: "#CBD5E1", shadowColor: "transparent", elevation: 0 }
+              ]}
               activeOpacity={0.9}
               onPress={handleAccept}
+              disabled={!isAgeConfirmed}
             >
               <Text style={styles.acceptButtonText}>Accept &amp; Agree</Text>
             </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
-  </Modal>
+      </SafeAreaView>
+    </Modal>
   );
 }
 
@@ -192,6 +215,24 @@ const styles = StyleSheet.create({
   docRowTitle: { fontSize: 15, fontWeight: "800", color: "#111827" },
   docRowSubtitle: { fontSize: 11, color: "#6B7280", marginTop: 2, marginRight: 8 },
   divider: { height: 1, backgroundColor: "#E5E7EB" },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  checkboxText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#334155",
+  },
   acceptFootnote: {
     fontSize: 11,
     color: "#9CA3AF",
