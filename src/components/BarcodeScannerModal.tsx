@@ -10,16 +10,14 @@ import {
   Easing,
   Dimensions,
   Platform,
+  Image,
 } from "react-native";
-import { CameraView, useCameraPermissions, BarcodeScanningResult } from "expo-camera";
 import {
-  X,
-  Scan,
-  Zap,
-  ZapOff,
-  Camera,
-  CheckCircle,
-} from "lucide-react-native";
+  CameraView,
+  useCameraPermissions,
+  BarcodeScanningResult,
+} from "expo-camera";
+import { X, Scan, Zap, ZapOff, Camera, CheckCircle } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 
 const { width } = Dimensions.get("window");
@@ -69,7 +67,7 @@ export default function BarcodeScannerModal({
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       animation.start();
 
@@ -123,36 +121,69 @@ export default function BarcodeScannerModal({
             <Scan size={64} color={COLORS.primary} />
             <Text style={styles.permissionTitle}>Barcode Camera Reader</Text>
             <Text style={styles.permissionSub}>
-              Point camera at lottery ticket barcode or test scan sample barcodes below:
+              Point camera at lottery ticket barcode or test scan sample
+              barcodes below:
             </Text>
-            <TouchableOpacity style={styles.grantBtn} onPress={requestPermission}>
-              <Camera size={18} color={COLORS.white} style={{ marginRight: 6 }} />
+            <TouchableOpacity
+              style={styles.grantBtn}
+              onPress={requestPermission}
+            >
+              <Camera
+                size={18}
+                color={COLORS.white}
+                style={{ marginRight: 6 }}
+              />
               <Text style={styles.grantBtnText}>Enable Live Camera Access</Text>
             </TouchableOpacity>
 
-            <View style={{ marginTop: 24, width: "100%", paddingHorizontal: 20 }}>
-              <Text style={{ color: COLORS.textMuted, fontSize: 12, fontWeight: "700", marginBottom: 8, textAlign: "center" }}>
+            <View
+              style={{ marginTop: 24, width: "100%", paddingHorizontal: 20 }}
+            >
+              <Text
+                style={{
+                  color: COLORS.textMuted,
+                  fontSize: 12,
+                  fontWeight: "700",
+                  marginBottom: 8,
+                  textAlign: "center",
+                }}
+              >
                 SAMPLE BARCODE SIMULATOR (TAP TO SCAN)
               </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-                {["BT 263322", "DF 319327", "SB 501348", "KN 987654"].map((sample) => (
-                  <TouchableOpacity
-                    key={sample}
-                    style={{
-                      backgroundColor: COLORS.primaryLight,
-                      borderColor: COLORS.primary,
-                      borderWidth: 1,
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 8,
-                    }}
-                    onPress={() => onBarcodeScanned(sample, "code128")}
-                  >
-                    <Text style={{ color: COLORS.primary, fontWeight: "800", fontSize: 13 }}>
-                      📷 Scan {sample}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  justifyContent: "center",
+                }}
+              >
+                {["BT 263322", "DF 319327", "SB 501348", "KN 987654"].map(
+                  (sample) => (
+                    <TouchableOpacity
+                      key={sample}
+                      style={{
+                        backgroundColor: COLORS.primaryLight,
+                        borderColor: COLORS.primary,
+                        borderWidth: 1,
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                      }}
+                      onPress={() => onBarcodeScanned(sample, "code128")}
+                    >
+                      <Text
+                        style={{
+                          color: COLORS.primary,
+                          fontWeight: "800",
+                          fontSize: 13,
+                        }}
+                      >
+                        📷 Scan {sample}
+                      </Text>
+                    </TouchableOpacity>
+                  ),
+                )}
               </View>
 
               <View style={{ flexDirection: "row", gap: 8, marginTop: 16 }}>
@@ -189,7 +220,15 @@ export default function BarcodeScannerModal({
                     }
                   }}
                 >
-                  <Text style={{ color: COLORS.white, fontWeight: "800", fontSize: 13 }}>Scan</Text>
+                  <Text
+                    style={{
+                      color: COLORS.white,
+                      fontWeight: "800",
+                      fontSize: 13,
+                    }}
+                  >
+                    Scan
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -217,7 +256,7 @@ export default function BarcodeScannerModal({
             {/* Viewfinder Reticle Overlay */}
             <View style={styles.overlay}>
               <View style={styles.overlayTop} />
-              
+
               <View style={styles.overlayMiddleRow}>
                 <View style={styles.overlaySide} />
                 <View style={styles.scanBox}>
@@ -248,10 +287,15 @@ export default function BarcodeScannerModal({
               </View>
 
               <View style={styles.overlayBottom}>
-                <Text style={styles.instructionTitle}>Position Barcode Inside Box</Text>
                 <Text style={styles.instructionSub}>
-                  Hold ticket steady • Barcode scanning only
+                  Align the barcode at the bottom-right of your ticket
                 </Text>
+                {/* Lottery ticket barcode hint image */}
+                <Image
+                  source={require("../../assets/barcode_hint.png")}
+                  style={styles.hintImage}
+                  resizeMode="contain"
+                />
               </View>
             </View>
           </CameraView>
@@ -415,20 +459,30 @@ const styles = StyleSheet.create({
   },
   overlayBottom: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(0,0,0,0.72)",
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   instructionTitle: {
     color: COLORS.white,
     fontSize: 16,
     fontWeight: "700",
     marginBottom: 4,
+    textAlign: "center",
   },
   instructionSub: {
-    color: COLORS.gold,
-    fontSize: 13,
+    color: COLORS.white,
+    fontSize: 12,
     fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  hintImage: {
+    width: width * 0.78,
+    height: 140,
+    borderRadius: 10,
+    opacity: 0.9,
   },
 });
