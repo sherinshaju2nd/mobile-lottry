@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -74,6 +75,7 @@ export default function HomeScreen({ navigation }: any) {
   const [searchResults, setSearchResults] = useState<SearchMatch[] | null>(
     null,
   );
+
 
   // Barcode Scanner Modal State
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -1156,6 +1158,16 @@ export default function HomeScreen({ navigation }: any) {
 
           <Text style={styles.seoSubtitle}>A Note on Accuracy</Text>
         </View> */}
+        
+        <View style={styles.footer}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions")}>
+            <Text style={styles.footerLink}>Terms &amp; Conditions</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerBullet}>•</Text>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy")}>
+            <Text style={styles.footerLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Barcode Scanner Modal */}
@@ -1180,6 +1192,8 @@ export default function HomeScreen({ navigation }: any) {
           setIsScannerOpen(true);
         }}
       />
+
+
     </SafeAreaView>
   );
 }
@@ -1654,5 +1668,25 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     letterSpacing: 0.5,
     textAlign: "center",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  footerLink: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+    textDecorationLine: "underline",
+  },
+  footerBullet: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginHorizontal: 12,
   },
 });

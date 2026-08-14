@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { View, Text, Animated, Easing, TouchableOpacity, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
@@ -21,6 +21,8 @@ import { fetchDrawResultByAnyDate } from "./src/api/lotteryApi";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
+import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { COLORS } from "./src/constants/colors";
 
 const Stack = createNativeStackNavigator();
@@ -256,21 +258,40 @@ const tabStyles = StyleSheet.create({
 });
 
 function AppContent() {
+  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
+
   useEffect(() => {
-    async function loadAssets() {
+    async function loadAssetsAndCheckPrivacy() {
       try {
         await Asset.loadAsync([
           require("./assets/icon.png"),
           require("./assets/adaptive-icon.png"),
         ]);
+        const accepted = await AsyncStorage.getItem("privacy_consent_accepted");
+        setIsPrivacyAccepted(accepted === "true");
       } catch (e) {
-        console.warn("Asset caching error:", e);
+        console.warn("Asset caching/privacy load error:", e);
+        setIsPrivacyAccepted(false);
       } finally {
         await SplashScreen.hideAsync();
       }
     }
-    loadAssets();
+    loadAssetsAndCheckPrivacy();
   }, []);
+
+  const handleAcceptPrivacy = async () => {
+    try {
+      await AsyncStorage.setItem("privacy_consent_accepted", "true");
+      setIsPrivacyAccepted(true);
+    } catch (e) {
+      console.warn("Error setting privacy consent:", e);
+      setIsPrivacyAccepted(true);
+    }
+  };
+
+  if (isPrivacyAccepted === null) {
+    return null;
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -282,7 +303,11 @@ function AppContent() {
           <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
         </Stack.Navigator>
       </NavigationContainer>
-      <LanguageSelectionModal />
+      {isPrivacyAccepted ? (
+        <LanguageSelectionModal />
+      ) : (
+        <PrivacyConsentModal onAccept={handleAcceptPrivacy} />
+      )}
     </View>
   );
 }
