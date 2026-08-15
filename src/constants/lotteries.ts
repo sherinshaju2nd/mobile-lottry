@@ -6,6 +6,8 @@ export interface LotteryMeta {
   drawTime: string;
   isBumper?: boolean;
   jackpot?: string;
+  ticket_price?: string;
+  draw_date?: string;
   drawSeason?: string;
 }
 

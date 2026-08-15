@@ -386,6 +386,37 @@ export async function fetchLotteries(): Promise<any[]> {
   return [];
 }
 
+/**
+ * Fetch Bumper lotteries from Supabase
+ */
+export async function fetchBumperLotteries(): Promise<LotteryMeta[]> {
+  try {
+    const { data, error } = await supabase
+      .from("lotteries")
+      .select("*")
+      .eq("is_bumper", true)
+      .order("id", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return data.map((d: any) => ({
+        day: d.day,
+        name: d.name,
+        nameMl: d.name_ml || d.name,
+        code: d.code,
+        drawTime: d.draw_time || "2:00 PM",
+        is_bumper: true,
+        jackpot: d.jackpot,
+        ticket_price: d.ticket_price,
+        draw_date: d.draw_date,
+        draw_season: d.draw_season,
+      }));
+    }
+  } catch (e) {
+    console.warn("Supabase fetchBumperLotteries error:", e);
+  }
+  return BUMPER_LOTTERIES;
+}
+
 export interface PostponedDraw {
   id?: number;
   draw_date: string;

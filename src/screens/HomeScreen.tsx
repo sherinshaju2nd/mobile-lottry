@@ -38,6 +38,7 @@ import {
   SearchMatch,
   supabase,
   fetchLotteries,
+  fetchBumperLotteries,
   checkIsDatePostponed,
   PostponedDraw,
 } from "../api/lotteryApi";
@@ -50,6 +51,7 @@ export default function HomeScreen({ navigation }: any) {
   const { language, setShowLanguageModal, t } = useLanguage();
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
+  const [bumperLotteries, setBumperLotteries] = useState(BUMPER_LOTTERIES);
   const [todayPostponement, setTodayPostponement] =
     useState<PostponedDraw | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,16 +112,30 @@ export default function HomeScreen({ navigation }: any) {
         timeZone: "Asia/Kolkata",
       });
 
-      const [draws, lotteries, postponement] = await Promise.all([
+      const [draws, lotteries, bumpers, postponement] = await Promise.all([
         fetchAllDraws(),
         fetchLotteries(),
+        fetchBumperLotteries(),
         checkIsDatePostponed(todayDate),
       ]);
       setAllDraws(draws);
       if (lotteries && lotteries.length > 0) {
         setLotteriesList(lotteries);
       }
-      setTodayPostponement(postponement);
+      if (bumpers && bumpers.length > 0) {
+        setBumperLotteries(bumpers);
+      }
+
+      const todayBumper = (bumpers || []).find((b: any) => b.draw_date === todayDate);
+      if (todayBumper) {
+        if (postponement && (postponement.lottery_code === "ALL" || postponement.lottery_code === todayBumper.code)) {
+          setTodayPostponement(postponement);
+        } else {
+          setTodayPostponement(null);
+        }
+      } else {
+        setTodayPostponement(postponement);
+      }
     } catch {
       setAllDraws([]);
     } finally {
@@ -216,7 +232,13 @@ export default function HomeScreen({ navigation }: any) {
     timeZone: "Asia/Kolkata",
   });
 
+  const todayBumperLottery =
+    bumperLotteries.find((b) => b.draw_date === todayISTDate) || null;
+
+  const isTodayBumper = Boolean(todayBumperLottery);
+
   const todayLottery =
+    todayBumperLottery ||
     lotteriesList.find(
       (l) => l.day.toLowerCase() === istDayName.toLowerCase(),
     ) || lotteriesList[1];
@@ -950,40 +972,89 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           ) : (
             /* Today's Draw Coming Soon Scheduled Card */
-            <View style={styles.scheduledCard}>
-              <View style={styles.scheduledBadgeRow}>
-                <Clock size={13} color={COLORS.primary} />
+            <View
+              style={[
+                styles.scheduledCard,
+                isTodayBumper && {
+                  backgroundColor: "#FFFDF0",
+                  borderColor: "#F59E0B",
+                  borderWidth: 1.5,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.scheduledBadgeRow,
+                  isTodayBumper && { backgroundColor: "#FEF3C7" },
+                ]}
+              >
+                {isTodayBumper ? (
+                  <Sparkles size={13} color="#B45309" />
+                ) : (
+                  <Clock size={13} color={COLORS.primary} />
+                )}
                 <Text
                   style={[
                     styles.scheduledBadgeText,
-                    { color: COLORS.primary },
+                    isTodayBumper
+                      ? { color: "#92400E", fontWeight: "900" }
+                      : { color: COLORS.primary },
                     language === "ml" && { fontSize: 10.5 },
                   ]}
                 >
-                  {language === "ml"
-                    ? "ഫലം ഉടൻ ലഭ്യമാകും"
-                    : "RESULT COMING SOON"}
+                  {isTodayBumper
+                    ? language === "ml"
+                      ? "👑 കേരള ബംപർ ലോട്ടറി ഇന്ന്"
+                      : "👑 KERALA BUMPER LOTTERY TODAY"
+                    : language === "ml"
+                      ? "ഫലം ഉടൻ ലഭ്യമാകും"
+                      : "RESULT COMING SOON"}
                 </Text>
               </View>
 
               <Text
                 style={[
                   styles.scheduledTitle,
+                  isTodayBumper && { color: "#78350F" },
                   language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
                 ]}
               >
                 {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
               </Text>
+
+              {/* Bumper Quick Badges */}
+              {isTodayBumper && (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginVertical: 8 }}>
+                  <View style={{ backgroundColor: "#D97706", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
+                    <Text style={{ color: "#FFFFFF", fontWeight: "900", fontSize: 11 }}>
+                      🏆 {todayLottery.jackpot || "₹25 Crore"}
+                    </Text>
+                  </View>
+                  {todayLottery.ticket_price && (
+                    <View style={{ backgroundColor: "#FDE68A", paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: "#F59E0B" }}>
+                      <Text style={{ color: "#78350F", fontWeight: "800", fontSize: 11 }}>
+                        🎟️ {todayLottery.ticket_price}
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: "#FCD34D" }}>
+                    <Text style={{ color: "#78350F", fontWeight: "800", fontSize: 11 }}>
+                      ⏰ {todayLottery.drawTime || "2:00 PM"}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
               <Text
                 style={[
                   styles.scheduledSubtitle,
-                  { color: COLORS.primary },
+                  isTodayBumper ? { color: "#92400E" } : { color: COLORS.primary },
                   language === "ml" && { fontSize: 12, lineHeight: 17 },
                 ]}
               >
-                {language === "ml"
-                  ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്"
-                  : "Draw Scheduled Today at 3:00 PM"}
+                {isTodayBumper
+                  ? (language === "ml" ? "പ്രത്യേക ബംപർ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 2:00 മണിക്ക്" : `Special Bumper Draw Scheduled Today at ${todayLottery.drawTime || "2:00 PM"}`)
+                  : (language === "ml" ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്" : "Draw Scheduled Today at 3:00 PM")}
               </Text>
               <Text
                 style={[
@@ -991,9 +1062,13 @@ export default function HomeScreen({ navigation }: any) {
                   language === "ml" && { fontSize: 10.5, lineHeight: 15 },
                 ]}
               >
-                {language === "ml"
-                  ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
-                  : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`}
+                {isTodayBumper
+                  ? (language === "ml"
+                      ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) ബംപർ നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
+                      : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published live at ${todayLottery.drawTime || "2:00 PM"}.`)
+                  : (language === "ml"
+                      ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
+                      : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`)}
               </Text>
             </View>
           ))}
