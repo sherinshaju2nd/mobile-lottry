@@ -38,6 +38,8 @@ import {
   SearchMatch,
   supabase,
   fetchLotteries,
+  checkIsDatePostponed,
+  PostponedDraw,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -48,6 +50,8 @@ export default function HomeScreen({ navigation }: any) {
   const { language, setShowLanguageModal, t } = useLanguage();
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
+  const [todayPostponement, setTodayPostponement] =
+    useState<PostponedDraw | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const getIsBefore245PM = () => {
@@ -102,14 +106,20 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadData = async () => {
     try {
-      const [draws, lotteries] = await Promise.all([
+      const todayDate = new Date().toLocaleDateString("en-CA", {
+        timeZone: "Asia/Kolkata",
+      });
+
+      const [draws, lotteries, postponement] = await Promise.all([
         fetchAllDraws(),
         fetchLotteries(),
+        checkIsDatePostponed(todayDate),
       ]);
       setAllDraws(draws);
       if (lotteries && lotteries.length > 0) {
         setLotteriesList(lotteries);
       }
+      setTodayPostponement(postponement);
     } catch {
       setAllDraws([]);
     } finally {
@@ -141,13 +151,20 @@ export default function HomeScreen({ navigation }: any) {
     };
     checkTime();
 
-    // Realtime listener for live cron job updates
+    // Realtime listener for live cron job updates and postponed draws
     const channelName = `realtime-mobile-home-${Date.now()}`;
     const channel = supabase
       .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
+        () => {
+          loadData();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "postponed_draws" },
         () => {
           loadData();
         },
@@ -655,23 +672,6 @@ export default function HomeScreen({ navigation }: any) {
                       marginTop: 8,
                       paddingHorizontal: 10,
                       paddingVertical: 5,
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: COLORS.border,
-                      backgroundColor: COLORS.background,
-                    }}
-                  >
-                    <RotateCw size={13} color={COLORS.textMuted} />
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.textMuted }}>
-                      {language === "ml" ? "മായ്ക്കുക" : "Reset"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          );
-        })()}
-
         {heroTab === 0 &&
           (todayDraw && todayDraw.first?.ticket ? (
             /* Today's Draw Published Card */
@@ -798,24 +798,25 @@ export default function HomeScreen({ navigation }: any) {
                 {
                   key: "8th",
                   label: language === "ml" ? "എട്ടാം സമ്മാനം" : "8th Prize",
-                  color: "#DC2626",
+                  color: "#475569",
                 },
                 {
                   key: "9th",
                   label: language === "ml" ? "ഒൻപതാം സമ്മാനം" : "9th Prize",
-                  color: "#475569",
+                  color: "#6B7280",
                 },
-              ].map((tier) => {
-                const numbers = (todayDraw.prizes as any)?.[tier.key] as
+              ].map(({ key, label, color }) => {
+                const numbers = (todayDraw.prizes as any)?.[key] as
                   | string[]
                   | undefined;
-                const amount = todayDraw.prizes?.amounts?.[tier.key];
-                if (!numbers || numbers.length === 0) return null;
+                const amount = todayDraw.prizes?.amounts?.[key];
+                if (!numbers || !Array.isArray(numbers) || numbers.length === 0)
+                  return null;
 
                 return (
-                  <View key={tier.key} style={styles.tierCard}>
+                  <View key={key} style={styles.tierCard}>
                     <View style={styles.tierHeader}>
-                      <Text style={styles.tierTitle}>{tier.label}</Text>
+                      <Text style={styles.tierTitle}>{label}</Text>
                       {amount && (
                         <Text style={styles.tierAmount}>{amount}</Text>
                       )}
@@ -831,6 +832,54 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
                 );
               })}
+            </View>
+          ) : todayPostponement ? (
+            /* Today's Draw Postponed / Holiday Notice Card */
+            <View style={[styles.scheduledCard, { borderColor: "#FCA5A5", backgroundColor: "#FEF2F2" }]}>
+              <View style={[styles.scheduledBadgeRow, { backgroundColor: "#FEE2E2" }]}>
+                <AlertCircle size={14} color="#DC2626" />
+                <Text
+                  style={[
+                    styles.scheduledBadgeText,
+                    { color: "#DC2626", fontWeight: "800" },
+                    language === "ml" && { fontSize: 10.5 },
+                  ]}
+                >
+                  {language === "ml"
+                    ? `ഇന്നത്തെ നറുക്കെടുപ്പ് ${todayPostponement.status === "holiday" ? "അവധിയാണ്" : "മാറ്റിവെച്ചു"}`
+                    : `DRAW ${todayPostponement.status.toUpperCase()} TODAY`}
+                </Text>
+              </View>
+
+              <Text
+                style={[
+                  styles.scheduledTitle,
+                  { color: "#991B1B" },
+                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
+                ]}
+              >
+                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
+              </Text>
+              <Text
+                style={[
+                  styles.scheduledSubtitle,
+                  { color: "#B91C1C", fontWeight: "700" },
+                  language === "ml" && { fontSize: 12, lineHeight: 17 },
+                ]}
+              >
+                📢 {todayPostponement.reason}
+              </Text>
+              {todayPostponement.rescheduled_date && (
+                <Text
+                  style={[
+                    styles.scheduledDesc,
+                    { color: "#7F1D1D", fontWeight: "800", marginTop: 6 },
+                    language === "ml" && { fontSize: 11, lineHeight: 16 },
+                  ]}
+                >
+                  🗓️ {language === "ml" ? "മാറ്റിവെച്ച തീയതി:" : "Rescheduled Draw Date:"} {todayPostponement.rescheduled_date}
+                </Text>
+              )}
             </View>
           ) : isAfter3PM ? (
             /* Today's Draw Live In-Progress Card */
@@ -930,11 +979,6 @@ export default function HomeScreen({ navigation }: any) {
                   : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`}
               </Text>
             </View>
-          ))}
-
-        {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
-        {heroTab === 1 && previousDraw && (
-          <View style={styles.winnerCard}>
             <View style={styles.winnerHeader}>
               <Trophy size={15} color={COLORS.primary} />
               <Text style={styles.winnerTextBadge}>

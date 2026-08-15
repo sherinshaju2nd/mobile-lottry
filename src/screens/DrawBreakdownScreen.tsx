@@ -25,6 +25,8 @@ import {
   fetchAllDraws,
   DrawResult,
   supabase,
+  checkIsDatePostponed,
+  PostponedDraw,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -43,6 +45,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   };
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
+  const [postponement, setPostponement] = useState<PostponedDraw | null>(null);
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -80,10 +83,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     async function loadData() {
       setIsLoading(true);
       try {
-        const result = await fetchDrawByDate(codeUpper, date);
+        const [result, postp] = await Promise.all([
+          fetchDrawByDate(codeUpper, date),
+          checkIsDatePostponed(date, codeUpper),
+        ]);
         setDrawResult(result);
+        setPostponement(postp);
       } catch {
         setDrawResult(null);
+        setPostponement(null);
       } finally {
         setIsLoading(false);
       }
@@ -106,6 +114,17 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           if (newRow && newRow.draw_date === date) {
             loadData();
           }
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "postponed_draws",
+        },
+        () => {
+          loadData();
         },
       )
       .subscribe();
@@ -586,6 +605,23 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 </View>
               );
             })}
+          </View>
+        ) : postponement ? (
+          <View style={[styles.emptyContainer, { backgroundColor: "#FEF2F2", borderColor: "#FCA5A5", borderWidth: 1, borderRadius: 16, padding: 20 }]}>
+            <AlertCircle size={36} color="#DC2626" />
+            <Text style={{ fontSize: 16, fontWeight: "900", color: "#991B1B", marginTop: 10, textAlign: "center" }}>
+              {language === "ml"
+                ? `ഈ തീയതിയിലെ (${date}) നറുക്കെടുപ്പ് ${postponement.status === "holiday" ? "അവധിയാണ്" : "മാറ്റിവെച്ചു"}`
+                : `DRAW ${postponement.status.toUpperCase()} ON ${date}`}
+            </Text>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: "#B91C1C", marginTop: 8, textAlign: "center", lineHeight: 18 }}>
+              📢 {postponement.reason}
+            </Text>
+            {postponement.rescheduled_date && (
+              <Text style={{ fontSize: 12, fontWeight: "800", color: "#7F1D1D", marginTop: 8, textAlign: "center" }}>
+                🗓️ {language === "ml" ? "മാറ്റിവെച്ച തീയതി:" : "Rescheduled Draw Date:"} {postponement.rescheduled_date}
+              </Text>
+            )}
           </View>
         ) : (
           <View style={styles.emptyContainer}>

@@ -375,6 +375,9 @@ export async function fetchLotteries(): Promise<any[]> {
         nameMl: d.name_ml || d.name,
         code: d.code,
         drawTime: d.draw_time || "3:00 PM",
+        is_bumper: d.is_bumper ?? d.day.toLowerCase().includes("bumper"),
+        jackpot: d.jackpot,
+        draw_season: d.draw_season,
       }));
     }
   } catch (e) {
@@ -382,3 +385,64 @@ export async function fetchLotteries(): Promise<any[]> {
   }
   return [];
 }
+
+export interface PostponedDraw {
+  id?: number;
+  draw_date: string;
+  lottery_code: string;
+  status: string; // 'postponed' | 'cancelled' | 'no_draw' | 'holiday'
+  reason: string;
+  rescheduled_date?: string | null;
+  disable_cron?: boolean;
+}
+
+/**
+ * Fetch list of postponed/no-draw dates from Supabase
+ */
+export async function fetchPostponedDraws(date?: string): Promise<PostponedDraw[]> {
+  try {
+    let query = supabase
+      .from("postponed_draws")
+      .select("*")
+      .order("draw_date", { ascending: false });
+
+    if (date) {
+      query = query.eq("draw_date", date);
+    }
+
+    const { data, error } = await query;
+    if (!error && data) {
+      return data as PostponedDraw[];
+    }
+  } catch (e) {
+    console.warn("fetchPostponedDraws note:", e);
+  }
+  return [];
+}
+
+/**
+ * Check if a date or lottery is marked as postponed
+ */
+export async function checkIsDatePostponed(
+  date: string,
+  lotteryCode?: string
+): Promise<PostponedDraw | null> {
+  try {
+    const list = await fetchPostponedDraws(date);
+    if (!list || list.length === 0) return null;
+
+    if (lotteryCode) {
+      const codeUpper = lotteryCode.toUpperCase();
+      const match = list.find(
+        (p) => p.lottery_code.toUpperCase() === codeUpper || p.lottery_code.toUpperCase() === "ALL"
+      );
+      return match || null;
+    }
+
+    return list[0] || null;
+  } catch (e) {
+    console.warn("checkIsDatePostponed error:", e);
+    return null;
+  }
+}
+
