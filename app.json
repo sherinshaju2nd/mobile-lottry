@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Kerala Lottery Results",
-    "slug": "kerala-lottery-results",
+    "name": "Kerala Lottery Results Today",
+    "slug": "kerala-lottery-results-today",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,19 +11,17 @@
       "resizeMode": "contain",
       "backgroundColor": "#0B3C5D"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.keralalottery.app"
+      "bundleIdentifier": "com.keralalotteryresultstoday.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
       },
-      "package": "com.keralalottery.app"
+      "package": "com.keralalotteryresultstoday.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +44,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon.png",
+          "icon": "./assets/notification-icon.png",
           "color": "#0B3C5D",
           "sounds": []
         }
