@@ -17,11 +17,18 @@
       "bundleIdentifier": "com.keralalotteryresultstoday.app"
     },
     "android": {
+      "package": "com.keralalotteryresultstoday.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
       },
-      "package": "com.keralalotteryresultstoday.app"
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -47,6 +54,12 @@
           "icon": "./assets/notification-icon.png",
           "color": "#0B3C5D",
           "sounds": []
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Kerala Lottery Results to access your camera to scan ticket barcodes."
         }
       ]
     ]
