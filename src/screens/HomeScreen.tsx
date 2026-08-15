@@ -833,31 +833,50 @@ export default function HomeScreen({ navigation }: any) {
               })}
             </View>
           ) : isAfter3PM ? (
-            /* Drawing in progress card after 3 PM */
-            <View
-              style={[
-                styles.scheduledCard,
-                { borderColor: "#BFDBFE", backgroundColor: "#EFF6FF" },
-              ]}
-            >
+            /* Today's Draw Live In-Progress Card */
+            <View style={[styles.scheduledCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
               <View style={styles.scheduledBadgeRow}>
-                <AlertCircle size={14} color="#3B82F6" />
-                <Text style={[styles.scheduledBadgeText, { color: "#1E40AF" }]}>
+                <ActivityIndicator size="small" color="#2563EB" />
+                <Text
+                  style={[
+                    styles.scheduledBadgeText,
+                    { color: "#1D4ED8" },
+                    language === "ml" && { fontSize: 10.5 },
+                  ]}
+                >
                   {language === "ml"
-                    ? "നറുക്കെടുപ്പ് നടക്കുന്നു"
-                    : "DRAWING IN PROGRESS"}
+                    ? "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു"
+                    : "LIVE DRAW IN PROGRESS"}
                 </Text>
               </View>
 
-              <Text style={styles.scheduledTitle}>
-                {todayLottery.nameMl || todayLottery.name} ({todayLottery.code})
+              <Text
+                style={[
+                  styles.scheduledTitle,
+                  { color: "#1E3A8A" },
+                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
+                ]}
+              >
+                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
               </Text>
-              <Text style={[styles.scheduledSubtitle, { color: "#1E40AF" }]}>
+              <Text
+                style={[
+                  styles.scheduledSubtitle,
+                  { color: "#2563EB" },
+                  language === "ml" && { fontSize: 12, lineHeight: 17 },
+                ]}
+              >
                 {language === "ml"
-                  ? "ഫലം ഉടൻ അപ്‌ഡേറ്റ് ചെയ്യും"
-                  : "Result will update shortly"}
+                  ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഇപ്പോൾ നടന്നുകൊണ്ടിരിക്കുന്നു"
+                  : "Draw Happening Right Now (3:00 PM)"}
               </Text>
-              <Text style={[styles.scheduledDesc, { color: "#1E40AF" }]}>
+              <Text
+                style={[
+                  styles.scheduledDesc,
+                  { color: "#1E40AF" },
+                  language === "ml" && { fontSize: 10.5, lineHeight: 15 },
+                ]}
+              >
                 {language === "ml"
                   ? "തത്സമയ നറുക്കെടുപ്പ് ഇപ്പോൾ നടന്നു കൊണ്ടിരിക്കുന്നു. ഫലം ഉടൻ ലൈവായി ലഭ്യമാകും."
                   : "The live draw is currently in progress. Results will update automatically shortly on this page."}
@@ -867,9 +886,13 @@ export default function HomeScreen({ navigation }: any) {
             /* Today's Draw Coming Soon Scheduled Card */
             <View style={styles.scheduledCard}>
               <View style={styles.scheduledBadgeRow}>
-                <Clock size={14} color={COLORS.primary} />
+                <Clock size={13} color={COLORS.primary} />
                 <Text
-                  style={[styles.scheduledBadgeText, { color: COLORS.primary }]}
+                  style={[
+                    styles.scheduledBadgeText,
+                    { color: COLORS.primary },
+                    language === "ml" && { fontSize: 10.5 },
+                  ]}
                 >
                   {language === "ml"
                     ? "ഫലം ഉടൻ ലഭ്യമാകും"
@@ -877,17 +900,31 @@ export default function HomeScreen({ navigation }: any) {
                 </Text>
               </View>
 
-              <Text style={styles.scheduledTitle}>
-                {todayLottery.nameMl || todayLottery.name} ({todayLottery.code})
+              <Text
+                style={[
+                  styles.scheduledTitle,
+                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
+                ]}
+              >
+                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
               </Text>
               <Text
-                style={[styles.scheduledSubtitle, { color: COLORS.primary }]}
+                style={[
+                  styles.scheduledSubtitle,
+                  { color: COLORS.primary },
+                  language === "ml" && { fontSize: 12, lineHeight: 17 },
+                ]}
               >
                 {language === "ml"
                   ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്"
                   : "Draw Scheduled Today at 3:00 PM"}
               </Text>
-              <Text style={styles.scheduledDesc}>
+              <Text
+                style={[
+                  styles.scheduledDesc,
+                  language === "ml" && { fontSize: 10.5, lineHeight: 15 },
+                ]}
+              >
                 {language === "ml"
                   ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
                   : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`}

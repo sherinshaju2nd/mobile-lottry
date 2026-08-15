@@ -21,16 +21,6 @@ export const WEEKLY_LOTTERIES: LotteryMeta[] = [
 
 export const BUMPER_LOTTERIES: LotteryMeta[] = [
   {
-    day: "Bumper (September)",
-    name: "Thiruvonam Bumper",
-    nameMl: "തിരുവോണം ബംപർ",
-    code: "TH",
-    drawTime: "2:00 PM",
-    isBumper: true,
-    jackpot: "₹25 Crore",
-    drawSeason: "September (Onam)",
-  },
-  {
     day: "Bumper (January)",
     name: "Christmas New Year Bumper",
     nameMl: "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
@@ -39,6 +29,16 @@ export const BUMPER_LOTTERIES: LotteryMeta[] = [
     isBumper: true,
     jackpot: "₹20 Crore",
     drawSeason: "January",
+  },
+  {
+    day: "Bumper (March)",
+    name: "Summer Bumper",
+    nameMl: "സമ്മർ ബംപർ",
+    code: "SB",
+    drawTime: "2:00 PM",
+    isBumper: true,
+    jackpot: "₹10 Crore",
+    drawSeason: "March (Summer)",
   },
   {
     day: "Bumper (May)",
@@ -51,16 +51,6 @@ export const BUMPER_LOTTERIES: LotteryMeta[] = [
     drawSeason: "May (Vishu)",
   },
   {
-    day: "Bumper (November)",
-    name: "Pooja Bumper",
-    nameMl: "പൂജ ബംപർ",
-    code: "PB",
-    drawTime: "2:00 PM",
-    isBumper: true,
-    jackpot: "₹12 Crore",
-    drawSeason: "November (Pooja/Diwali)",
-  },
-  {
     day: "Bumper (July)",
     name: "Monsoon Bumper",
     nameMl: "മൺസൂൺ ബംപർ",
@@ -71,14 +61,24 @@ export const BUMPER_LOTTERIES: LotteryMeta[] = [
     drawSeason: "July (Monsoon)",
   },
   {
-    day: "Bumper (March)",
-    name: "Summer Bumper",
-    nameMl: "സമ്മർ ബംപർ",
-    code: "SB",
+    day: "Bumper (September)",
+    name: "Thiruvonam Bumper",
+    nameMl: "തിരുവോണം ബംപർ",
+    code: "TH",
     drawTime: "2:00 PM",
     isBumper: true,
-    jackpot: "₹10 Crore",
-    drawSeason: "March (Summer)",
+    jackpot: "₹25 Crore",
+    drawSeason: "September (Onam)",
+  },
+  {
+    day: "Bumper (November)",
+    name: "Pooja Bumper",
+    nameMl: "പൂജ ബംപർ",
+    code: "PB",
+    drawTime: "2:00 PM",
+    isBumper: true,
+    jackpot: "₹12 Crore",
+    drawSeason: "November (Pooja/Diwali)",
   },
 ];
 

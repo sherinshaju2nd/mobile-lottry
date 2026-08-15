@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
   Text,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, Sparkles, Calendar, Trophy } from "lucide-react-native";
@@ -15,13 +16,48 @@ import {
   ALL_LOTTERIES,
   LotteryMeta,
 } from "../constants/lotteries";
+import { fetchLotteriesFromDb } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteriesScreen({ navigation }: any) {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"weekly" | "bumper">("weekly");
+  const [weeklyData, setWeeklyData] = useState<LotteryMeta[]>(WEEKLY_LOTTERIES);
+  const [bumperData, setBumperData] = useState<LotteryMeta[]>(BUMPER_LOTTERIES);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const currentData = activeTab === "weekly" ? WEEKLY_LOTTERIES : BUMPER_LOTTERIES;
+  useEffect(() => {
+    fetchLotteriesFromDb()
+      .then((res) => {
+        if (res.weekly && res.weekly.length > 0) setWeeklyData(res.weekly);
+        if (res.bumper && res.bumper.length > 0) setBumperData(res.bumper);
+      })
+      .catch((e) => console.warn("Failed loading lotteries from DB:", e))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const currentData = activeTab === "weekly" ? weeklyData : bumperData;
+
+  const renderSkeleton = () => (
+    <View style={{ gap: 12 }}>
+      {[1, 2, 3, 4].map((k) => (
+        <View
+          key={k}
+          style={[
+            styles.card,
+            { opacity: 0.6, borderColor: "#E2E8F0" },
+          ]}
+        >
+          <View style={styles.cardHeader}>
+            <View style={[styles.codeChip, { backgroundColor: "#E2E8F0", width: 45, height: 22 }]} />
+            <View style={{ width: 80, height: 16, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+          </View>
+          <View style={{ width: 140, height: 20, backgroundColor: "#E2E8F0", borderRadius: 6, marginVertical: 6 }} />
+          <View style={{ width: "70%", height: 14, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+        </View>
+      ))}
+    </View>
+  );
 
   const renderItem = ({ item }: { item: LotteryMeta }) => {
     const isBumper = item.isBumper;
@@ -115,7 +151,7 @@ export default function LotteriesScreen({ navigation }: any) {
                 language === "ml" && { fontSize: 11 },
               ]}
             >
-              {language === "ml" ? "പ്രതിവാര ലോട്ടറി (7)" : "Weekly Draws (7)"}
+              {language === "ml" ? `പ്രതിവാര ലോട്ടറി (${weeklyData.length})` : `Weekly Draws (${weeklyData.length})`}
             </Text>
           </TouchableOpacity>
 
@@ -133,17 +169,24 @@ export default function LotteriesScreen({ navigation }: any) {
                 language === "ml" && { fontSize: 11 },
               ]}
             >
-              {language === "ml" ? "ബംപർ ലോട്ടറി (6)" : "Bumper Draws (6)"}
+              {language === "ml" ? `ബംപർ ലോട്ടറി (${bumperData.length})` : `Bumper Draws (${bumperData.length})`}
             </Text>
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={currentData}
-          keyExtractor={(item: LotteryMeta) => item.code}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
-        />
+        {isLoading ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+            {renderSkeleton()}
+          </View>
+        ) : (
+          <FlatList
+            data={currentData}
+            keyExtractor={(item) => item.code}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

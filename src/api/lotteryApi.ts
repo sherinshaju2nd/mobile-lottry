@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
 
 const SUPABASE_URL =
   process.env.EXPO_PUBLIC_SUPABASE_URL || "https://dqsoseefmiwyjkgqmphh.supabase.co";
@@ -46,6 +47,57 @@ export interface SearchMatch {
   prize_tier: string;
   prize_amount?: string;
   ticket_matched: string;
+}
+
+/**
+ * Fetch all lotteries (weekly + bumper) dynamically from Supabase database
+ */
+export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; bumper: LotteryMeta[] }> {
+  try {
+    const { data, error } = await supabase
+      .from("lotteries")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      const weekly: LotteryMeta[] = [];
+      const bumper: LotteryMeta[] = [];
+      const monthOrder = ["XN", "SB", "VB", "MB", "TH", "PB"];
+
+      data.forEach((d: any) => {
+        const isBumper = d.is_bumper ?? d.day.toLowerCase().includes("bumper");
+        const item: LotteryMeta = {
+          code: d.code,
+          name: d.name,
+          nameMl: d.name_ml || d.name,
+          day: d.day,
+          drawTime: d.draw_time || (isBumper ? "2:00 PM" : "3:00 PM"),
+          isBumper,
+          jackpot: d.jackpot || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.jackpot || "₹10 Crore"),
+          drawSeason: d.draw_season || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.drawSeason || d.day),
+        };
+        if (isBumper) {
+          bumper.push(item);
+        } else {
+          weekly.push(item);
+        }
+      });
+
+      bumper.sort((a, b) => {
+        const ai = monthOrder.indexOf(a.code);
+        const bi = monthOrder.indexOf(b.code);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+
+      return {
+        weekly: weekly.length > 0 ? weekly : WEEKLY_LOTTERIES,
+        bumper: bumper.length > 0 ? bumper : BUMPER_LOTTERIES,
+      };
+    }
+  } catch (e) {
+    console.warn("fetchLotteriesFromDb error:", e);
+  }
+  return { weekly: WEEKLY_LOTTERIES, bumper: BUMPER_LOTTERIES };
 }
 
 /**

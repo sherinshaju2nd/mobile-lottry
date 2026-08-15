@@ -301,17 +301,19 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text
+              numberOfLines={1}
               style={[
                 styles.title,
-                language === "ml" && { fontSize: 16, lineHeight: 24 },
+                language === "ml" && { fontSize: 14, lineHeight: 20 },
               ]}
             >
               {language === "ml" && lotteryMeta.nameMl ? lotteryMeta.nameMl : lotteryMeta.name} {language === "ml" ? "ഫലം" : "Result"}
             </Text>
             <Text
+              numberOfLines={1}
               style={[
                 styles.subtitle,
-                language === "ml" && { fontSize: 11 },
+                language === "ml" && { fontSize: 10.5, lineHeight: 15 },
               ]}
             >
               {t("draw_date")}: {date} ({t("draw_code")}: {codeUpper})
@@ -374,8 +376,16 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             >
               {/* Header row: title + reset */}
               <View style={styles.verifierHeader}>
-                <Text style={styles.verifierTitle}>
-                  {language === "ml" ? "കാരുണ്യ ടിക്കറ്റ് പരിശോധിക്കുക" : "Verify Your Ticket"}
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.verifierTitle,
+                    language === "ml" && { fontSize: 12.5, lineHeight: 18 },
+                  ]}
+                >
+                  {language === "ml"
+                    ? `${lotteryMeta.nameMl || lotteryMeta.name} ടിക്കറ്റ് പരിശോധിക്കുക`
+                    : `Verify ${lotteryMeta.name} Ticket`}
                 </Text>
                 {(checkTicket.trim().length > 0 || checkMatches || checkErrorMsg) && (
                   <TouchableOpacity
@@ -397,7 +407,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               <View style={styles.verifierInputRow}>
                 <TextInput
                   style={styles.verifierInput}
-                  placeholder={language === "ml" ? "ടിക്കറ്റ് നമ്പർ നൽകുക (ഉദാ: 263322)" : "Enter ticket number (e.g. 263322)"}
+                  placeholder={language === "ml" ? "ടിക്കറ്റ് നമ്പർ നൽകുക..." : "Enter ticket number (e.g. 263322)"}
                   placeholderTextColor={COLORS.textLight}
                   value={checkTicket}
                   onChangeText={setCheckTicket}
@@ -414,12 +424,18 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 <TouchableOpacity
                   style={[
                     styles.verifyBtn,
+                    language === "ml" && { paddingHorizontal: 10 },
                     checkTicket.replace(/\D/g, "").length < 4 && styles.verifyBtnDisabled,
                   ]}
                   onPress={() => handleVerifyTicket()}
                   disabled={checkTicket.replace(/\D/g, "").length < 4}
                 >
-                  <Text style={styles.verifyBtnText}>
+                  <Text
+                    style={[
+                      styles.verifyBtnText,
+                      language === "ml" && { fontSize: 11.5 },
+                    ]}
+                  >
                     {language === "ml" ? "പരിശോധിക്കുക" : "Verify"}
                   </Text>
                 </TouchableOpacity>
@@ -525,7 +541,14 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </View>
 
             {/* Full Prize Tiers Breakdown Table */}
-            <Text style={styles.sectionHeader}>{t("complete_prize_breakdown")}</Text>
+            <Text
+              style={[
+                styles.sectionHeader,
+                language === "ml" && { fontSize: 15, lineHeight: 22, marginTop: 8 },
+              ]}
+            >
+              {t("complete_prize_breakdown")}
+            </Text>
 
             {prizeTiers.map((tier) => {
               const numbers = (drawResult.prizes as any)?.[tier.key] as
@@ -537,7 +560,12 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               return (
                 <View key={tier.key} style={styles.tierCard}>
                   <View style={styles.tierHeader}>
-                    <Text style={styles.tierTitle}>
+                    <Text
+                      style={[
+                        styles.tierTitle,
+                        language === "ml" && { fontSize: 13.5, lineHeight: 19 },
+                      ]}
+                    >
                       {tier.label}
                     </Text>
                     {amount && <Text style={styles.tierAmount}>{amount}</Text>}
