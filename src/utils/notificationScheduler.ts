@@ -1,13 +1,48 @@
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
+import { Platform, Linking } from "react-native";
 import { LotteryReminder, getNotificationDate } from "./reminderStorage";
+
+export type NotificationPermissionState = {
+  granted: boolean;
+  canAskAgain: boolean;
+  status: Notifications.PermissionStatus;
+};
+
+export async function getNotificationPermissionStatus(): Promise<NotificationPermissionState> {
+  if (Platform.OS === "web") {
+    return {
+      granted: false,
+      canAskAgain: false,
+      status: Notifications.PermissionStatus.DENIED,
+    };
+  }
+  const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+  return {
+    granted: status === Notifications.PermissionStatus.GRANTED,
+    canAskAgain,
+    status,
+  };
+}
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === "web") return false;
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  if (existingStatus === "granted") return true;
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
+  const { status: existingStatus, canAskAgain } = await Notifications.getPermissionsAsync();
+  if (existingStatus === Notifications.PermissionStatus.GRANTED) return true;
+
+  if (canAskAgain) {
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === Notifications.PermissionStatus.GRANTED;
+  }
+
+  return false;
+}
+
+export async function openNotificationSettings(): Promise<void> {
+  if (Platform.OS === "ios") {
+    await Linking.openURL("app-settings:");
+  } else {
+    await Linking.openSettings();
+  }
 }
 
 export async function scheduleReminderNotification(
@@ -55,3 +90,4 @@ export async function cancelReminderNotification(
     // Silently ignore if already cancelled
   }
 }
+

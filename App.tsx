@@ -270,17 +270,33 @@ const tabStyles = StyleSheet.create({
   },
 });
 
+import InAppNotificationToast from "./src/components/InAppNotificationToast";
+
 function AppContent() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
+  const [inAppNotif, setInAppNotif] = useState<{
+    visible: boolean;
+    title: string;
+    body: string;
+  }>({ visible: false, title: "", body: "" });
   const navigationRef = useRef<any>(null);
 
   useEffect(() => {
     // Request notification permission early
     Notifications.requestPermissionsAsync().catch(() => {});
 
-    // Handle tapping a notification → go to Reminders
-    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+    // Handle tapping a notification from system tray → go to Reminders
+    const responseSub = Notifications.addNotificationResponseReceivedListener(() => {
       navigationRef.current?.navigate("Reminders");
+    });
+
+    // Handle foreground notification receipt → show sleek in-app toast
+    const receiveSub = Notifications.addNotificationReceivedListener((notification) => {
+      setInAppNotif({
+        visible: true,
+        title: notification.request.content.title || "🎰 Kerala Lottery Update",
+        body: notification.request.content.body || "New draw alert!",
+      });
     });
 
     async function loadAssetsAndCheckPrivacy() {
@@ -300,7 +316,10 @@ function AppContent() {
     }
     loadAssetsAndCheckPrivacy();
 
-    return () => sub.remove();
+    return () => {
+      responseSub.remove();
+      receiveSub.remove();
+    };
   }, []);
 
   const handleAcceptPrivacy = async () => {
@@ -319,6 +338,13 @@ function AppContent() {
 
   return (
     <View style={{ flex: 1 }}>
+      <InAppNotificationToast
+        visible={inAppNotif.visible}
+        title={inAppNotif.title}
+        body={inAppNotif.body}
+        onPress={() => navigationRef.current?.navigate("Reminders")}
+        onDismiss={() => setInAppNotif((prev) => ({ ...prev, visible: false }))}
+      />
       <NavigationContainer ref={navigationRef}>
         <StatusBar style="dark" />
         <Stack.Navigator screenOptions={{ headerShown: false }}>

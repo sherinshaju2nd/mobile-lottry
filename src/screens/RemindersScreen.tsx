@@ -28,8 +28,14 @@ import {
   getAllReminders,
   deleteReminder,
 } from "../utils/reminderStorage";
-import { cancelReminderNotification } from "../utils/notificationScheduler";
+import {
+  cancelReminderNotification,
+  getNotificationPermissionStatus,
+  openNotificationSettings,
+  requestNotificationPermission,
+} from "../utils/notificationScheduler";
 import AddReminderModal from "../components/AddReminderModal";
+import { AlertCircle, Settings } from "lucide-react-native";
 
 // Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android)
 function parseDrawDateTime(drawDate: string, drawTime: string): number {
@@ -42,6 +48,7 @@ export default function RemindersScreen({ navigation }: any) {
   const [reminders, setReminders] = useState<LotteryReminder[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<LotteryReminder | null>(null);
+  const [hasPermission, setHasPermission] = useState(true);
 
   const loadReminders = useCallback(async () => {
     const all = await getAllReminders();
@@ -50,6 +57,9 @@ export default function RemindersScreen({ navigation }: any) {
       return parseDrawDateTime(a.drawDate, a.drawTime) - parseDrawDateTime(b.drawDate, b.drawTime);
     });
     setReminders(all);
+
+    const perm = await getNotificationPermissionStatus();
+    setHasPermission(perm.granted || Platform.OS === "web");
   }, []);
 
   useFocusEffect(
@@ -199,6 +209,28 @@ export default function RemindersScreen({ navigation }: any) {
           Get notified 5 mins before your ticket's draw time
         </Text>
       </View>
+
+      {/* Permission Warning Banner if notifications are disabled */}
+      {!hasPermission && (
+        <View style={styles.permBanner}>
+          <View style={styles.permBannerLeft}>
+            <AlertCircle size={20} color="#D97706" />
+            <View style={styles.permBannerTextCol}>
+              <Text style={styles.permBannerTitle}>Notifications Disabled</Text>
+              <Text style={styles.permBannerDesc}>
+                Turn on notifications to receive 3:00 PM draw alerts.
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.permSettingsBtn}
+            onPress={() => openNotificationSettings()}
+          >
+            <Settings size={14} color={COLORS.white} />
+            <Text style={styles.permSettingsBtnText}>Enable</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* List */}
       {reminders.length === 0 ? (
@@ -456,5 +488,53 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 15,
     fontWeight: "800",
+  },
+  permBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#FCD34D",
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    padding: 12,
+  },
+  permBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    gap: 10,
+    marginRight: 8,
+  },
+  permBannerTextCol: {
+    flex: 1,
+  },
+  permBannerTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#92400E",
+    marginBottom: 2,
+  },
+  permBannerDesc: {
+    fontSize: 11.5,
+    color: "#B45309",
+    lineHeight: 16,
+  },
+  permSettingsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#D97706",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  permSettingsBtnText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

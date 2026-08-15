@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   FlatList,
+  Platform,
 } from "react-native";
 import {
   Scan,
@@ -30,6 +31,8 @@ import {
 import {
   scheduleReminderNotification,
   cancelReminderNotification,
+  getNotificationPermissionStatus,
+  openNotificationSettings,
 } from "../utils/notificationScheduler";
 import { fetchLotteries } from "../api/lotteryApi";
 
@@ -512,11 +515,26 @@ export default function AddReminderModal({
         drawTime: drawTime24,
         createdAt: editReminder?.createdAt ?? new Date().toISOString(),
       };
+      const permState = await getNotificationPermissionStatus();
       const notifId = await scheduleReminderNotification(reminder);
       reminder.notificationId = notifId ?? undefined;
       await saveReminder(reminder);
       onSaved();
       onClose();
+
+      if (!permState.granted && Platform.OS !== "web") {
+        Alert.alert(
+          "Reminder Saved",
+          "Your reminder was saved! To receive push alerts 5 minutes before the draw, please enable notifications in Settings.",
+          [
+            { text: "Not Now", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => openNotificationSettings(),
+            },
+          ]
+        );
+      }
     } catch {
       Alert.alert("Error", "Failed to save reminder. Please try again.");
     } finally {
