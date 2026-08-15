@@ -672,6 +672,23 @@ export default function HomeScreen({ navigation }: any) {
                       marginTop: 8,
                       paddingHorizontal: 10,
                       paddingVertical: 5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: COLORS.border,
+                      backgroundColor: COLORS.background,
+                    }}
+                  >
+                    <RotateCw size={13} color={COLORS.textMuted} />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.textMuted }}>
+                      {language === "ml" ? "മായ്ക്കുക" : "Reset"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          );
+        })()}
+
         {heroTab === 0 &&
           (todayDraw && todayDraw.first?.ticket ? (
             /* Today's Draw Published Card */
@@ -979,6 +996,11 @@ export default function HomeScreen({ navigation }: any) {
                   : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`}
               </Text>
             </View>
+          ))}
+
+        {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
+        {heroTab === 1 && previousDraw && (
+          <View style={styles.winnerCard}>
             <View style={styles.winnerHeader}>
               <Trophy size={15} color={COLORS.primary} />
               <Text style={styles.winnerTextBadge}>
