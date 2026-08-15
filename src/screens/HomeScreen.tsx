@@ -873,52 +873,170 @@ export default function HomeScreen({ navigation }: any) {
               })}
             </View>
           ) : todayPostponement ? (
-            /* Today's Draw Postponed / Holiday Notice Card */
-            <View style={[styles.scheduledCard, { borderColor: "#FCA5A5", backgroundColor: "#FEF2F2" }]}>
-              <View style={[styles.scheduledBadgeRow, { backgroundColor: "#FEE2E2" }]}>
-                <AlertCircle size={14} color="#DC2626" />
-                <Text
-                  style={[
-                    styles.scheduledBadgeText,
-                    { color: "#DC2626", fontWeight: "800" },
-                    language === "ml" && { fontSize: 10.5 },
-                  ]}
+            /* Today's Draw Postponed / Holiday Notice Card (Clean Modern UI) */
+            <View
+              style={{
+                backgroundColor: "#FFFFFF",
+                borderRadius: 18,
+                padding: 16,
+                borderWidth: 1.5,
+                borderColor: "#FEE2E2",
+                shadowColor: "#E11D48",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 3,
+                marginBottom: 16,
+                overflow: "hidden",
+              }}
+            >
+              {/* Top Accent Indicator Bar */}
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  backgroundColor: todayPostponement.status === "holiday" ? "#F43F5E" : "#E11D48",
+                }}
+              />
+
+              {/* Header Badge & Lottery Code */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 10,
+                  marginTop: 2,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    backgroundColor: "#FFE4E6",
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: "#FECDD3",
+                  }}
                 >
-                  {language === "ml"
-                    ? `ഇന്നത്തെ നറുക്കെടുപ്പ് ${todayPostponement.status === "holiday" ? "അവധിയാണ്" : "മാറ്റിവെച്ചു"}`
-                    : `DRAW ${todayPostponement.status.toUpperCase()} TODAY`}
-                </Text>
+                  <AlertCircle size={13} color="#E11D48" />
+                  <Text
+                    style={{
+                      color: "#BE123C",
+                      fontWeight: "800",
+                      fontSize: language === "ml" ? 11 : 11.5,
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {language === "ml"
+                      ? `ഇന്നത്തെ നറുക്കെടുപ്പ് ${todayPostponement.status === "holiday" ? "അവധിയാണ്" : "മാറ്റിവെച്ചു"}`
+                      : `DRAW ${todayPostponement.status.toUpperCase()} TODAY`}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    backgroundColor: "#F1F5F9",
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: "#E2E8F0",
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: "900", color: "#475569" }}>
+                    {todayLottery.code}
+                  </Text>
+                </View>
               </View>
 
+              {/* Main Lottery Title */}
               <Text
-                style={[
-                  styles.scheduledTitle,
-                  { color: "#991B1B" },
-                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
-                ]}
+                style={{
+                  fontSize: 18,
+                  fontWeight: "900",
+                  color: "#1E293B",
+                  marginBottom: 10,
+                  letterSpacing: -0.2,
+                }}
               >
-                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
+                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name}
               </Text>
-              <Text
-                style={[
-                  styles.scheduledSubtitle,
-                  { color: "#B91C1C", fontWeight: "700" },
-                  language === "ml" && { fontSize: 12, lineHeight: 17 },
-                ]}
+
+              {/* Official Reason Notice Box */}
+              <View
+                style={{
+                  backgroundColor: "#FFF1F2",
+                  borderRadius: 12,
+                  padding: 12,
+                  borderWidth: 1,
+                  borderColor: "#FFE4E6",
+                }}
               >
-                📢 {todayPostponement.reason}
-              </Text>
-              {todayPostponement.rescheduled_date && (
-                <Text
-                  style={[
-                    styles.scheduledDesc,
-                    { color: "#7F1D1D", fontWeight: "800", marginTop: 6 },
-                    language === "ml" && { fontSize: 11, lineHeight: 16 },
-                  ]}
-                >
-                  🗓️ {language === "ml" ? "മാറ്റിവെച്ച തീയതി:" : "Rescheduled Draw Date:"} {todayPostponement.rescheduled_date}
-                </Text>
-              )}
+                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                  <Text style={{ fontSize: 14 }}>📢</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: "800",
+                        color: "#9F1239",
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        marginBottom: 2,
+                      }}
+                    >
+                      {language === "ml" ? "ഔദ്യോഗിക അറിയിപ്പ്" : "Official Notice"}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: "#881337",
+                        lineHeight: 18,
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {todayPostponement.reason}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Rescheduled Date if available */}
+                {todayPostponement.rescheduled_date && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      marginTop: 8,
+                      paddingTop: 8,
+                      borderTopWidth: 1,
+                      borderTopColor: "#FECDD3",
+                    }}
+                  >
+                    <Text style={{ fontSize: 13 }}>🗓️</Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "800",
+                        color: "#9F1239",
+                      }}
+                    >
+                      {language === "ml" ? "മാറ്റിവെച്ച തീയതി: " : "Rescheduled Date: "}
+                      <Text style={{ fontWeight: "900", color: "#881337" }}>
+                        {todayPostponement.rescheduled_date}
+                      </Text>
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           ) : isAfter3PM ? (
             /* Today's Draw Live In-Progress Card */

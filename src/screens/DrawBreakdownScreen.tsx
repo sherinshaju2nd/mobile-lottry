@@ -607,21 +607,130 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             })}
           </View>
         ) : postponement ? (
-          <View style={[styles.emptyContainer, { backgroundColor: "#FEF2F2", borderColor: "#FCA5A5", borderWidth: 1, borderRadius: 16, padding: 20 }]}>
-            <AlertCircle size={36} color="#DC2626" />
-            <Text style={{ fontSize: 16, fontWeight: "900", color: "#991B1B", marginTop: 10, textAlign: "center" }}>
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 18,
+              padding: 20,
+              borderWidth: 1.5,
+              borderColor: "#FEE2E2",
+              shadowColor: "#E11D48",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 3,
+              marginVertical: 16,
+              alignItems: "center",
+              overflow: "hidden",
+            }}
+          >
+            {/* Top Accent Indicator Bar */}
+            <View
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                backgroundColor: postponement.status === "holiday" ? "#F43F5E" : "#E11D48",
+              }}
+            />
+
+            <View
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: 23,
+                backgroundColor: "#FFE4E6",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 10,
+                marginTop: 4,
+              }}
+            >
+              <AlertCircle size={22} color="#E11D48" />
+            </View>
+
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "900",
+                color: "#1E293B",
+                textAlign: "center",
+                marginBottom: 6,
+              }}
+            >
               {language === "ml"
                 ? `ഈ തീയതിയിലെ (${date}) നറുക്കെടുപ്പ് ${postponement.status === "holiday" ? "അവധിയാണ്" : "മാറ്റിവെച്ചു"}`
                 : `DRAW ${postponement.status.toUpperCase()} ON ${date}`}
             </Text>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: "#B91C1C", marginTop: 8, textAlign: "center", lineHeight: 18 }}>
-              📢 {postponement.reason}
-            </Text>
-            {postponement.rescheduled_date && (
-              <Text style={{ fontSize: 12, fontWeight: "800", color: "#7F1D1D", marginTop: 8, textAlign: "center" }}>
-                🗓️ {language === "ml" ? "മാറ്റിവെച്ച തീയതി:" : "Rescheduled Draw Date:"} {postponement.rescheduled_date}
+
+            <View
+              style={{
+                backgroundColor: "#FFF1F2",
+                borderRadius: 12,
+                padding: 12,
+                borderWidth: 1,
+                borderColor: "#FFE4E6",
+                alignSelf: "stretch",
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: "800",
+                  color: "#9F1239",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  marginBottom: 2,
+                  textAlign: "center",
+                }}
+              >
+                📢 {language === "ml" ? "ഔദ്യോഗിക അറിയിപ്പ്" : "Official Notice"}
               </Text>
-            )}
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "600",
+                  color: "#881337",
+                  textAlign: "center",
+                  lineHeight: 18,
+                  textTransform: "capitalize",
+                }}
+              >
+                {postponement.reason}
+              </Text>
+
+              {postponement.rescheduled_date && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    marginTop: 8,
+                    paddingTop: 8,
+                    borderTopWidth: 1,
+                    borderTopColor: "#FECDD3",
+                  }}
+                >
+                  <Text style={{ fontSize: 13 }}>🗓️</Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: "800",
+                      color: "#9F1239",
+                    }}
+                  >
+                    {language === "ml" ? "മാറ്റിവെച്ച തീയതി: " : "Rescheduled Date: "}
+                    <Text style={{ fontWeight: "900", color: "#881337" }}>
+                      {postponement.rescheduled_date}
+                    </Text>
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         ) : (
           <View style={styles.emptyContainer}>
