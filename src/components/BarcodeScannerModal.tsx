@@ -8,7 +8,7 @@ import {
   TextInput,
   Animated,
   Easing,
-  Dimensions,
+  useWindowDimensions,
   Platform,
   Image,
 } from "react-native";
@@ -19,9 +19,6 @@ import {
 } from "expo-camera";
 import { X, Scan, Zap, ZapOff, Camera, CheckCircle } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-
-const { width } = Dimensions.get("window");
-const SCAN_BOX_SIZE = width * 0.75;
 
 interface BarcodeScannerModalProps {
   visible: boolean;
@@ -34,6 +31,10 @@ export default function BarcodeScannerModal({
   onClose,
   onBarcodeScanned,
 }: BarcodeScannerModalProps) {
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+  const scanBoxSize = Math.min(width * 0.72, height * (isLandscape ? 0.48 : 0.42), 290);
+
   const [permission, requestPermission] = useCameraPermissions();
   const [torchOn, setTorchOn] = useState(false);
   const [scanned, setScanned] = useState(false);
@@ -56,7 +57,7 @@ export default function BarcodeScannerModal({
       const animation = Animated.loop(
         Animated.sequence([
           Animated.timing(scanLineAnim, {
-            toValue: SCAN_BOX_SIZE - 8,
+            toValue: scanBoxSize - 8,
             duration: 1800,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
@@ -73,7 +74,7 @@ export default function BarcodeScannerModal({
 
       return () => animation.stop();
     }
-  }, [visible]);
+  }, [visible, scanBoxSize]);
 
   const handleScan = (result: BarcodeScanningResult) => {
     if (scanned) return;
@@ -257,9 +258,9 @@ export default function BarcodeScannerModal({
             <View style={styles.overlay}>
               <View style={styles.overlayTop} />
 
-              <View style={styles.overlayMiddleRow}>
+              <View style={[styles.overlayMiddleRow, { height: scanBoxSize }]}>
                 <View style={styles.overlaySide} />
-                <View style={styles.scanBox}>
+                <View style={[styles.scanBox, { width: scanBoxSize, height: scanBoxSize }]}>
                   {/* Four Corner Accents */}
                   <View style={[styles.corner, styles.topLeft]} />
                   <View style={[styles.corner, styles.topRight]} />
@@ -385,15 +386,12 @@ const styles = StyleSheet.create({
   },
   overlayMiddleRow: {
     flexDirection: "row",
-    height: SCAN_BOX_SIZE,
   },
   overlaySide: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.65)",
   },
   scanBox: {
-    width: SCAN_BOX_SIZE,
-    height: SCAN_BOX_SIZE,
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
@@ -480,7 +478,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   hintImage: {
-    width: width * 0.78,
+    width: "82%",
+    maxWidth: 340,
     height: 140,
     borderRadius: 10,
     opacity: 0.9,

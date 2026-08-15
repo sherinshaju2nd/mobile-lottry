@@ -135,7 +135,8 @@ export default function ModernDatePickerModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
-          {/* Header */}
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+            {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconBadge}>
@@ -256,6 +257,7 @@ export default function ModernDatePickerModal({
               </TouchableOpacity>
             </View>
           </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -273,6 +275,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "100%",
     maxWidth: 380,
+    maxHeight: "92%",
     backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 18,

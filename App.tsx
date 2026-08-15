@@ -7,7 +7,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Home, Ticket, Search as SearchIcon, Calendar as CalendarIcon, Camera } from "lucide-react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { Asset } from "expo-asset";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -132,6 +132,7 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
 function BottomTabNavigator({ navigation }: any) {
   const { openScanner } = useScanner();
   const { t, language } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [isDatePickerOpen, setIsDatePickerOpen] = React.useState(false);
 
   const handleDateSelected = async (dateStr: string | null) => {
@@ -156,8 +157,8 @@ function BottomTabNavigator({ navigation }: any) {
           tabBarStyle: {
             backgroundColor: COLORS.white,
             borderTopColor: COLORS.border,
-            height: language === "ml" ? 50 : 58,
-            paddingBottom: language === "ml" ? 3 : 6,
+            height: (language === "ml" ? 52 : 58) + (insets.bottom > 0 ? insets.bottom - 4 : 0),
+            paddingBottom: (language === "ml" ? 3 : 6) + (insets.bottom > 0 ? insets.bottom - 6 : 0),
             paddingTop: language === "ml" ? 3 : 5,
           },
           tabBarLabelStyle: {

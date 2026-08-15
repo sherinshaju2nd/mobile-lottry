@@ -6,10 +6,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Linking,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ShieldCheck, AlertTriangle, ExternalLink, CheckCircle2, Square, CheckSquare } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 
@@ -40,7 +40,7 @@ export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalPro
       visible={visible}
       statusBarTranslucent
     >
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
         <View style={styles.mainContainer}>

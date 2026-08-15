@@ -125,7 +125,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <View style={styles.container}>
         {/* Top Header */}
         <View style={styles.header}>

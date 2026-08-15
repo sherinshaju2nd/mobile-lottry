@@ -285,7 +285,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   ] as const;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}

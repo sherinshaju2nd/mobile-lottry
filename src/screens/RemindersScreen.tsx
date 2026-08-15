@@ -6,10 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   StatusBar,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   Bell,
@@ -177,7 +177,7 @@ export default function RemindersScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
       <StatusBar
         barStyle="dark-content"
         backgroundColor="#FFFFFF"
@@ -282,7 +282,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: "row",

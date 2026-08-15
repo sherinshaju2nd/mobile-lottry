@@ -5,8 +5,9 @@ import {
   Text,
   Modal,
   TouchableOpacity,
-  SafeAreaView,
+  ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Globe, Check, Sparkles, X } from "lucide-react-native";
 import { useLanguage } from "../context/LanguageContext";
 import { Language } from "../constants/translations";
@@ -35,8 +36,8 @@ export default function LanguageSelectionModal() {
       animationType="fade"
       transparent={false}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
+      <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header Card */}
           <View style={styles.header}>
             <View style={styles.globeBadge}>
@@ -139,7 +140,7 @@ export default function LanguageSelectionModal() {
               {selected === "ml" ? "തുടരുക (Continue)" : "Confirm & Continue"}
             </Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </Modal>
   );
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: 24,
     justifyContent: "center",
   },
