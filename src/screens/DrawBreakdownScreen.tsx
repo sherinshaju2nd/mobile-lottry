@@ -19,7 +19,7 @@ import {
   Download,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { WEEKLY_LOTTERIES } from "../constants/lotteries";
+import { ALL_LOTTERIES } from "../constants/lotteries";
 import {
   fetchDrawByDate,
   fetchAllDraws,
@@ -35,7 +35,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { code, date, highlight } = route.params || { code: "BT", date: "2026-08-10" };
   const codeUpper = code.toUpperCase();
 
-  const lotteryMeta = WEEKLY_LOTTERIES.find((l) => l.code === codeUpper) || {
+  const lotteryMeta = ALL_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
     nameMl: "",
     code: codeUpper,

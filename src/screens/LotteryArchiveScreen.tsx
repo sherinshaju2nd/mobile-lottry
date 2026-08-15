@@ -17,7 +17,7 @@ import {
   FileText,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { WEEKLY_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
+import { ALL_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -26,7 +26,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
   const { code } = route.params || { code: "BT" };
   const codeUpper = code.toUpperCase();
 
-  const lotteryMeta = WEEKLY_LOTTERIES.find((l) => l.code === codeUpper) || {
+  const lotteryMeta = ALL_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
     nameMl: "",
     code: codeUpper,

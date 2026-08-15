@@ -28,6 +28,7 @@ import {
 import { COLORS } from "../constants/colors";
 import {
   WEEKLY_LOTTERIES,
+  BUMPER_LOTTERIES,
   getLotteryMalayalamName,
 } from "../constants/lotteries";
 import {
@@ -262,17 +263,19 @@ export default function HomeScreen({ navigation }: any) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text
+                  numberOfLines={1}
                   style={[
                     styles.appName,
-                    language === "ml" && { fontSize: 15, lineHeight: 22 },
+                    language === "ml" && { fontSize: 13, lineHeight: 18, fontWeight: "800" },
                   ]}
                 >
                   {t("app_header_title")}
                 </Text>
                 <Text
+                  numberOfLines={1}
                   style={[
                     styles.appSubtitle,
-                    language === "ml" && { fontSize: 10.5, lineHeight: 15 },
+                    language === "ml" && { fontSize: 9.5, lineHeight: 13 },
                   ]}
                 >
                   {t("app_header_subtitle")}
@@ -280,12 +283,12 @@ export default function HomeScreen({ navigation }: any) {
               </View>
             </View>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <TouchableOpacity
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
                   backgroundColor: COLORS.primaryLight,
                   alignItems: "center",
                   justifyContent: "center",
@@ -294,27 +297,27 @@ export default function HomeScreen({ navigation }: any) {
                 }}
                 onPress={() => navigation.navigate("Reminders")}
               >
-                <Bell size={16} color={COLORS.primary} />
+                <Bell size={15} color={COLORS.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 4,
                   backgroundColor: COLORS.primaryLight,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
+                  paddingHorizontal: 8,
+                  paddingVertical: 5,
                   borderRadius: 20,
                   borderWidth: 1,
                   borderColor: COLORS.primary,
                 }}
                 onPress={() => setShowLanguageModal(true)}
               >
-                <Globe size={14} color={COLORS.primary} />
+                <Globe size={13} color={COLORS.primary} />
                 <Text
                   style={{
-                    fontSize: 11,
+                    fontSize: language === "ml" ? 10 : 11,
                     fontWeight: "800",
                     color: COLORS.primary,
                   }}
@@ -493,6 +496,7 @@ export default function HomeScreen({ navigation }: any) {
                       style={[
                         styles.heroTabText,
                         heroTab === 1 && styles.heroTabActiveText,
+                        language === "ml" && { fontSize: 11 },
                       ]}
                       numberOfLines={1}
                     >
@@ -904,7 +908,12 @@ export default function HomeScreen({ navigation }: any) {
               </Text>
             </View>
 
-            <Text style={styles.winnerTitle}>
+            <Text
+              style={[
+                styles.winnerTitle,
+                language === "ml" && { fontSize: 16.5, lineHeight: 24 },
+              ]}
+            >
               {language === "ml" &&
               getLotteryMalayalamName(previousDraw.lottery_code)
                 ? getLotteryMalayalamName(previousDraw.lottery_code)
@@ -956,7 +965,12 @@ export default function HomeScreen({ navigation }: any) {
                 })
               }
             >
-              <Text style={styles.viewBreakdownText}>
+              <Text
+                style={[
+                  styles.viewBreakdownText,
+                  language === "ml" && { fontSize: 12, lineHeight: 18 },
+                ]}
+              >
                 {language === "ml"
                   ? `${previousDraw.draw_date} തീയതിയിലെ സമ്പൂർണ്ണ ഫലം കാണുക →`
                   : `View Full Breakdown for ${previousDraw.draw_date} →`}
