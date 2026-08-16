@@ -129,6 +129,51 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+function AnimatedTabIcon({
+  IconComponent,
+  color,
+  focused,
+  size,
+}: {
+  IconComponent: any;
+  color: string;
+  focused: boolean;
+  size: number;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (focused) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.25,
+          duration: 130,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 50,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [focused, scaleAnim]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <IconComponent size={size} color={color} />
+    </Animated.View>
+  );
+}
+
 function BottomTabNavigator({ navigation }: any) {
   const { openScanner } = useScanner();
   const { t, language } = useLanguage();
@@ -165,18 +210,22 @@ function BottomTabNavigator({ navigation }: any) {
             fontSize: language === "ml" ? 9.5 : 11,
             fontWeight: "700",
           },
-          tabBarIcon: ({ color }: { color: string }) => {
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => {
             const iconSize = language === "ml" ? 18 : 22;
-            if (route.name === "HomeTab") {
-              return <Home size={iconSize} color={color} />;
-            } else if (route.name === "LotteriesTab") {
-              return <Ticket size={iconSize} color={color} />;
-            } else if (route.name === "SearchTab") {
-              return <SearchIcon size={iconSize} color={color} />;
-            } else if (route.name === "DateTab") {
-              return <CalendarIcon size={iconSize} color={color} />;
-            }
-            return null;
+            let IconComp: any = Home;
+            if (route.name === "HomeTab") IconComp = Home;
+            else if (route.name === "LotteriesTab") IconComp = Ticket;
+            else if (route.name === "SearchTab") IconComp = SearchIcon;
+            else if (route.name === "DateTab") IconComp = CalendarIcon;
+
+            return (
+              <AnimatedTabIcon
+                IconComponent={IconComp}
+                color={color}
+                focused={focused}
+                size={iconSize}
+              />
+            );
           },
         })}
       >

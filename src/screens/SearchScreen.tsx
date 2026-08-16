@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Platform,
+  LayoutAnimation,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -78,6 +80,18 @@ export default function SearchScreen({ navigation }: any) {
     setScannedBarcode(extractedTicket);
     setQuery(extractedTicket);
     setIsBarcodeResultOpen(true);
+  };
+
+  const handleModeChange = (newMode: "single" | "batch") => {
+    if (newMode === mode) return;
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+    setMode(newMode);
+    handleReset();
   };
 
   interface BatchItem {
@@ -160,6 +174,10 @@ export default function SearchScreen({ navigation }: any) {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        removeClippedSubviews={Platform.OS === "android"}
+        overScrollMode="never"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
@@ -186,10 +204,7 @@ export default function SearchScreen({ navigation }: any) {
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={[styles.tab, mode === "single" && styles.activeTab]}
-            onPress={() => {
-              setMode("single");
-              handleReset();
-            }}
+            onPress={() => handleModeChange("single")}
           >
             <Ticket
               size={15}
@@ -209,10 +224,7 @@ export default function SearchScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={[styles.tab, mode === "batch" && styles.activeTab]}
-            onPress={() => {
-              setMode("batch");
-              handleReset();
-            }}
+            onPress={() => handleModeChange("batch")}
           >
             <Layers
               size={15}

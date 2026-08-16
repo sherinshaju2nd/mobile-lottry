@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -10,7 +10,14 @@ import {
   RefreshControl,
   Image,
   Linking,
+  Platform,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Trophy,
@@ -48,6 +55,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }: any) {
+  const scrollViewRef = useRef<ScrollView>(null);
   const { language, setShowLanguageModal, t } = useLanguage();
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
@@ -77,6 +85,19 @@ export default function HomeScreen({ navigation }: any) {
   // Hero Section Tab: 0 = Today's Draw, 1 = Yesterday's Result
   // Before 2:45 PM IST, default to Yesterday's Result (1), after 2:45 PM default to Today's Draw (0)
   const [heroTab, setHeroTab] = useState<number>(getIsBefore245PM() ? 1 : 0);
+
+  const handleHeroTabChange = (newTab: number) => {
+    if (newTab === heroTab) return;
+    LayoutAnimation.configureNext({
+      duration: 260,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+    setHeroTab(newTab);
+    setTicketInput("");
+    setSearchResults(null);
+  };
 
   // Quick Ticket Checker State
   const [ticketInput, setTicketInput] = useState("");
@@ -212,6 +233,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
     loadData();
   };
 
@@ -282,8 +304,14 @@ export default function HomeScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        removeClippedSubviews={Platform.OS === "android"}
+        overScrollMode="never"
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -455,7 +483,7 @@ export default function HomeScreen({ navigation }: any) {
                       styles.heroTab,
                       heroTab === 1 && styles.heroTabActiveGreen,
                     ]}
-                    onPress={() => setHeroTab(1)}
+                    onPress={() => handleHeroTabChange(1)}
                   >
                     <Trophy
                       size={14}
@@ -481,7 +509,7 @@ export default function HomeScreen({ navigation }: any) {
                     styles.heroTab,
                     heroTab === 0 && styles.heroTabActiveGreen,
                   ]}
-                  onPress={() => setHeroTab(0)}
+                  onPress={() => handleHeroTabChange(0)}
                 >
                   <Clock
                     size={14}
@@ -509,11 +537,7 @@ export default function HomeScreen({ navigation }: any) {
                     styles.heroTab,
                     heroTab === 0 && styles.heroTabActiveGreen,
                   ]}
-                  onPress={() => {
-                    setHeroTab(0);
-                    setTicketInput("");
-                    setSearchResults(null);
-                  }}
+                  onPress={() => handleHeroTabChange(0)}
                 >
                   <Clock
                     size={14}
@@ -540,11 +564,7 @@ export default function HomeScreen({ navigation }: any) {
                       styles.heroTab,
                       heroTab === 1 && styles.heroTabActiveGreen,
                     ]}
-                    onPress={() => {
-                      setHeroTab(1);
-                      setTicketInput("");
-                      setSearchResults(null);
-                    }}
+                    onPress={() => handleHeroTabChange(1)}
                   >
                     <Trophy
                       size={14}

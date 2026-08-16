@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Linking,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -114,6 +115,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
+      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       try {
         const [result, postp] = await Promise.all([
           fetchDrawByDate(codeUpper, date),
@@ -347,6 +349,11 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
         ref={scrollViewRef}
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        removeClippedSubviews={Platform.OS === "android"}
+        overScrollMode="never"
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header Bar */}
         <View style={styles.header}>

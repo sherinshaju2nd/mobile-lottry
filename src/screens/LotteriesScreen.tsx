@@ -6,6 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
+  LayoutAnimation,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChevronRight, Sparkles, Calendar, Trophy } from "lucide-react-native";
@@ -25,6 +27,17 @@ export default function LotteriesScreen({ navigation }: any) {
   const [weeklyData, setWeeklyData] = useState<LotteryMeta[]>(WEEKLY_LOTTERIES);
   const [bumperData, setBumperData] = useState<LotteryMeta[]>(BUMPER_LOTTERIES);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleTabChange = (tab: "weekly" | "bumper") => {
+    if (tab === activeTab) return;
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     fetchLotteriesFromDb()
@@ -290,7 +303,7 @@ export default function LotteriesScreen({ navigation }: any) {
         <View style={styles.tabBar}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "weekly" && styles.activeTab]}
-            onPress={() => setActiveTab("weekly")}
+            onPress={() => handleTabChange("weekly")}
             activeOpacity={0.85}
           >
             <Calendar size={13} color={activeTab === "weekly" ? COLORS.white : COLORS.textDark} />
@@ -308,7 +321,7 @@ export default function LotteriesScreen({ navigation }: any) {
 
           <TouchableOpacity
             style={[styles.tab, activeTab === "bumper" && styles.activeTab]}
-            onPress={() => setActiveTab("bumper")}
+            onPress={() => handleTabChange("bumper")}
             activeOpacity={0.85}
           >
             <Sparkles size={13} color={activeTab === "bumper" ? COLORS.white : COLORS.textDark} />
@@ -336,6 +349,12 @@ export default function LotteriesScreen({ navigation }: any) {
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={Platform.OS === "android"}
+            scrollEventThrottle={16}
+            overScrollMode="never"
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={5}
           />
         )}
       </View>
