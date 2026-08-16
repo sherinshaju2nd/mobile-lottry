@@ -17,6 +17,7 @@ import {
   AlertCircle,
   RotateCw,
   Download,
+  Clock,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { ALL_LOTTERIES } from "../constants/lotteries";
@@ -37,11 +38,16 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { code, date, highlight } = route.params || { code: "BT", date: "2026-08-10" };
   const codeUpper = code.toUpperCase();
 
+  const todayISTDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
+
   const lotteryMeta = ALL_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
     nameMl: "",
     code: codeUpper,
     day: "Scheduled Draw",
+    drawTime: "3:00 PM",
   };
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
@@ -732,6 +738,96 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               )}
             </View>
           </View>
+        ) : date > todayISTDate ? (
+          <View
+            style={{
+              backgroundColor: "#FFFDF0",
+              borderRadius: 16,
+              padding: 24,
+              borderWidth: 1.5,
+              borderColor: "#F59E0B",
+              marginVertical: 16,
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#FEF3C7",
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: "#FCD34D",
+                marginBottom: 10,
+              }}
+            >
+              <Text style={{ fontSize: 11, fontWeight: "900", color: "#92400E" }}>
+                {language === "ml" ? "👑 അടുത്ത നറുക്കെടുപ്പ്" : "👑 UPCOMING SCHEDULED DRAW"}
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "900",
+                color: "#78350F",
+                textAlign: "center",
+                marginBottom: 6,
+              }}
+            >
+              {language === "ml"
+                ? `${lotteryMeta.nameMl || lotteryMeta.name} നറുക്കെടുപ്പ് ${date}-ൽ`
+                : `${lotteryMeta.name} Scheduled on ${date}`}
+            </Text>
+            <Text
+              style={{
+                fontSize: 12.5,
+                color: "#92400E",
+                textAlign: "center",
+                lineHeight: 18,
+              }}
+            >
+              {language === "ml"
+                ? `ഈ നറുക്കെടുപ്പ് ${date} ഉച്ചയ്ക്ക് ${lotteryMeta.drawTime || "3:00"} മണിക്ക് നടക്കുന്നതാണ്. ഫലങ്ങൾ ഉടൻ ഇവിടെ അപ്‌ഡേറ്റ് ചെയ്യപ്പെടും.`
+                : `This draw is scheduled for ${date} at ${lotteryMeta.drawTime || "3:00 PM"}. Winning numbers will be published here live once the draw concludes.`}
+            </Text>
+          </View>
+        ) : date === todayISTDate ? (
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 16,
+              padding: 24,
+              borderWidth: 1,
+              borderColor: "#E2E8F0",
+              marginVertical: 16,
+              alignItems: "center",
+            }}
+          >
+            <Clock size={32} color={COLORS.primary} style={{ marginBottom: 8 }} />
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: "900",
+                color: COLORS.textDark,
+                textAlign: "center",
+                marginBottom: 4,
+              }}
+            >
+              {language === "ml" ? "ഇന്നത്തെ ഫലം തയ്യാറാകുന്നു..." : "Today's Draw in Progress..."}
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: COLORS.textMuted,
+                textAlign: "center",
+                lineHeight: 17,
+              }}
+            >
+              {language === "ml"
+                ? "ലൈവ് നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക് ആരംഭിക്കും. ഔദ്യോഗിക ഫലങ്ങൾ 3:10 ന് ഇവിടെ ലഭ്യമാകും."
+                : "Live lottery draw commences at 3:00 PM. Official winning results will be published here live around 3:10 PM."}
+            </Text>
+          </View>
         ) : (
           <View style={styles.emptyContainer}>
             <AlertCircle
@@ -739,7 +835,9 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               color={COLORS.textMuted}
             />
             <Text style={styles.emptyText}>
-              No draw result record found for date {date}.
+              {language === "ml"
+                ? `${date} തീയതിയിലെ ഫലങ്ങൾ രേഖപ്പെടുത്തിയിട്ടില്ല.`
+                : `No draw result record found for date ${date}.`}
             </Text>
           </View>
         )}

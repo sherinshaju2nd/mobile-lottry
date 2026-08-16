@@ -462,10 +462,53 @@ export default function SearchScreen({ navigation }: any) {
               ))
             ) : (
               <View style={styles.noMatchCard}>
-                <XCircle size={32} color={COLORS.textMuted} />
-                <Text style={styles.noMatchTitle}>{t("no_prize_found")}</Text>
+                <XCircle
+                  size={32}
+                  color={
+                    selectedDateFilter &&
+                    selectedDateFilter >=
+                      new Date().toLocaleDateString("en-CA", {
+                        timeZone: "Asia/Kolkata",
+                      })
+                      ? "#D97706"
+                      : COLORS.textMuted
+                  }
+                />
+                <Text style={styles.noMatchTitle}>
+                  {selectedDateFilter ===
+                  new Date().toLocaleDateString("en-CA", {
+                    timeZone: "Asia/Kolkata",
+                  })
+                    ? language === "ml"
+                      ? "ഇന്നത്തെ ഫലം തയ്യാറാകുന്നു"
+                      : "Today's Draw in Progress"
+                    : selectedDateFilter &&
+                      selectedDateFilter >
+                        new Date().toLocaleDateString("en-CA", {
+                          timeZone: "Asia/Kolkata",
+                        })
+                    ? language === "ml"
+                      ? "അടുത്ത നറുക്കെടുപ്പ്"
+                      : "Upcoming Scheduled Draw"
+                    : t("no_prize_found")}
+                </Text>
                 <Text style={styles.noMatchSub}>
-                  "{query}" {t("no_prize_desc")}
+                  {selectedDateFilter ===
+                  new Date().toLocaleDateString("en-CA", {
+                    timeZone: "Asia/Kolkata",
+                  })
+                    ? language === "ml"
+                      ? "ഇന്നത്തെ ഫലം ഉച്ചയ്ക്ക് 3:10 ന് പ്രസിദ്ധീകരിക്കും. അല്പം കഴിഞ്ഞ് വീണ്ടും പരിശോധിക്കുക."
+                      : "Results for today's draw publish at 3:10 PM. Please check back once the draw concludes."
+                    : selectedDateFilter &&
+                      selectedDateFilter >
+                        new Date().toLocaleDateString("en-CA", {
+                          timeZone: "Asia/Kolkata",
+                        })
+                    ? language === "ml"
+                      ? `${selectedDateFilter} തീയതിയിലെ നറുക്കെടുപ്പ് നടന്നിട്ടില്ല.`
+                      : `The draw scheduled for ${selectedDateFilter} has not taken place yet.`
+                    : `"${query}" ${t("no_prize_desc")}`}
                 </Text>
               </View>
             )}

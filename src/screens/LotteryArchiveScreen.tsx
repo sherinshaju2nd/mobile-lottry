@@ -34,8 +34,13 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     drawTime: "3:00 PM",
   };
 
+  const todayISTDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
+
   const [history, setHistory] = useState<DrawResult[]>([]);
   const [filteredHistory, setFilteredHistory] = useState<DrawResult[]>([]);
+  const [lotteryDbMeta, setLotteryDbMeta] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchFilter, setSearchFilter] = useState("");
 
@@ -43,9 +48,19 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     async function loadHistory() {
       setIsLoading(true);
       try {
-        const results = await fetchLotteryHistory(codeUpper);
+        const [results, lotRes] = await Promise.all([
+          fetchLotteryHistory(codeUpper),
+          supabase
+            .from("lotteries")
+            .select("*")
+            .eq("code", codeUpper)
+            .maybeSingle(),
+        ]);
         setHistory(results);
         setFilteredHistory(results);
+        if (lotRes.data) {
+          setLotteryDbMeta(lotRes.data);
+        }
       } catch {
         setHistory([]);
         setFilteredHistory([]);
@@ -61,6 +76,13 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
+        () => {
+          loadHistory();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lotteries" },
         () => {
           loadHistory();
         }
@@ -119,13 +141,13 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
         <Text style={styles.footerText}>
           {language === "ml" ? "സമ്പൂർണ്ണ ഫലങ്ങൾ കാണുക" : "View Full Results & Breakdown"}
         </Text>
-        <ChevronRight size={16} color={COLORS.primary} />
+        <ChevronRight size={14} color={COLORS.primary} />
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <View style={styles.container}>
         {/* Top Header */}
         <View style={styles.header}>
@@ -151,6 +173,46 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             </Text>
           </View>
         </View>
+
+        {/* Announced Upcoming Draw Banner */}
+        {lotteryDbMeta?.draw_date && lotteryDbMeta.draw_date >= todayISTDate && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#FFFDF0",
+              borderWidth: 1.5,
+              borderColor: "#F59E0B",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 12,
+              shadowColor: "#F59E0B",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 6,
+              elevation: 2,
+            }}
+            onPress={() =>
+              navigation.navigate("DrawBreakdown", {
+                code: codeUpper,
+                date: lotteryDbMeta.draw_date,
+              })
+            }
+          >
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <View style={{ backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: "#FCD34D" }}>
+                <Text style={{ fontSize: 10.5, fontWeight: "900", color: "#92400E" }}>
+                  {lotteryDbMeta.draw_date === todayISTDate
+                    ? language === "ml" ? "👑 ഇന്ന് നറുക്കെടുപ്പ്" : "👑 DRAWS TODAY"
+                    : language === "ml" ? `👑 അടുത്ത നറുക്കെടുപ്പ്: ${lotteryDbMeta.draw_date}` : `👑 NEXT DRAW: ${lotteryDbMeta.draw_date}`}
+                </Text>
+              </View>
+              <ChevronRight size={14} color="#D97706" />
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: "900", color: "#78350F" }}>
+              {language === "ml" ? "നറുക്കെടുപ്പ് സമയം:" : "Draw Time:"} {lotteryDbMeta.draw_time || ((lotteryMeta as any).isBumper ? "2:00 PM" : "3:00 PM")}
+              {lotteryDbMeta.jackpot ? ` • ${lotteryDbMeta.jackpot}` : ""}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Filter Input */}
         <View style={styles.filterContainer}>
