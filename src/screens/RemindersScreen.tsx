@@ -37,11 +37,27 @@ import {
 import AddReminderModal from "../components/AddReminderModal";
 import { AlertCircle, Settings } from "lucide-react-native";
 
-// Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android)
-function parseDrawDateTime(drawDate: string, drawTime: string): number {
+// Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android and handles 12h/24h)
+function parseDrawDateTime(drawDate: string, drawTime?: string): number {
+  if (!drawDate) return 0;
   const [y, mo, d] = drawDate.split("-").map(Number);
-  const [h, mi] = drawTime.split(":").map(Number);
-  return new Date(y, mo - 1, d, h, mi, 0).getTime();
+  let hours = 15;
+  let minutes = 0;
+
+  if (drawTime) {
+    const clean = drawTime.trim().toUpperCase();
+    const isPM = clean.includes("PM");
+    const isAM = clean.includes("AM");
+    const digits = clean.replace(/[^0-9:]/g, "").split(":");
+    if (digits.length >= 2) {
+      hours = parseInt(digits[0], 10) || 0;
+      minutes = parseInt(digits[1], 10) || 0;
+      if (isPM && hours < 12) hours += 12;
+      if (isAM && hours === 12) hours = 0;
+    }
+  }
+
+  return new Date(y, mo - 1, d, hours, minutes, 0).getTime();
 }
 
 export default function RemindersScreen({ navigation }: any) {

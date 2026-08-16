@@ -49,8 +49,10 @@ export interface SearchMatch {
   ticket_matched: string;
 }
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 /**
- * Fetch all lotteries (weekly + bumper) dynamically from Supabase database
+ * Fetch all lotteries (weekly + bumper) dynamically from Supabase database with offline cache
  */
 export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; bumper: LotteryMeta[] }> {
   try {
@@ -91,19 +93,31 @@ export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; b
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
 
-      return {
+      const result = {
         weekly: weekly.length > 0 ? weekly : WEEKLY_LOTTERIES,
         bumper: bumper.length > 0 ? bumper : BUMPER_LOTTERIES,
       };
+
+      // Persist snapshot to AsyncStorage for offline instant startup
+      AsyncStorage.setItem("@lotteries_meta_cache", JSON.stringify(result)).catch(() => {});
+      return result;
     }
   } catch (e) {
-    console.warn("fetchLotteriesFromDb error:", e);
+    console.warn("fetchLotteriesFromDb error, falling back to cache:", e);
   }
+
+  try {
+    const cached = await AsyncStorage.getItem("@lotteries_meta_cache");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {}
+
   return { weekly: WEEKLY_LOTTERIES, bumper: BUMPER_LOTTERIES };
 }
 
 /**
- * Fetch all draw results directly from Supabase database
+ * Fetch all draw results directly from Supabase database with offline cache
  */
 export async function fetchAllDraws(): Promise<DrawResult[]> {
   try {
@@ -113,7 +127,7 @@ export async function fetchAllDraws(): Promise<DrawResult[]> {
       .order("draw_date", { ascending: false });
 
     if (!error && data && data.length > 0) {
-      return data.map((row) => {
+      const parsedDraws: DrawResult[] = data.map((row) => {
         let firstObj: WinnerInfo = {};
         let prizesObj: PrizeBreakdown = {};
         try {
@@ -137,10 +151,22 @@ export async function fetchAllDraws(): Promise<DrawResult[]> {
           created_at: row.created_at,
         };
       });
+
+      // Persist snapshot to AsyncStorage for offline viewing
+      AsyncStorage.setItem("@draw_results_cache", JSON.stringify(parsedDraws)).catch(() => {});
+      return parsedDraws;
     }
   } catch (e) {
-    console.warn("Supabase fetchAll error:", e);
+    console.warn("Supabase fetchAll error, falling back to offline cache:", e);
   }
+
+  try {
+    const cached = await AsyncStorage.getItem("@draw_results_cache");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {}
+
   return [];
 }
 

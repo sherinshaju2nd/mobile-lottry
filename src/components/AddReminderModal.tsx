@@ -45,15 +45,16 @@ interface LotteryOption {
 
 function convertTo24h(timeStr: string): string {
   if (!timeStr) return "15:00";
-  if (timeStr.includes(":") && !timeStr.toUpperCase().includes("M"))
-    return timeStr;
-  const upper = timeStr.toUpperCase().trim();
-  const [timePart, meridiem] = upper.split(" ");
-  const [h, m] = timePart.split(":").map(Number);
-  let hour = h;
-  if (meridiem === "PM" && h !== 12) hour = h + 12;
-  if (meridiem === "AM" && h === 12) hour = 0;
-  return `${String(hour).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
+  const clean = timeStr.trim().toUpperCase();
+  const isPM = clean.includes("PM");
+  const isAM = clean.includes("AM");
+  const digits = clean.replace(/[^0-9:]/g, "").split(":");
+  if (digits.length < 2) return "15:00";
+  let h = parseInt(digits[0], 10) || 0;
+  const m = parseInt(digits[1], 10) || 0;
+  if (isPM && h < 12) h += 12;
+  if (isAM && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 // ─── Inline Date Picker ────────────────────────────────────────────────────
