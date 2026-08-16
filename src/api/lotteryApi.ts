@@ -279,7 +279,7 @@ export async function searchTicketNumber(queryTicket: string, targetDate?: strin
   const rawQuery = queryTicket.trim().toUpperCase();
   const digitsOnly = rawQuery.replace(/\D/g, "");
   const normalizedQuery = rawQuery.replace(/\s+/g, "");
-  const querySeries = rawQuery.replace(/\d/g, "").trim();
+  const querySeries = rawQuery.replace(/[^A-Z]/gi, "").trim();
 
   const allResults = await fetchAllDraws();
   const matches: SearchMatch[] = [];
@@ -289,28 +289,33 @@ export async function searchTicketNumber(queryTicket: string, targetDate?: strin
       continue;
     }
     const firstTicketRaw = (draw.first?.ticket || "").trim().toUpperCase();
-    const firstTicketNormalized = firstTicketRaw.replace(/\s+/g, "");
     const firstTicketDigits = firstTicketRaw.replace(/\D/g, "");
-    const firstSeries = firstTicketRaw.replace(/\d/g, "").trim();
+    const firstSeries = firstTicketRaw.replace(/[^A-Z]/gi, "").trim();
 
-    const matchesFirstSeries = !querySeries || querySeries === firstSeries;
-
-    if (
-      firstTicketNormalized &&
-      matchesFirstSeries &&
-      (firstTicketNormalized === normalizedQuery ||
-        (digitsOnly.length === 6 && firstTicketDigits === digitsOnly) ||
-        (digitsOnly.length >= 2 && digitsOnly.length < 6 && firstTicketDigits.endsWith(digitsOnly)))
-    ) {
-      matches.push({
-        draw_date: draw.draw_date,
-        draw_name: draw.draw_name,
-        draw_code: draw.draw_code,
-        lottery_code: draw.lottery_code,
-        prize_tier: "1st Prize Winner",
-        prize_amount: draw.prizes?.amounts?.["1st"] || "1,00,00,000/-",
-        ticket_matched: draw.first?.ticket || "",
-      });
+    // 1st Prize requires exact 6 digits
+    if (firstTicketDigits.length === 6 && digitsOnly.length === 6 && firstTicketDigits === digitsOnly) {
+      if (querySeries && firstSeries && querySeries !== firstSeries) {
+        // Consolation prize: same 6 digits but different series
+        matches.push({
+          draw_date: draw.draw_date,
+          draw_name: draw.draw_name,
+          draw_code: draw.draw_code,
+          lottery_code: draw.lottery_code,
+          prize_tier: "Consolation Prize",
+          prize_amount: draw.prizes?.amounts?.["consolation"] || "₹8,000/-",
+          ticket_matched: `${querySeries} ${digitsOnly}`,
+        });
+      } else {
+        matches.push({
+          draw_date: draw.draw_date,
+          draw_name: draw.draw_name,
+          draw_code: draw.draw_code,
+          lottery_code: draw.lottery_code,
+          prize_tier: "1st Prize Winner",
+          prize_amount: draw.prizes?.amounts?.["1st"] || "1,00,00,000/-",
+          ticket_matched: draw.first?.ticket || "",
+        });
+      }
     }
 
     const tiers = [
@@ -333,16 +338,24 @@ export async function searchTicketNumber(queryTicket: string, targetDate?: strin
         for (const num of nums) {
           const normNum = num.trim().toUpperCase().replace(/\s+/g, "");
           const numDigits = normNum.replace(/\D/g, "");
-          const numSeries = normNum.replace(/\d/g, "").trim();
+          const numSeries = normNum.replace(/[^A-Z]/gi, "").trim();
 
           const matchesItemSeries = !querySeries || !numSeries || querySeries === numSeries;
 
-          if (
-            matchesItemSeries &&
-            (normNum === normalizedQuery ||
-              (digitsOnly.length === 6 && numDigits === digitsOnly) ||
-              (digitsOnly.length >= 2 && digitsOnly.length < 6 && numDigits.endsWith(digitsOnly)))
-          ) {
+          let isTierMatch = false;
+          if (numDigits.length === 6) {
+            // 6-digit prize requires 6 digits from user
+            if (digitsOnly.length === 6 && numDigits === digitsOnly && matchesItemSeries) {
+              isTierMatch = true;
+            }
+          } else if (numDigits.length >= 4) {
+            // 4-digit prize: matches if query ends with prize digits or exact match
+            if (digitsOnly === numDigits || (digitsOnly.length >= numDigits.length && digitsOnly.endsWith(numDigits))) {
+              isTierMatch = true;
+            }
+          }
+
+          if (isTierMatch) {
             matches.push({
               draw_date: draw.draw_date,
               draw_name: draw.draw_name,

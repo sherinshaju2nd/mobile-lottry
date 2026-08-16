@@ -64,8 +64,19 @@ export default function SearchScreen({ navigation }: any) {
 
   const handleBarcodeScanned = (scannedValue: string) => {
     setIsScannerOpen(false);
-    setScannedBarcode(scannedValue);
-    setQuery(scannedValue);
+    const trimmed = scannedValue.trim();
+    const digitsOnly = trimmed.replace(/\D/g, "");
+    let extractedTicket = trimmed;
+    if (digitsOnly.length > 6 && /^\d+$/.test(trimmed)) {
+      extractedTicket = digitsOnly.slice(-6);
+    } else {
+      const match = trimmed.match(/^([A-Za-z]{1,3})\s*(\d{6})$/);
+      if (match) {
+        extractedTicket = `${match[1].toUpperCase()} ${match[2]}`;
+      }
+    }
+    setScannedBarcode(extractedTicket);
+    setQuery(extractedTicket);
     setIsBarcodeResultOpen(true);
   };
 

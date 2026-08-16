@@ -96,8 +96,19 @@ export default function HomeScreen({ navigation }: any) {
 
   const handleBarcodeScanned = (scannedValue: string) => {
     setIsScannerOpen(false);
-    setScannedBarcode(scannedValue);
-    setTicketInput(scannedValue);
+    const trimmed = scannedValue.trim();
+    const digitsOnly = trimmed.replace(/\D/g, "");
+    let extractedTicket = trimmed;
+    if (digitsOnly.length > 6 && /^\d+$/.test(trimmed)) {
+      extractedTicket = digitsOnly.slice(-6);
+    } else {
+      const match = trimmed.match(/^([A-Za-z]{1,3})\s*(\d{6})$/);
+      if (match) {
+        extractedTicket = `${match[1].toUpperCase()} ${match[2]}`;
+      }
+    }
+    setScannedBarcode(extractedTicket);
+    setTicketInput(extractedTicket);
     setIsBarcodeResultOpen(true);
   };
 
@@ -181,6 +192,13 @@ export default function HomeScreen({ navigation }: any) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "postponed_draws" },
+        () => {
+          loadData();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lotteries" },
         () => {
           loadData();
         },

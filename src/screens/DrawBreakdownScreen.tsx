@@ -79,10 +79,21 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
   const handleBarcodeScanned = (scannedValue: string) => {
     setIsScannerOpen(false);
-    setScannedBarcode(scannedValue);
-    setCheckTicket(scannedValue);
+    const trimmed = scannedValue.trim();
+    const digitsOnly = trimmed.replace(/\D/g, "");
+    let extractedTicket = trimmed;
+    if (digitsOnly.length > 6 && /^\d+$/.test(trimmed)) {
+      extractedTicket = digitsOnly.slice(-6);
+    } else {
+      const match = trimmed.match(/^([A-Za-z]{1,3})\s*(\d{6})$/);
+      if (match) {
+        extractedTicket = `${match[1].toUpperCase()} ${match[2]}`;
+      }
+    }
+    setScannedBarcode(extractedTicket);
+    setCheckTicket(extractedTicket);
     setIsBarcodeResultOpen(true);
-    handleVerifyTicket(scannedValue);
+    handleVerifyTicket(extractedTicket);
   };
 
   useEffect(() => {
@@ -144,8 +155,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   useEffect(() => {
     if (!highlight || !drawResult) return;
     const query = String(highlight).trim();
-    const queryDigits = query.replace(/\D/g, "");
-    if (queryDigits.length < 4) return;
+    if (query.replace(/\D/g, "").length < 4) return;
 
     // Auto-fill and run verify
     setCheckTicket(query);
@@ -181,14 +191,22 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
     let digitsMatch = false;
 
-    if (queryDigits === prizeDigits) {
-      digitsMatch = true;
-    } else if (queryDigits.length === 6 && prizeDigits.length < 6 && prizeDigits.length >= 2) {
-      digitsMatch = queryDigits.endsWith(prizeDigits);
-    } else if (queryDigits.length < 6 && prizeDigits.length === 6 && queryDigits.length >= 4) {
-      digitsMatch = prizeDigits.endsWith(queryDigits);
-    } else if (queryDigits.length < 6 && prizeDigits.length < 6 && queryDigits.length >= 4 && prizeDigits.length >= 4) {
-      digitsMatch = queryDigits.endsWith(prizeDigits) || prizeDigits.endsWith(queryDigits);
+    if (prizeDigits.length === 6) {
+      // 6-digit prize requires 6 digits from user
+      if (queryDigits.length === 6 && queryDigits === prizeDigits) {
+        digitsMatch = true;
+      } else {
+        return { isMatch: false, exactSeriesMatch: false };
+      }
+    } else {
+      // 4-digit or partial prize
+      if (queryDigits === prizeDigits) {
+        digitsMatch = true;
+      } else if (queryDigits.length >= prizeDigits.length) {
+        digitsMatch = queryDigits.endsWith(prizeDigits);
+      } else {
+        return { isMatch: false, exactSeriesMatch: false };
+      }
     }
 
     if (!digitsMatch) {
