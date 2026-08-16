@@ -28,15 +28,17 @@ import * as Notifications from "expo-notifications";
 import { COLORS } from "./src/constants/colors";
 
 // Configure foreground notification display
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {}
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -332,22 +334,27 @@ function AppContent() {
   const navigationRef = useRef<any>(null);
 
   useEffect(() => {
-    // Request notification permission early
-    Notifications.requestPermissionsAsync().catch(() => {});
+    let responseSub: any = null;
+    let receiveSub: any = null;
 
-    // Handle tapping a notification from system tray → go to Reminders
-    const responseSub = Notifications.addNotificationResponseReceivedListener(() => {
-      navigationRef.current?.navigate("Reminders");
-    });
+    try {
+      // Request notification permission early
+      Notifications.requestPermissionsAsync().catch(() => {});
 
-    // Handle foreground notification receipt → show sleek in-app toast
-    const receiveSub = Notifications.addNotificationReceivedListener((notification) => {
-      setInAppNotif({
-        visible: true,
-        title: notification.request.content.title || "🎰 Kerala Lottery Update",
-        body: notification.request.content.body || "New draw alert!",
+      // Handle tapping a notification from system tray → go to Reminders
+      responseSub = Notifications.addNotificationResponseReceivedListener(() => {
+        navigationRef.current?.navigate("Reminders");
       });
-    });
+
+      // Handle foreground notification receipt → show sleek in-app toast
+      receiveSub = Notifications.addNotificationReceivedListener((notification) => {
+        setInAppNotif({
+          visible: true,
+          title: notification.request.content.title || "🎰 Kerala Lottery Update",
+          body: notification.request.content.body || "New draw alert!",
+        });
+      });
+    } catch {}
 
     async function loadAssetsAndCheckPrivacy() {
       try {
@@ -367,8 +374,8 @@ function AppContent() {
     loadAssetsAndCheckPrivacy();
 
     return () => {
-      responseSub.remove();
-      receiveSub.remove();
+      responseSub?.remove?.();
+      receiveSub?.remove?.();
     };
   }, []);
 

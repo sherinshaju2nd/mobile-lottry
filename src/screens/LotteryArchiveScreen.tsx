@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -240,6 +241,14 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             keyExtractor={(item: DrawResult) => item.draw_date}
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews={Platform.OS === "android"}
+            scrollEventThrottle={16}
+            keyboardShouldPersistTaps="handled"
+            overScrollMode="never"
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={5}
           />
         ) : (
           <View style={styles.emptyContainer}>

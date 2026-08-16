@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -19,7 +19,11 @@ import {
   Calendar,
   Ticket,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
+  Sparkles,
+  Clock,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import BarcodeScannerModal from "./BarcodeScannerModal";
@@ -35,12 +39,15 @@ import {
   openNotificationSettings,
 } from "../utils/notificationScheduler";
 import { fetchLotteries } from "../api/lotteryApi";
+import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
 
 interface LotteryOption {
   name: string;
+  nameMl?: string;
   code: string;
   drawTime: string;
   day: string;
+  isBumper?: boolean;
 }
 
 function convertTo24h(timeStr: string): string {
@@ -57,373 +64,40 @@ function convertTo24h(timeStr: string): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// ─── Inline Date Picker ────────────────────────────────────────────────────
-const MONTHS = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+function getNextDrawDateForLottery(lotteryDay: string): Date {
+  const dayMap: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+  const targetDay = dayMap[lotteryDay];
+  const now = new Date();
+  if (targetDay === undefined) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  }
+  const currentDay = now.getDay();
+  let daysToAdd = (targetDay - currentDay + 7) % 7;
+  const istHours = now.getUTCHours() + 5.5;
+  if (daysToAdd === 0 && istHours >= 15) {
+    daysToAdd = 7;
+  }
+  const result = new Date(now);
+  result.setDate(result.getDate() + daysToAdd);
+  return result;
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
 ];
+const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-function getDaysInMonth(month: number, year: number) {
-  return new Date(year, month + 1, 0).getDate();
-}
-
-const ITEM_H = 50;
-const VISIBLE_ITEMS = 5; // must be odd
-const PICKER_H = ITEM_H * VISIBLE_ITEMS;
-
-function SpinnerColumn({
-  items,
-  selectedIndex,
-  onSelect,
-  flex,
-  align = "center",
-}: {
-  items: string[];
-  selectedIndex: number;
-  onSelect: (i: number) => void;
-  flex?: number;
-  align?: "left" | "center" | "right";
-}) {
-  const ref = useRef<ScrollView>(null);
-  const lastIdx = useRef(selectedIndex);
-
-  useEffect(() => {
-    // Scroll to initial position without animation on first mount
-    setTimeout(() => {
-      ref.current?.scrollTo({ y: selectedIndex * ITEM_H, animated: false });
-    }, 50);
-  }, []);
-
-  // When selectedIndex changes externally (e.g. month changes day count), re-scroll
-  useEffect(() => {
-    if (lastIdx.current !== selectedIndex) {
-      lastIdx.current = selectedIndex;
-      ref.current?.scrollTo({ y: selectedIndex * ITEM_H, animated: true });
-    }
-  }, [selectedIndex]);
-
-  const textAlign =
-    align === "left" ? "left" : align === "right" ? "right" : "center";
-
-  return (
-    <View style={[pS.col, flex !== undefined ? { flex } : {}]}>
-      {/* Top fade */}
-      <View style={pS.fadeTop} pointerEvents="none" />
-      {/* Bottom fade */}
-      <View style={pS.fadeBottom} pointerEvents="none" />
-      {/* Center selection pill */}
-      <View style={pS.pill} pointerEvents="none" />
-
-      <ScrollView
-        ref={ref}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={ITEM_H}
-        decelerationRate="fast"
-        onMomentumScrollEnd={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
-          const clamped = Math.min(Math.max(idx, 0), items.length - 1);
-          lastIdx.current = clamped;
-          onSelect(clamped);
-        }}
-        onScrollEndDrag={(e) => {
-          const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
-          const clamped = Math.min(Math.max(idx, 0), items.length - 1);
-          lastIdx.current = clamped;
-          onSelect(clamped);
-        }}
-        contentContainerStyle={{
-          paddingVertical: ITEM_H * Math.floor(VISIBLE_ITEMS / 2),
-        }}
-        style={{ height: PICKER_H }}
-      >
-        {items.map((item, i) => {
-          const dist = Math.abs(i - selectedIndex);
-          const opacity = dist === 0 ? 1 : dist === 1 ? 0.45 : 0.2;
-          const fontSize = dist === 0 ? 20 : dist === 1 ? 16 : 14;
-          const fontWeight: any = dist === 0 ? "800" : "500";
-          const color = dist === 0 ? COLORS.primary : "#6B7280";
-          return (
-            <TouchableOpacity
-              key={i}
-              activeOpacity={0.7}
-              style={pS.item}
-              onPress={() => {
-                lastIdx.current = i;
-                onSelect(i);
-                ref.current?.scrollTo({ y: i * ITEM_H, animated: true });
-              }}
-            >
-              <Text
-                style={[
-                  pS.itemText,
-                  { opacity, fontSize, fontWeight, color, textAlign },
-                ]}
-                numberOfLines={1}
-              >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-}
-
-const pS = StyleSheet.create({
-  col: {
-    position: "relative",
-    overflow: "hidden",
-  },
-  item: {
-    height: ITEM_H,
-    justifyContent: "center",
-    paddingHorizontal: 6,
-  },
-  itemText: {
-    letterSpacing: 0.2,
-  },
-  pill: {
-    position: "absolute",
-    top: ITEM_H * Math.floor(VISIBLE_ITEMS / 2),
-    left: 6,
-    right: 6,
-    height: ITEM_H,
-    backgroundColor: "rgba(11, 60, 93, 0.08)",
-    borderRadius: 12,
-    zIndex: 0,
-  },
-  fadeTop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ITEM_H * 2,
-    zIndex: 1,
-    // Simulated gradient from white to transparent
-    backgroundColor: "transparent",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  fadeBottom: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: ITEM_H * 2,
-    zIndex: 1,
-    backgroundColor: "transparent",
-  },
-});
-
-// ─── Date Picker Modal ─────────────────────────────────────────────────────
-function DatePickerModal({
-  visible,
-  value,
-  onClose,
-  onConfirm,
-}: {
-  visible: boolean;
-  value: Date;
-  onClose: () => void;
-  onConfirm: (d: Date) => void;
-}) {
-  const today = new Date();
-  const minYear = today.getFullYear();
-  const maxYear = minYear + 3;
-
-  const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) =>
-    String(minYear + i)
-  );
-
-  const [selYear, setSelYear] = useState(value.getFullYear());
-  const [selMonth, setSelMonth] = useState(value.getMonth());
-  const [selDay, setSelDay] = useState(value.getDate());
-
-  useEffect(() => {
-    if (visible) {
-      setSelYear(value.getFullYear());
-      setSelMonth(value.getMonth());
-      setSelDay(value.getDate());
-    }
-  }, [visible, value]);
-
-  const daysInMonth = getDaysInMonth(selMonth, selYear);
-  const days = Array.from({ length: daysInMonth }, (_, i) =>
-    String(i + 1).padStart(2, "0")
-  );
-  const adjustedDay = Math.min(selDay, daysInMonth);
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={dpStyles.backdrop}>
-        <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={onClose} />
-        <View style={dpStyles.sheet}>
-          {/* Drag handle */}
-          <View style={dpStyles.handle} />
-
-          <View style={dpStyles.header}>
-            <TouchableOpacity style={dpStyles.headerBtn} onPress={onClose}>
-              <Text style={dpStyles.cancel}>Cancel</Text>
-            </TouchableOpacity>
-            <View style={dpStyles.headerCenter}>
-              <Calendar size={16} color={COLORS.primary} />
-              <Text style={dpStyles.title}>Draw Date</Text>
-            </View>
-            <TouchableOpacity
-              style={dpStyles.headerBtn}
-              onPress={() => {
-                onConfirm(new Date(selYear, selMonth, adjustedDay));
-              }}
-            >
-              <Text style={dpStyles.done}>Done</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Selected date preview */}
-          <View style={dpStyles.preview}>
-            <Text style={dpStyles.previewText}>
-              {new Date(selYear, selMonth, adjustedDay).toLocaleDateString("en-IN", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </Text>
-          </View>
-
-          <View style={dpStyles.pickerRow}>
-            {/* Day */}
-            <SpinnerColumn
-              items={days}
-              selectedIndex={adjustedDay - 1}
-              onSelect={(i) => setSelDay(i + 1)}
-              flex={1}
-              align="center"
-            />
-            {/* Separator */}
-            <Text style={dpStyles.sep}>/</Text>
-            {/* Month */}
-            <SpinnerColumn
-              items={MONTHS.map((m) => m.substring(0, 3))}
-              selectedIndex={selMonth}
-              onSelect={setSelMonth}
-              flex={2}
-              align="center"
-            />
-            {/* Separator */}
-            <Text style={dpStyles.sep}>/</Text>
-            {/* Year */}
-            <SpinnerColumn
-              items={years}
-              selectedIndex={selYear - minYear}
-              onSelect={(i) => setSelYear(minYear + i)}
-              flex={1.5}
-              align="center"
-            />
-          </View>
-
-          {/* Column labels */}
-          <View style={dpStyles.labels}>
-            <Text style={[dpStyles.colLabel, { flex: 1 }]}>DAY</Text>
-            <View style={{ width: 14 }} />
-            <Text style={[dpStyles.colLabel, { flex: 2 }]}>MONTH</Text>
-            <View style={{ width: 14 }} />
-            <Text style={[dpStyles.colLabel, { flex: 1.5 }]}>YEAR</Text>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-const dpStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#D1D5DB",
-    alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingBottom: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  headerBtn: { paddingHorizontal: 12, paddingVertical: 8 },
-  headerCenter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  title: { fontSize: 15, fontWeight: "700", color: "#1F2937" },
-  cancel: { fontSize: 15, color: "#6B7280", fontWeight: "600" },
-  done: { fontSize: 15, color: COLORS.primary, fontWeight: "800" },
-  preview: {
-    marginHorizontal: 20,
-    marginVertical: 8,
-    backgroundColor: "#F0F9FF",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#BAE6FD",
-  },
-  previewText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.primary,
-    textAlign: "center",
-  },
-  pickerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  sep: {
-    fontSize: 20,
-    color: "#D1D5DB",
-    fontWeight: "300",
-    width: 14,
-    textAlign: "center",
-  },
-  labels: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    marginTop: 4,
-  },
-  colLabel: {
-    textAlign: "center",
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#9CA3AF",
-    letterSpacing: 1,
-  },
-});
-
-// ─── Main Component ────────────────────────────────────────────────────────
 interface AddReminderModalProps {
   visible: boolean;
   onClose: () => void;
@@ -439,23 +113,33 @@ export default function AddReminderModal({
 }: AddReminderModalProps) {
   const [ticketNumber, setTicketNumber] = useState("");
   const [selectedLottery, setSelectedLottery] = useState<LotteryOption | null>(null);
-  const [lotteries, setLotteries] = useState<LotteryOption[]>([]);
+  const [lotteries, setLotteries] = useState<LotteryOption[]>(ALL_LOTTERIES);
   const [loadingLotteries, setLoadingLotteries] = useState(false);
-  const [showLotteryPicker, setShowLotteryPicker] = useState(false);
-  const [drawDate, setDrawDate] = useState(() => {
+  const [activeSheet, setActiveSheet] = useState<"form" | "lotteryPicker" | "datePicker">("form");
+
+  const [drawDate, setDrawDate] = useState<Date>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d;
   });
-  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Date picker calendar matrix state
+  const [calYear, setCalYear] = useState(drawDate.getFullYear());
+  const [calMonth, setCalMonth] = useState(drawDate.getMonth());
+
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (visible) {
+      setActiveSheet("form");
       setLoadingLotteries(true);
       fetchLotteries()
-        .then((data) => setLotteries(data as LotteryOption[]))
+        .then((data) => {
+          if (data && data.length > 0) {
+            setLotteries(data as LotteryOption[]);
+          }
+        })
         .catch(() => {})
         .finally(() => setLoadingLotteries(false));
     }
@@ -465,13 +149,18 @@ export default function AddReminderModal({
     if (editReminder && visible) {
       setTicketNumber(editReminder.ticketNumber);
       const [y, m, d] = editReminder.drawDate.split("-").map(Number);
-      setDrawDate(new Date(y, m - 1, d));
+      const targetDate = new Date(y, m - 1, d);
+      setDrawDate(targetDate);
+      setCalYear(targetDate.getFullYear());
+      setCalMonth(targetDate.getMonth());
     } else if (!editReminder && visible) {
       setTicketNumber("");
       setSelectedLottery(null);
       const d = new Date();
       d.setDate(d.getDate() + 1);
       setDrawDate(d);
+      setCalYear(d.getFullYear());
+      setCalMonth(d.getMonth());
     }
   }, [editReminder, visible]);
 
@@ -492,6 +181,41 @@ export default function AddReminderModal({
 
   const formatDate = (date: Date) =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+  const handleLotterySelect = (item: LotteryOption) => {
+    setSelectedLottery(item);
+    if (!editReminder) {
+      const nextDate = getNextDrawDateForLottery(item.day);
+      setDrawDate(nextDate);
+      setCalYear(nextDate.getFullYear());
+      setCalMonth(nextDate.getMonth());
+    }
+    setActiveSheet("form");
+  };
+
+  const handleDayClick = (day: number) => {
+    const newDate = new Date(calYear, calMonth, day);
+    setDrawDate(newDate);
+    setActiveSheet("form");
+  };
+
+  const handlePrevMonth = () => {
+    if (calMonth === 0) {
+      setCalMonth(11);
+      setCalYear((y) => y - 1);
+    } else {
+      setCalMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calMonth === 11) {
+      setCalMonth(0);
+      setCalYear((y) => y + 1);
+    } else {
+      setCalMonth((m) => m + 1);
+    }
+  };
 
   const handleSave = async () => {
     if (!ticketNumber.trim()) {
@@ -543,196 +267,359 @@ export default function AddReminderModal({
     }
   };
 
+  // Calendar matrix calculations
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
+  const today = new Date();
+  const isCurrentMonthToday = today.getFullYear() === calYear && today.getMonth() === calMonth;
+  const isCurrentMonthSelected = drawDate.getFullYear() === calYear && drawDate.getMonth() === calMonth;
+
   return (
     <>
       <Modal
         visible={visible}
         animationType="slide"
         transparent
-        onRequestClose={onClose}
+        onRequestClose={() => {
+          if (activeSheet !== "form") {
+            setActiveSheet("form");
+          } else {
+            onClose();
+          }
+        }}
       >
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <Ticket size={20} color={COLORS.primary} />
-                <Text style={styles.headerTitle}>
-                  {editReminder ? "Edit Reminder" : "Add Ticket Reminder"}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <X size={22} color={COLORS.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.body}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {/* Ticket Number */}
-              <Text style={styles.label}>Ticket Number</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. BT 704781"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={ticketNumber}
-                  onChangeText={setTicketNumber}
-                  autoCapitalize="characters"
-                />
-                <TouchableOpacity
-                  style={styles.scanBtn}
-                  onPress={() => setIsScannerOpen(true)}
-                >
-                  <Scan size={20} color={COLORS.white} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Lottery Name */}
-              <Text style={styles.label}>Lottery Name</Text>
-              <TouchableOpacity
-                style={styles.selectBtn}
-                onPress={() => setShowLotteryPicker(true)}
-              >
-                {loadingLotteries ? (
-                  <ActivityIndicator size="small" color={COLORS.primary} />
-                ) : (
-                  <>
-                    <Text
-                      style={[
-                        styles.selectBtnText,
-                        !selectedLottery && { color: COLORS.textMuted },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {selectedLottery
-                        ? `${selectedLottery.name} (${selectedLottery.day})`
-                        : "Select lottery..."}
+            {/* Sheet 1: Main Add/Edit Reminder Form */}
+            {activeSheet === "form" && (
+              <>
+                <View style={styles.header}>
+                  <View style={styles.headerLeft}>
+                    <Ticket size={20} color={COLORS.primary} />
+                    <Text style={styles.headerTitle}>
+                      {editReminder ? "Edit Reminder" : "Add Ticket Reminder"}
                     </Text>
-                    <ChevronDown size={18} color={COLORS.textMuted} />
-                  </>
-                )}
-              </TouchableOpacity>
-              {selectedLottery && (
-                <Text style={styles.drawTimeHint}>
-                  ⏰ Draw time: {selectedLottery.drawTime}
-                </Text>
-              )}
+                  </View>
+                  <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                    <X size={22} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
 
-              {/* Draw Date */}
-              <Text style={styles.label}>Draw Date</Text>
-              <TouchableOpacity
-                style={styles.dateBtn}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Calendar size={18} color={COLORS.primary} />
-                <Text style={styles.dateBtnText}>
-                  {formatDateDisplay(drawDate)}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Notification info */}
-              <View style={styles.notifInfo}>
-                <Text style={styles.notifInfoText}>
-                  🔔 You'll receive a push notification 5 minutes before the draw starts.
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.saveBtn, saving && { opacity: 0.6 }]}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                <Save size={18} color={COLORS.white} />
-                <Text style={styles.saveBtnText}>
-                  {saving
-                    ? "Saving..."
-                    : editReminder
-                    ? "Update Reminder"
-                    : "Save Reminder"}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Custom Date Picker — rendered OUTSIDE the main modal */}
-      <DatePickerModal
-        visible={showDatePicker}
-        value={drawDate}
-        onClose={() => setShowDatePicker(false)}
-        onConfirm={(d) => {
-          setDrawDate(d);
-          setShowDatePicker(false);
-        }}
-      />
-
-      {/* Lottery Picker */}
-      <Modal
-        visible={showLotteryPicker}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowLotteryPicker(false)}
-      >
-        <View style={styles.backdrop}>
-          <View style={[styles.sheet, { maxHeight: "70%" }]}>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Select Lottery</Text>
-              <TouchableOpacity onPress={() => setShowLotteryPicker(false)}>
-                <X size={22} color={COLORS.textMuted} />
-              </TouchableOpacity>
-            </View>
-            {loadingLotteries ? (
-              <View style={{ padding: 40, alignItems: "center" }}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-              </View>
-            ) : (
-              <FlatList
-                data={lotteries}
-                keyExtractor={(item) => item.code}
-                contentContainerStyle={{ paddingBottom: 24 }}
-                renderItem={({ item }) => {
-                  const isSelected = selectedLottery?.code === item.code;
-                  return (
+                <ScrollView
+                  contentContainerStyle={styles.body}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {/* Ticket Number */}
+                  <Text style={styles.label}>Ticket Number</Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. BT 704781"
+                      placeholderTextColor={COLORS.textMuted}
+                      value={ticketNumber}
+                      onChangeText={setTicketNumber}
+                      autoCapitalize="characters"
+                    />
                     <TouchableOpacity
-                      style={[
-                        styles.lotteryRow,
-                        isSelected && styles.lotteryRowSelected,
-                      ]}
+                      style={styles.scanBtn}
+                      onPress={() => setIsScannerOpen(true)}
+                    >
+                      <Scan size={20} color={COLORS.white} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Lottery Name Selection */}
+                  <Text style={styles.label}>Lottery Name</Text>
+                  <TouchableOpacity
+                    style={styles.selectBtn}
+                    onPress={() => setActiveSheet("lotteryPicker")}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[
+                          styles.selectBtnText,
+                          !selectedLottery && { color: COLORS.textMuted },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {selectedLottery
+                          ? `${selectedLottery.name} ${selectedLottery.nameMl ? `(${selectedLottery.nameMl})` : ""}`
+                          : "Select lottery name..."}
+                      </Text>
+                      {selectedLottery && (
+                        <Text style={styles.selectBtnSubtext}>
+                          Draw Day: {selectedLottery.day} · {selectedLottery.drawTime}
+                        </Text>
+                      )}
+                    </View>
+                    <ChevronDown size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+
+                  {/* Draw Date Selection */}
+                  <Text style={styles.label}>Draw Date</Text>
+                  <TouchableOpacity
+                    style={styles.dateBtn}
+                    onPress={() => {
+                      setCalYear(drawDate.getFullYear());
+                      setCalMonth(drawDate.getMonth());
+                      setActiveSheet("datePicker");
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Calendar size={18} color={COLORS.primary} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.dateBtnText}>
+                        {formatDateDisplay(drawDate)}
+                      </Text>
+                    </View>
+                    <ChevronDown size={18} color={COLORS.primary} />
+                  </TouchableOpacity>
+
+                  {/* Notification info banner */}
+                  <View style={styles.notifInfo}>
+                    <Text style={styles.notifInfoText}>
+                      🔔 You'll receive a high-priority push notification 5 minutes before the draw begins.
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                    onPress={handleSave}
+                    disabled={saving}
+                  >
+                    <Save size={18} color={COLORS.white} />
+                    <Text style={styles.saveBtnText}>
+                      {saving
+                        ? "Saving..."
+                        : editReminder
+                        ? "Update Reminder"
+                        : "Save Reminder"}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </>
+            )}
+
+            {/* Sheet 2: Lottery Selector Overlay */}
+            {activeSheet === "lotteryPicker" && (
+              <View style={{ flex: 1, maxHeight: "100%" }}>
+                <View style={styles.header}>
+                  <View style={styles.headerLeft}>
+                    <Ticket size={20} color={COLORS.primary} />
+                    <Text style={styles.headerTitle}>Select Lottery</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setActiveSheet("form")}
+                    style={styles.closeBtn}
+                  >
+                    <X size={22} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+
+                <FlatList
+                  data={lotteries}
+                  keyExtractor={(item) => item.code}
+                  contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const isSelected = selectedLottery?.code === item.code;
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.lotteryCard,
+                          isSelected && styles.lotteryCardSelected,
+                        ]}
+                        onPress={() => handleLotterySelect(item)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.lotteryCardContent}>
+                          <View style={styles.lotteryCardHeader}>
+                            <Text
+                              style={[
+                                styles.lotteryCardTitle,
+                                isSelected && { color: COLORS.primary },
+                              ]}
+                            >
+                              {item.name}
+                            </Text>
+                            <View
+                              style={[
+                                styles.codeBadge,
+                                item.isBumper ? styles.codeBadgeBumper : styles.codeBadgeWeekly,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.codeBadgeText,
+                                  item.isBumper ? styles.codeBadgeTextBumper : styles.codeBadgeTextWeekly,
+                                ]}
+                              >
+                                {item.code}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {item.nameMl ? (
+                            <Text style={styles.lotteryCardMl}>{item.nameMl}</Text>
+                          ) : null}
+
+                          <View style={styles.lotteryCardMeta}>
+                            <View style={styles.metaPill}>
+                              <Calendar size={12} color="#0369A1" />
+                              <Text style={styles.metaPillText}>{item.day}</Text>
+                            </View>
+                            <View style={styles.metaPill}>
+                              <Clock size={12} color="#0369A1" />
+                              <Text style={styles.metaPillText}>{item.drawTime}</Text>
+                            </View>
+                          </View>
+                        </View>
+
+                        {isSelected && (
+                          <View style={styles.checkCircle}>
+                            <Check size={16} color={COLORS.white} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  }}
+                  ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                />
+              </View>
+            )}
+
+            {/* Sheet 3: Date Picker Calendar Overlay */}
+            {activeSheet === "datePicker" && (
+              <View style={{ flex: 1 }}>
+                <View style={styles.header}>
+                  <View style={styles.headerLeft}>
+                    <Calendar size={20} color={COLORS.primary} />
+                    <Text style={styles.headerTitle}>Select Draw Date</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setActiveSheet("form")}
+                    style={styles.closeBtn}
+                  >
+                    <X size={22} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView
+                  contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {/* Month Navigation */}
+                  <View style={styles.calNav}>
+                    <TouchableOpacity
+                      style={styles.calNavBtn}
+                      onPress={handlePrevMonth}
+                    >
+                      <ChevronLeft size={20} color={COLORS.textDark} />
+                    </TouchableOpacity>
+                    <Text style={styles.calNavTitle}>
+                      {MONTH_NAMES[calMonth]} {calYear}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.calNavBtn}
+                      onPress={handleNextMonth}
+                    >
+                      <ChevronRight size={20} color={COLORS.textDark} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Day Headers (Su, Mo, Tu...) */}
+                  <View style={styles.dayNamesRow}>
+                    {DAY_NAMES.map((name, idx) => (
+                      <Text key={idx} style={styles.dayNameCell}>
+                        {name}
+                      </Text>
+                    ))}
+                  </View>
+
+                  {/* Calendar Matrix */}
+                  <View style={styles.calendarGrid}>
+                    {Array.from({ length: firstDayIndex }).map((_, i) => (
+                      <View key={`empty-${i}`} style={styles.calendarCell} />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const dayNum = i + 1;
+                      const isToday = isCurrentMonthToday && today.getDate() === dayNum;
+                      const isSelected = isCurrentMonthSelected && drawDate.getDate() === dayNum;
+
+                      return (
+                        <TouchableOpacity
+                          key={`day-${dayNum}`}
+                          style={[
+                            styles.calendarCell,
+                            isSelected && styles.calendarCellSelected,
+                            isToday && !isSelected && styles.calendarCellToday,
+                          ]}
+                          onPress={() => handleDayClick(dayNum)}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            style={[
+                              styles.calendarCellText,
+                              isSelected && styles.calendarCellTextSelected,
+                              isToday && !isSelected && styles.calendarCellTextToday,
+                            ]}
+                          >
+                            {dayNum}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {/* Quick Preset Buttons */}
+                  <Text style={[styles.label, { marginTop: 20 }]}>Quick Presets</Text>
+                  <View style={styles.presetsRow}>
+                    <TouchableOpacity
+                      style={styles.presetBtn}
                       onPress={() => {
-                        setSelectedLottery(item);
-                        setShowLotteryPicker(false);
+                        const d = new Date();
+                        setDrawDate(d);
+                        setActiveSheet("form");
                       }}
                     >
-                      <View style={styles.lotteryRowLeft}>
-                        <Text
-                          style={[
-                            styles.lotteryRowName,
-                            isSelected && { color: COLORS.primary },
-                          ]}
-                        >
-                          {item.name}
-                        </Text>
-                        <Text style={styles.lotteryRowMeta}>
-                          {item.day} · {item.drawTime}
-                        </Text>
-                      </View>
-                      {isSelected && <Check size={18} color={COLORS.primary} />}
+                      <Text style={styles.presetBtnText}>Today</Text>
                     </TouchableOpacity>
-                  );
-                }}
-                ItemSeparatorComponent={() => (
-                  <View style={{ height: 1, backgroundColor: "#F3F4F6" }} />
-                )}
-              />
+                    <TouchableOpacity
+                      style={styles.presetBtn}
+                      onPress={() => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + 1);
+                        setDrawDate(d);
+                        setActiveSheet("form");
+                      }}
+                    >
+                      <Text style={styles.presetBtnText}>Tomorrow</Text>
+                    </TouchableOpacity>
+                    {selectedLottery && (
+                      <TouchableOpacity
+                        style={[styles.presetBtn, { backgroundColor: "#ECFDF5", borderColor: "#A7F3D0" }]}
+                        onPress={() => {
+                          const nextDate = getNextDrawDateForLottery(selectedLottery.day);
+                          setDrawDate(nextDate);
+                          setActiveSheet("form");
+                        }}
+                      >
+                        <Text style={[styles.presetBtnText, { color: "#065F46" }]}>
+                          Next {selectedLottery.day}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </ScrollView>
+              </View>
             )}
           </View>
         </View>
       </Modal>
 
-      {/* Barcode Scanner */}
+      {/* Barcode Scanner Modal */}
       <BarcodeScannerModal
         visible={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
@@ -748,23 +635,29 @@ export default function AddReminderModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
   },
   sheet: {
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: "92%",
-    paddingBottom: 32,
+    maxHeight: "90%",
+    minHeight: 480,
+    paddingBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingTop: 18,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderColor: "#F0F0F0",
   },
@@ -776,7 +669,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     color: "#374151",
-    marginTop: 16,
+    marginTop: 14,
     marginBottom: 6,
   },
   inputRow: { flexDirection: "row", gap: 8, alignItems: "center" },
@@ -804,26 +697,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 48,
+    minHeight: 52,
     borderWidth: 1.5,
     borderColor: "#E5E7EB",
     borderRadius: 12,
     paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: "#F9FAFB",
   },
   selectBtnText: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#1F2937",
-    flex: 1,
-    marginRight: 8,
   },
-  drawTimeHint: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+  selectBtnSubtext: {
+    fontSize: 11.5,
     fontWeight: "600",
-    marginTop: 4,
-    marginLeft: 4,
+    color: COLORS.primary,
+    marginTop: 2,
   },
   dateBtn: {
     flexDirection: "row",
@@ -836,7 +727,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: "#F9FAFB",
   },
-  dateBtnText: { fontSize: 14, fontWeight: "600", color: "#1F2937" },
+  dateBtnText: { fontSize: 14, fontWeight: "700", color: "#1F2937" },
   notifInfo: {
     backgroundColor: "#FFF8E1",
     borderRadius: 10,
@@ -867,20 +758,133 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   saveBtnText: { color: COLORS.white, fontSize: 15, fontWeight: "800" },
-  lotteryRow: {
+
+  // Lottery Card Styles
+  lotteryCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
   },
-  lotteryRowSelected: { backgroundColor: "#F0F9FF" },
-  lotteryRowLeft: { flex: 1 },
-  lotteryRowName: { fontSize: 15, fontWeight: "700", color: "#1F2937" },
-  lotteryRowMeta: {
+  lotteryCardSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: "#F0FDF4",
+  },
+  lotteryCardContent: { flex: 1, marginRight: 8 },
+  lotteryCardHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  lotteryCardTitle: { fontSize: 15, fontWeight: "800", color: "#1F2937" },
+  codeBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
+  codeBadgeWeekly: { backgroundColor: "#E0F2FE" },
+  codeBadgeBumper: { backgroundColor: "#FEF3C7" },
+  codeBadgeText: { fontSize: 11, fontWeight: "900" },
+  codeBadgeTextWeekly: { color: "#0369A1" },
+  codeBadgeTextBumper: { color: "#B45309" },
+  lotteryCardMl: { fontSize: 12, color: "#6B7280", marginTop: 2 },
+  lotteryCardMeta: { flexDirection: "row", gap: 8, marginTop: 6 },
+  metaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#F0F9FF",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  metaPillText: { fontSize: 11, fontWeight: "700", color: "#0369A1" },
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Calendar Picker Styles
+  calNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  calNavBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  calNavTitle: { fontSize: 16, fontWeight: "800", color: "#1F2937" },
+  dayNamesRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 8,
+  },
+  dayNameCell: {
+    width: 36,
+    textAlign: "center",
     fontSize: 12,
-    color: COLORS.textMuted,
+    fontWeight: "700",
+    color: "#9CA3AF",
+  },
+  calendarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+  },
+  calendarCell: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 3,
+    borderRadius: 21,
+  },
+  calendarCellSelected: {
+    backgroundColor: COLORS.primary,
+  },
+  calendarCellToday: {
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: "#F0FDF4",
+  },
+  calendarCellText: {
+    fontSize: 14,
     fontWeight: "600",
-    marginTop: 2,
+    color: "#1F2937",
+  },
+  calendarCellTextSelected: {
+    color: COLORS.white,
+    fontWeight: "800",
+  },
+  calendarCellTextToday: {
+    color: COLORS.primary,
+    fontWeight: "800",
+  },
+  presetsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 6,
+  },
+  presetBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#F9FAFB",
+  },
+  presetBtnText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#374151",
   },
 });
