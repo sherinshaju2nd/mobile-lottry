@@ -30,6 +30,7 @@ import {
   SearchMatch,
   fetchAllDraws,
   DrawResult,
+  formatTicketSearchInput,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -285,10 +286,10 @@ export default function SearchScreen({ navigation }: any) {
             >
               <TextInput
                 style={[styles.input, { flex: 1 }]}
-                placeholder={t("enter_ticket_placeholder")}
+                placeholder={language === "ml" ? "ഉദാ: MJ 136429, 136429, അല്ലെങ്കിൽ 6429" : "e.g. MJ 136429, 136429, or 6429"}
                 placeholderTextColor={COLORS.textLight}
                 value={query}
-                onChangeText={setQuery}
+                onChangeText={(text) => setQuery(formatTicketSearchInput(text))}
                 autoCapitalize="characters"
               />
               <TouchableOpacity

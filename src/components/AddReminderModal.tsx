@@ -38,7 +38,7 @@ import {
   getNotificationPermissionStatus,
   openNotificationSettings,
 } from "../utils/notificationScheduler";
-import { fetchLotteries } from "../api/lotteryApi";
+import { fetchLotteries, formatTicketSearchInput } from "../api/lotteryApi";
 import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
 
 interface LotteryOption {
@@ -315,10 +315,10 @@ export default function AddReminderModal({
                   <View style={styles.inputRow}>
                     <TextInput
                       style={styles.input}
-                      placeholder="e.g. BT 704781"
+                      placeholder="e.g. MJ 136429, 136429, or 6429"
                       placeholderTextColor={COLORS.textMuted}
                       value={ticketNumber}
-                      onChangeText={setTicketNumber}
+                      onChangeText={(text) => setTicketNumber(formatTicketSearchInput(text))}
                       autoCapitalize="characters"
                     />
                     <TouchableOpacity

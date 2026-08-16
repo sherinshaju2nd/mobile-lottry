@@ -54,6 +54,7 @@ import {
   fetchBumperLotteries,
   checkIsDatePostponed,
   PostponedDraw,
+  formatTicketSearchInput,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -657,7 +658,7 @@ export default function HomeScreen({ navigation }: any) {
                   }
                   placeholderTextColor={COLORS.textLight}
                   value={ticketInput}
-                  onChangeText={setTicketInput}
+                  onChangeText={(text) => setTicketInput(formatTicketSearchInput(text))}
                   keyboardType="default"
                   autoCapitalize="characters"
                 />

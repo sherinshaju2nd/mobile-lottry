@@ -452,6 +452,28 @@ export function findTopPrizePartialHint(
   return null;
 }
 
+export function formatTicketSearchInput(text: string): string {
+  if (!text) return "";
+
+  // Extract up to 2 letters (series) and up to 6 digits (ticket number)
+  const letters = text.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
+  const digits = text.replace(/\D/g, "").slice(0, 6);
+
+  if (letters.length > 0) {
+    if (digits.length > 0) {
+      return `${letters} ${digits}`;
+    }
+    // If user typed a space after letters, retain it
+    if (text.endsWith(" ") || text.includes(" ")) {
+      return `${letters} `;
+    }
+    return letters;
+  }
+
+  // If digits only
+  return digits;
+}
+
 export function getSearchFeedbackMessage(
   queryInput: string,
   language: string = "en",
