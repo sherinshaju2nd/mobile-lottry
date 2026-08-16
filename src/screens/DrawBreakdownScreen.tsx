@@ -28,6 +28,8 @@ import {
   supabase,
   checkIsDatePostponed,
   PostponedDraw,
+  findTopPrizePartialHint,
+  getSearchFeedbackMessage,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -66,6 +68,19 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
+  const [copiedToast, setCopiedToast] = useState<string | null>(null);
+
+  const handleCopyTicket = (ticketNum: string) => {
+    if (!ticketNum || ticketNum === "N/A") return;
+    setCopiedToast(
+      language === "ml"
+        ? `ടിക്കറ്റ് ${ticketNum} കോപ്പി ചെയ്തു!`
+        : `Ticket ${ticketNum} copied!`
+    );
+    setTimeout(() => {
+      setCopiedToast(null);
+    }, 2200);
+  };
 
   // Refs for auto-scroll to checker
   const scrollViewRef = useRef<ScrollView>(null);
@@ -307,11 +322,8 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
       setCheckErrorMsg(null);
     } else {
       setCheckMatches(null);
-      setCheckErrorMsg(
-        language === "ml"
-          ? `ടിക്കറ്റ് "${targetTicket}" ലോട്ടറി ഫലത്തിൽ സമ്മാനം ഒന്നും നേടിയിട്ടില്ല.`
-          : `Ticket "${targetTicket}" did not win a prize in this draw.`
-      );
+      const topHint = findTopPrizePartialHint(query, drawResult);
+      setCheckErrorMsg(getSearchFeedbackMessage(targetTicket, language, date, topHint));
     }
   };
 
@@ -325,6 +337,8 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     { key: "7th", label: language === "ml" ? "ഏഴാം സമ്മാനം" : "7th Prize", color: "#EA580C" },
     { key: "8th", label: language === "ml" ? "എട്ടാം സമ്മാനം" : "8th Prize", color: "#DC2626" },
     { key: "9th", label: language === "ml" ? "ഒൻപതാം സമ്മാനം" : "9th Prize", color: "#475569" },
+    { key: "guess", label: language === "ml" ? "ഭാഗ്യ സംഖ്യകൾ (Guess Numbers)" : "Guessing Numbers", color: "#8B5CF6" },
+    { key: "mc", label: language === "ml" ? "മെഷീൻ ക്ലബ്ബ് (MC) സംഖ്യകൾ" : "Machine Center (MC) Numbers", color: "#EC4899" },
   ] as const;
 
   return (
@@ -366,12 +380,41 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             <TouchableOpacity
               style={styles.pdfDownloadBtn}
               activeOpacity={0.8}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`)}
             >
               <Download size={18} color={COLORS.primary} />
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Floating Copied Toast */}
+        {copiedToast && (
+          <View
+            style={{
+              position: "absolute",
+              top: 70,
+              alignSelf: "center",
+              zIndex: 999,
+              backgroundColor: "#065F46",
+              paddingHorizontal: 16,
+              paddingVertical: 9,
+              borderRadius: 25,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.25,
+              shadowRadius: 8,
+              elevation: 6,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <Text style={{ color: "#FFFFFF", fontWeight: "800", fontSize: 12.5 }}>
+              ✅ {copiedToast}
+            </Text>
+          </View>
+        )}
 
         {isLoading ? (
           <ActivityIndicator
@@ -397,11 +440,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   </Text>
                 </View>
 
-                <View style={styles.heroTicketBox}>
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => handleCopyTicket(drawResult.first?.ticket || "")}
+                  style={styles.heroTicketBox}
+                >
                   <Text style={styles.winnerTicket}>
                     {drawResult.first?.ticket || "N/A"}
                   </Text>
-                </View>
+                </TouchableOpacity>
 
                 <View style={styles.winnerDetailsRow}>
                   <Text style={styles.winnerMeta}>

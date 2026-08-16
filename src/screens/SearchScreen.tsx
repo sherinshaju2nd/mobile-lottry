@@ -521,6 +521,10 @@ export default function SearchScreen({ navigation }: any) {
                     ? language === "ml"
                       ? `${selectedDateFilter} തീയതിയിലെ നറുക്കെടുപ്പ് നടന്നിട്ടില്ല.`
                       : `The draw scheduled for ${selectedDateFilter} has not taken place yet.`
+                    : query.replace(/\D/g, "").length >= 4 && query.replace(/\D/g, "").length < 6
+                    ? language === "ml"
+                      ? `ടിക്കറ്റ് "${query}" 4 മുതൽ 9 വരെയുള്ള സമ്മാനങ്ങളിൽ ഇല്ല. 1, 2, 3 സമ്മാനങ്ങളും സമാശ്വാസ സമ്മാനവും പരിശോധിക്കാൻ മുഴുവൻ 6 അക്ക ടിക്കറ്റ് നമ്പർ നൽകുക.`
+                      : `4-digit query "${query}" did not match 4th to 9th Prize tiers. Note: 1st, 2nd, 3rd, and Consolation prizes strictly require entering your full 6-digit ticket number with series.`
                     : `"${query}" ${t("no_prize_desc")}`}
                 </Text>
               </View>

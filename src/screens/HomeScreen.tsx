@@ -1092,8 +1092,8 @@ export default function HomeScreen({ navigation }: any) {
                 ]}
               >
                 {language === "ml"
-                  ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഇപ്പോൾ നടന്നുകൊണ്ടിരിക്കുന്നു"
-                  : "Draw Happening Right Now (3:00 PM)"}
+                  ? `ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഇപ്പോൾ നടന്നുകൊണ്ടിരിക്കുന്നു (${todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})`
+                  : `Draw Happening Right Now (${todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})`}
               </Text>
               <Text
                 style={[

@@ -400,6 +400,87 @@ export async function searchTicketNumber(queryTicket: string, targetDate?: strin
   return matches;
 }
 
+export interface TopPrizeHint {
+  tier: string;
+  ticket: string;
+  amount?: string;
+}
+
+/**
+ * Detects if a 4-digit query matches the trailing digits of top prizes (1st, 2nd, 3rd, Consolation)
+ */
+export function findTopPrizePartialHint(
+  rawQuery: string,
+  draw: { first?: WinnerInfo; prizes?: PrizeBreakdown }
+): TopPrizeHint | null {
+  const queryDigits = rawQuery.replace(/\D/g, "");
+  if (!queryDigits || queryDigits.length < 4 || queryDigits.length >= 6) {
+    return null;
+  }
+
+  // 1. Check 1st Prize
+  if (draw.first?.ticket) {
+    const firstDigits = draw.first.ticket.replace(/\D/g, "");
+    if (firstDigits.length === 6 && firstDigits.endsWith(queryDigits)) {
+      return {
+        tier: "1st Prize",
+        ticket: draw.first.ticket,
+        amount: draw.prizes?.amounts?.["1st"] || "₹70,00,000/-",
+      };
+    }
+  }
+
+  // 2. Check 2nd, 3rd, Consolation
+  const topTiers = ["2nd", "3rd", "consolation"] as const;
+  for (const tier of topTiers) {
+    const nums = (draw.prizes as any)?.[tier] as string[] | undefined;
+    const amount = draw.prizes?.amounts?.[tier];
+    if (nums && Array.isArray(nums)) {
+      for (const num of nums) {
+        const numDigits = String(num).replace(/\D/g, "");
+        if (numDigits.length === 6 && numDigits.endsWith(queryDigits)) {
+          return {
+            tier: tier === "consolation" ? "Consolation Prize" : `${tier} Prize`,
+            ticket: String(num),
+            amount,
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+export function getSearchFeedbackMessage(
+  queryInput: string,
+  language: string = "en",
+  drawDate?: string,
+  topHint?: TopPrizeHint | null
+): string {
+  const queryDigits = queryInput.replace(/\D/g, "");
+  const isMl = language === "ml";
+
+  if (topHint) {
+    if (isMl) {
+      return `ശ്രദ്ധിക്കുക: 4 അക്ക തിരച്ചിൽ "${queryInput}" ഉയർന്ന സമ്മാനത്തിന്റെ അവസാന അക്കങ്ങളുമായി (${topHint.tier}: ${topHint.ticket}) സാമ്യമുണ്ട്. സമ്മാനം ലഭിച്ചിട്ടുണ്ടോ എന്നറിയാൻ മുഴുവൻ 6 അക്ക നമ്പറും നൽകുക. 4 അക്കങ്ങൾക്ക് 4-ാം സമ്മാനം മുതൽ മാത്രമേ ലഭിക്കൂ.`;
+    }
+    return `Note: 4-digit search "${queryInput}" matches ending digits of ${topHint.tier} (${topHint.ticket}${topHint.amount ? ` • ${topHint.amount}` : ""}). Enter your full 6-digit ticket with series to verify. 4-digit searches only win prizes starting from 4th Prize.`;
+  }
+
+  if (queryDigits.length >= 4 && queryDigits.length < 6) {
+    if (isMl) {
+      return `ടിക്കറ്റ് "${queryInput}" 4 മുതൽ 9 വരെയുള്ള സമ്മാനങ്ങളിൽ ഇല്ല. 1, 2, 3 സമ്മാനങ്ങളും സമാശ്വാസ സമ്മാനവും പരിശോധിക്കാൻ മുഴുവൻ 6 അക്ക ടിക്കറ്റ് നമ്പർ നൽകുക.`;
+    }
+    return `Ticket "${queryInput}" did not match any prize from 4th to 9th Prize. To check 1st, 2nd, 3rd, or Consolation prizes, please enter your full 6-digit ticket number.`;
+  }
+
+  if (isMl) {
+    return `ടിക്കറ്റ് "${queryInput}" ഈ നറുക്കെടുപ്പിൽ സമ്മാനം നേടിയിട്ടില്ല.`;
+  }
+  return `Ticket "${queryInput}" did not win any prize in this draw.`;
+}
+
 /**
  * Fetch all lotteries master data directly from Supabase
  */
