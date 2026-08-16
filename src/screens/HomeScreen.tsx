@@ -197,31 +197,6 @@ export default function HomeScreen({ navigation }: any) {
     loadData();
   };
 
-  const handleQuickCheck = async () => {
-    if (!ticketInput.trim()) return;
-    const digits = ticketInput.replace(/\D/g, "");
-    if (digits.length < 4) return;
-    setIsChecking(true);
-    try {
-      const matches = await searchTicketNumber(ticketInput.trim());
-      setSearchResults(matches);
-    } catch {
-      setSearchResults([]);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  // Reset checker state when navigating away from HomeScreen
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        setTicketInput("");
-        setSearchResults(null);
-      };
-    }, [])
-  );
-
   // Identify Today's Lottery metadata based on IST weekday
   const todayISTDate = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -248,6 +223,32 @@ export default function HomeScreen({ navigation }: any) {
     allDraws.find((d) => d.draw_date !== todayISTDate) ||
     (allDraws.length > 1 ? allDraws[1] : allDraws[0]) ||
     null;
+
+  const handleQuickCheck = async () => {
+    if (!ticketInput.trim()) return;
+    const digits = ticketInput.replace(/\D/g, "");
+    if (digits.length < 4) return;
+    setIsChecking(true);
+    try {
+      const targetDate = heroTab === 0 ? todayISTDate : previousDraw?.draw_date;
+      const matches = await searchTicketNumber(ticketInput.trim(), targetDate);
+      setSearchResults(matches);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  // Reset checker state when navigating away from HomeScreen
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setTicketInput("");
+        setSearchResults(null);
+      };
+    }, [])
+  );
 
   // Active draw based on selected hero tab
   const activeDraw = heroTab === 0 ? todayDraw : previousDraw;
@@ -1424,8 +1425,8 @@ export default function HomeScreen({ navigation }: any) {
                     </View>
                   )}
 
-                  {latest ? (
-                    latest.draw_date === todayISTDate ? (
+                  {isTodayLottery ? (
+                    latest && latest.draw_date === todayISTDate && latest.first?.ticket ? (
                       <View
                         style={[
                           styles.latestHighlight,
@@ -1469,22 +1470,65 @@ export default function HomeScreen({ navigation }: any) {
                         </Text>
                       </View>
                     ) : (
-                      <View style={styles.latestHighlight}>
+                      <View
+                        style={[
+                          styles.latestHighlight,
+                          {
+                            backgroundColor: "#FFFBEB",
+                            borderColor: "#FCD34D",
+                          },
+                        ]}
+                      >
                         <View style={styles.latestHeaderRow}>
-                          <Text style={styles.highlightLabel}>
-                            {language === "ml"
-                              ? "അവസാന 1-ാം സമ്മാനം"
-                              : "LATEST 1ST PRIZE"}
+                          <Text
+                            style={[
+                              styles.highlightLabel,
+                              { color: "#B45309" },
+                            ]}
+                          >
+                            {isAfter3PM
+                              ? (language === "ml" ? "തത്സമയം നടക്കുന്നു" : "DRAW IN PROGRESS")
+                              : (language === "ml" ? "ഇന്നത്തെ നറുക്കെടുപ്പ്" : "DRAW SCHEDULED TODAY")}
                           </Text>
-                          <Text style={styles.highlightDate}>
-                            {latest.draw_date}
+                          <Text
+                            style={[
+                              styles.highlightDate,
+                              { color: "#92400E" },
+                            ]}
+                          >
+                            3:00 PM
                           </Text>
                         </View>
-                        <Text style={styles.highlightTicket}>
-                          {latest.first?.ticket || "N/A"}
+                        <Text
+                          style={{
+                            fontSize: 11.5,
+                            fontWeight: "700",
+                            color: "#92400E",
+                            marginTop: 3,
+                          }}
+                        >
+                          {isAfter3PM
+                            ? (language === "ml" ? "ഫലം ഉടൻ വരും →" : "Results coming soon →")
+                            : (language === "ml" ? "ഫലം ഉച്ചയ്ക്ക് 3:10 ന് →" : "Results publish today at 3:10 PM →")}
                         </Text>
                       </View>
                     )
+                  ) : latest ? (
+                    <View style={styles.latestHighlight}>
+                      <View style={styles.latestHeaderRow}>
+                        <Text style={styles.highlightLabel}>
+                          {language === "ml"
+                            ? "അവസാന 1-ാം സമ്മാനം"
+                            : "LATEST 1ST PRIZE"}
+                        </Text>
+                        <Text style={styles.highlightDate}>
+                          {latest.draw_date}
+                        </Text>
+                      </View>
+                      <Text style={styles.highlightTicket}>
+                        {latest.first?.ticket || "N/A"}
+                      </Text>
+                    </View>
                   ) : (
                     <View style={styles.archiveNoticeBox}>
                       <Text style={styles.archiveNotice}>

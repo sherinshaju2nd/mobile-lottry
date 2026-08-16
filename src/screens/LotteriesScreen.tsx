@@ -59,53 +59,204 @@ export default function LotteriesScreen({ navigation }: any) {
     </View>
   );
 
+  const todayISTDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
+
   const renderItem = ({ item }: { item: LotteryMeta }) => {
     const isBumper = item.isBumper;
+    const isAnnouncedUpcoming = Boolean(
+      isBumper && item.draw_date && item.draw_date >= todayISTDate,
+    );
+    const isDrawToday = Boolean(isBumper && item.draw_date === todayISTDate);
 
     return (
       <TouchableOpacity
-        style={[styles.card, isBumper && styles.bumperCard]}
+        style={[
+          styles.card,
+          isBumper && styles.bumperCard,
+          isAnnouncedUpcoming && {
+            borderColor: "#F59E0B",
+            borderWidth: 2,
+            backgroundColor: "#FFFDF0",
+            shadowColor: "#F59E0B",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.18,
+            shadowRadius: 10,
+            elevation: 4,
+          },
+        ]}
         onPress={() => navigation.navigate("LotteryArchive", { code: item.code })}
         activeOpacity={0.85}
       >
         <View style={styles.cardHeader}>
           <View style={styles.badgeRow}>
-            <View style={styles.codeChip}>
-              <Text style={styles.codeText}>{item.code}</Text>
+            <View
+              style={[
+                styles.codeChip,
+                isAnnouncedUpcoming && { backgroundColor: "#D97706" },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.codeText,
+                  isAnnouncedUpcoming && { color: "#FFFFFF" },
+                ]}
+              >
+                {item.code}
+              </Text>
             </View>
-            <Text style={[styles.dayText, language === "ml" && { fontSize: 11, paddingHorizontal: 8 }]}>
-              {item.day}
-            </Text>
+            {isAnnouncedUpcoming ? (
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  backgroundColor: "#FEF3C7",
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: "#FCD34D",
+                }}
+              >
+                <Sparkles size={11} color="#B45309" />
+                <Text
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: "800",
+                    color: "#92400E",
+                  }}
+                >
+                  {isDrawToday
+                    ? language === "ml"
+                      ? "ഇന്ന് നറുക്കെടുപ്പ്"
+                      : "DRAWS TODAY"
+                    : language === "ml"
+                      ? `തീയതി: ${item.draw_date}`
+                      : `Draw: ${item.draw_date}`}
+                </Text>
+              </View>
+            ) : (
+              <Text
+                style={[
+                  styles.dayText,
+                  language === "ml" && { fontSize: 11, paddingHorizontal: 8 },
+                ]}
+              >
+                {item.day}
+              </Text>
+            )}
           </View>
-          <ChevronRight size={18} color={COLORS.primary} />
+          <ChevronRight size={18} color={isAnnouncedUpcoming ? "#D97706" : COLORS.primary} />
         </View>
 
-        <Text style={[styles.title, language === "ml" && { fontSize: 15, lineHeight: 22, fontWeight: "800" }]}>
+        <Text
+          style={[
+            styles.title,
+            isAnnouncedUpcoming && { color: "#78350F" },
+            language === "ml" && { fontSize: 15, lineHeight: 22, fontWeight: "800" },
+          ]}
+        >
           {language === "ml" && item.nameMl ? item.nameMl : item.name}
         </Text>
 
         {isBumper && item.jackpot && (
-          <View style={styles.jackpotRow}>
-            <Trophy size={13} color={COLORS.primary} />
-            <Text style={[styles.jackpotText, language === "ml" && { fontSize: 11 }]}>
+          <View
+            style={[
+              styles.jackpotRow,
+              isAnnouncedUpcoming && {
+                backgroundColor: "#FEF3C7",
+                borderColor: "#FCD34D",
+              },
+            ]}
+          >
+            <Trophy size={13} color={isAnnouncedUpcoming ? "#D97706" : COLORS.primary} />
+            <Text
+              style={[
+                styles.jackpotText,
+                isAnnouncedUpcoming && { color: "#92400E" },
+                language === "ml" && { fontSize: 11 },
+              ]}
+            >
               {language === "ml" ? "ഒന്നാം സമ്മാനം:" : "1st Prize:"}{" "}
-              <Text style={{ fontWeight: "900", color: COLORS.primary }}>{item.jackpot}</Text>
+              <Text
+                style={{
+                  fontWeight: "900",
+                  color: isAnnouncedUpcoming ? "#78350F" : COLORS.primary,
+                }}
+              >
+                {item.jackpot}
+              </Text>
             </Text>
           </View>
         )}
 
-        <Text style={[styles.subtitle, language === "ml" && { fontSize: 11, lineHeight: 16 }]}>
-          {isBumper
-            ? language === "ml"
-              ? `നറുക്കെടുപ്പ് സമയം: ${item.drawSeason || "ഉച്ചയ്ക്ക് 2:00 മണി"}`
-              : `Draw Season: ${item.drawSeason || "Annual Bumper"}`
-            : language === "ml"
-              ? "നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി"
-              : `Draw: ${item.drawTime}`}
-        </Text>
+        {isAnnouncedUpcoming ? (
+          <View
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: 8,
+              padding: 10,
+              borderWidth: 1,
+              borderColor: "#F59E0B",
+              marginTop: 4,
+              marginBottom: 4,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: "900",
+                color: "#B45309",
+                marginBottom: 2,
+                textTransform: "uppercase",
+              }}
+            >
+              {language === "ml" ? "🗓️ പ്രഖ്യാപിച്ച തീയതി" : "🗓️ ANNOUNCED DRAW DATE"}
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "900",
+                color: "#78350F",
+              }}
+            >
+              {item.draw_date} • {item.drawTime || "2:00 PM"}
+            </Text>
+            {item.ticket_price && (
+              <Text
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: "700",
+                  color: "#92400E",
+                  marginTop: 2,
+                }}
+              >
+                {language === "ml" ? "ടിക്കറ്റ് വില:" : "Ticket:"} {item.ticket_price}
+              </Text>
+            )}
+          </View>
+        ) : (
+          <Text style={[styles.subtitle, language === "ml" && { fontSize: 11, lineHeight: 16 }]}>
+            {isBumper
+              ? language === "ml"
+                ? `നറുക്കെടുപ്പ് സമയം: ${item.drawSeason || "ഉച്ചയ്ക്ക് 2:00 മണി"}`
+                : `Draw Season: ${item.drawSeason || "Annual Bumper"}`
+              : language === "ml"
+                ? "നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി"
+                : `Draw: ${item.drawTime}`}
+          </Text>
+        )}
 
         <View style={styles.footer}>
-          <Text style={[styles.footerLink, language === "ml" && { fontSize: 11.5 }]}>
+          <Text
+            style={[
+              styles.footerLink,
+              isAnnouncedUpcoming && { color: "#D97706" },
+              language === "ml" && { fontSize: 11.5 },
+            ]}
+          >
             {t("view_archive")} →
           </Text>
         </View>

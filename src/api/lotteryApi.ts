@@ -75,6 +75,8 @@ export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; b
           isBumper,
           jackpot: d.jackpot || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.jackpot || "₹10 Crore"),
           drawSeason: d.draw_season || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.drawSeason || d.day),
+          draw_date: d.draw_date || undefined,
+          ticket_price: d.ticket_price || undefined,
         };
         if (isBumper) {
           bumper.push(item);
