@@ -20,6 +20,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { ALL_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
@@ -249,6 +250,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             initialNumToRender={8}
             maxToRenderPerBatch={10}
             windowSize={5}
+            ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
           />
         ) : (
           <View style={styles.emptyContainer}>

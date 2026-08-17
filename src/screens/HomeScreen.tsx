@@ -58,6 +58,7 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -1651,10 +1652,10 @@ export default function HomeScreen({ navigation }: any) {
             today, and the jackpot kerala lottery result today figure right at
             the top of today's card.
           </Text>
-
-          <Text style={styles.seoSubtitle}>A Note on Accuracy</Text>
         </View> */}
-        
+
+        <ComplianceDisclaimerCard style={{ marginHorizontal: 16 }} />
+
         <View style={styles.footer}>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim")}>
             <Text style={styles.footerLink}>Claim</Text>
@@ -1674,6 +1675,10 @@ export default function HomeScreen({ navigation }: any) {
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy")}>
             <Text style={styles.footerLink}>Privacy</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerBullet}>•</Text>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/contact")}>
+            <Text style={styles.footerLink}>Contact</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

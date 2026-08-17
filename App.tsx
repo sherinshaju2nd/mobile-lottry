@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from "react";
-import { View, Text, Animated, Easing, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Animated, Easing, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -340,6 +340,17 @@ function AppContent() {
     try {
       // Request notification permission early
       Notifications.requestPermissionsAsync().catch(() => {});
+
+      // Setup Android Notification Channel (Required for Android 8.0+)
+      if (Platform.OS === "android") {
+        Notifications.setNotificationChannelAsync("default", {
+          name: "Lottery Draw Alerts",
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#0B3C5D",
+          sound: "default",
+        }).catch(() => {});
+      }
 
       // Handle tapping a notification from system tray → go to Reminders
       responseSub = Notifications.addNotificationResponseReceivedListener(() => {

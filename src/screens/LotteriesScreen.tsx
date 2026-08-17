@@ -19,6 +19,7 @@ import {
   LotteryMeta,
 } from "../constants/lotteries";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteriesScreen({ navigation }: any) {
@@ -355,6 +356,7 @@ export default function LotteriesScreen({ navigation }: any) {
             initialNumToRender={8}
             maxToRenderPerBatch={10}
             windowSize={5}
+            ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
           />
         )}
       </View>

@@ -35,6 +35,7 @@ import {
   requestNotificationPermission,
 } from "../utils/notificationScheduler";
 import AddReminderModal from "../components/AddReminderModal";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { AlertCircle, Settings } from "lucide-react-native";
 
 // Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android and handles 12h/24h)
@@ -280,6 +281,7 @@ export default function RemindersScreen({ navigation }: any) {
           scrollEventThrottle={16}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"
+          ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
         />
       )}
 

@@ -35,6 +35,7 @@ import {
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ModernDatePickerModal from "../components/ModernDatePickerModal";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function SearchScreen({ navigation }: any) {
@@ -611,6 +612,8 @@ export default function SearchScreen({ navigation }: any) {
             })}
           </View>
         )}
+
+        <ComplianceDisclaimerCard style={{ marginTop: 20, marginBottom: 10 }} />
       </ScrollView>
 
       {/* Barcode Scanner Modal */}

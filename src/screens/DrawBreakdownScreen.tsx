@@ -34,6 +34,7 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
@@ -913,6 +914,8 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </Text>
           </View>
         )}
+
+        <ComplianceDisclaimerCard style={{ marginTop: 16 }} />
       </ScrollView>
 
       {/* Barcode Scanner Modal */}
