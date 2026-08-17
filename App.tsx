@@ -17,6 +17,7 @@ import SearchScreen from "./src/screens/SearchScreen";
 import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
 import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
+import ContactScreen from "./src/screens/ContactScreen";
 import ModernDatePickerModal from "./src/components/ModernDatePickerModal";
 import { fetchDrawResultByAnyDate } from "./src/api/lotteryApi";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
@@ -420,6 +421,7 @@ function AppContent() {
           <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
           <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
           <Stack.Screen name="Reminders" component={RemindersScreen} />
+          <Stack.Screen name="Contact" component={ContactScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       {isPrivacyAccepted ? (

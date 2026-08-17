@@ -1677,7 +1677,7 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.footerLink}>Privacy</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/contact")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Contact")}>
             <Text style={styles.footerLink}>Contact</Text>
           </TouchableOpacity>
         </View>
