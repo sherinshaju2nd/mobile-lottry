@@ -17,9 +17,9 @@ import {
   BUMPER_LOTTERIES,
   ALL_LOTTERIES,
   LotteryMeta,
+  getDayTranslated,
 } from "../constants/lotteries";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteriesScreen({ navigation }: any) {
@@ -158,7 +158,7 @@ export default function LotteriesScreen({ navigation }: any) {
                   language === "ml" && { fontSize: 11, paddingHorizontal: 8 },
                 ]}
               >
-                {item.day}
+                {getDayTranslated(item.day, language)}
               </Text>
             )}
           </View>
@@ -356,7 +356,6 @@ export default function LotteriesScreen({ navigation }: any) {
             initialNumToRender={8}
             maxToRenderPerBatch={10}
             windowSize={5}
-            ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
           />
         )}
       </View>

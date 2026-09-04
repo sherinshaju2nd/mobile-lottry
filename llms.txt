@@ -1,0 +1,62 @@
+# Kerala Lottery Results Today (Mobile App)
+
+> Official React Native & Expo mobile application for live Kerala State Lottery draw alerts, instant camera ticket barcode scanner, real-time push notifications, and saved ticket watchlists.
+
+## Project Overview
+- **App Name**: Kerala Lottery Results Today
+- **Package ID (Android)**: `com.keralalotteryresultstoday.app`
+- **Bundle ID (iOS)**: `com.keralalotteryresultstoday.app`
+- **Framework**: Expo 54 (SDK 54) + React Native 0.81.5 + React 19.1.0 + TypeScript 5
+- **Backend / Database**: Supabase (`@supabase/supabase-js`)
+- **Key Modules**: Camera Ticket Scanner (`expo-camera`), Push Notifications (`expo-notifications`), Local Persistence (`@react-native-async-storage/async-storage`), Bottom Tab & Stack Navigation (`@react-navigation`).
+
+---
+
+## Tech Stack & Dependencies
+
+### Core Framework & Navigation
+- **Expo SDK 54**: Managed workflow with EAS Build support.
+- **React Native 0.81.5 & React 19.1.0**: Latest mobile runtime and concurrent UI rendering.
+- **React Navigation v6**:
+  - `@react-navigation/native`: Root navigation container.
+  - `@react-navigation/native-stack`: Stack transitions for draw details and search.
+  - `@react-navigation/bottom-tabs`: Core bottom tab navigator (Live, Search, Scan, Watchlist, Guides).
+
+### Hardware & Device APIs
+- **Camera & Barcode Scanner (`expo-camera`, `expo-image-manipulator`)**: Live barcode and ticket number recognition.
+- **Push Notifications (`expo-notifications`)**: 3:00 PM draw start alerts and winning number release broadcasts.
+- **Safe Area & UI (`react-native-safe-area-context`, `react-native-screens`, `lucide-react-native`)**: Native edge-to-edge UI with Lucide icons.
+
+---
+
+## Project Structure
+
+```
+mobile/
+├── App.tsx                           # Main app entry point, navigation container & theme setup
+├── app.json                          # Expo configuration, permissions, and app identity
+├── eas.json                          # Expo Application Services build configurations
+├── assets/                           # App icons, splash screens, notification icons
+└── src/                              # Source code directory
+    ├── api/                          # Supabase client and lottery query helpers
+    ├── components/                   # Reusable UI components (DrawCards, PrizeTables, Headers)
+    ├── constants/                    # Colors, lottery codes, draw schedules, and theme tokens
+    ├── context/                      # Global state providers (WatchlistContext, ThemeContext)
+    ├── screens/                      # Navigation screen components
+    │   ├── HomeScreen.tsx            # Live result card, countdown timer, today's draw summary
+    │   ├── SearchScreen.tsx          # Ticket number matching and historical search
+    │   ├── ScannerScreen.tsx         # Camera barcode & number scanner
+    │   ├── WatchlistScreen.tsx       # User's saved lottery tickets with live win check
+    │   ├── DetailScreen.tsx          # Full prize list breakdown (1st to 8th + Consolation)
+    │   └── GuideScreen.tsx           # Prize claiming rules and FAQ
+    └── utils/                        # Date formatters, tax calculators, and local storage helpers
+```
+
+---
+
+## Key Features & Capabilities
+
+1. **Real-Time 3:00 PM Draw Updates**: Live sync with Supabase PostgreSQL database to stream winning numbers without requiring app restarts.
+2. **Camera Barcode & QR Scanner**: Enables users to scan physical paper tickets to verify winning prizes instantly.
+3. **Saved Ticket Watchlist**: Offline ticket persistence via `AsyncStorage` with automatic winning prize detection.
+4. **Push Notifications**: Automated alerts for daily 3:00 PM draw announcements and bumper lottery countdowns.

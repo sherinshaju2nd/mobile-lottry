@@ -88,9 +88,48 @@ export const ALL_LOTTERIES: LotteryMeta[] = [...WEEKLY_LOTTERIES, ...BUMPER_LOTT
 
 export function getLotteryMalayalamName(code?: string): string {
   if (!code) return "";
+  const codeUpper = code.toUpperCase().trim();
   const match = ALL_LOTTERIES.find(
-    (l) => l.code.toUpperCase() === code.toUpperCase()
+    (l) => l.code.toUpperCase() === codeUpper
   );
-  return match?.nameMl || "";
+  if (match?.nameMl) return match.nameMl;
+
+  // Additional legacy & alternate code mappings
+  const codeMap: Record<string, string> = {
+    BT: "ഭാഗ്യതാരാ",
+    SS: "സ്ത്രീശക്തി",
+    DL: "ധനലക്ഷ്മി",
+    KN: "കാരുണ്യ പ്ലസ്",
+    SK: "സുവർണ്ണ കേരളം",
+    KR: "കാരുണ്യ",
+    SM: "സമൃദ്ധി",
+    W: "വിൻ വിൻ",
+    WIN: "വിൻ വിൻ",
+    AK: "അക്ഷയ",
+    NR: "നിർമ്മൽ",
+    FF: "ഫിഫ്റ്റി ഫിഫ്റ്റി",
+    XN: "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
+    SB: "സമ്മർ ബംപർ",
+    VB: "വിഷു ബംപർ",
+    MB: "മൺസൂൺ ബംപർ",
+    TH: "തിരുവോണം ബംപർ",
+    PB: "പൂജ ബംപർ",
+  };
+  return codeMap[codeUpper] || "";
 }
+
+export function getDayTranslated(dayName?: string, lang: "en" | "ml" = "en"): string {
+  if (!dayName) return "";
+  if (lang === "en") return dayName;
+  const d = dayName.toLowerCase().trim();
+  if (d.includes("monday") || d.includes("mon")) return "തിങ്കൾ";
+  if (d.includes("tuesday") || d.includes("tue")) return "ചൊവ്വ";
+  if (d.includes("wednesday") || d.includes("wed")) return "ബുധൻ";
+  if (d.includes("thursday") || d.includes("thu")) return "വ്യാഴം";
+  if (d.includes("friday") || d.includes("fri")) return "വെള്ളി";
+  if (d.includes("saturday") || d.includes("sat")) return "ശനി";
+  if (d.includes("sunday") || d.includes("sun")) return "ഞായർ";
+  return dayName;
+}
+
 

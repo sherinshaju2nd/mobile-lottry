@@ -34,7 +34,6 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
@@ -454,7 +453,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   style={styles.heroTicketBox}
                 >
                   <Text style={styles.winnerTicket}>
-                    {drawResult.first?.ticket || "N/A"}
+                    {drawResult.first?.ticket || (language === "ml" ? "ഫലം വരുന്നു..." : "DRAWING IN PROGRESS")}
                   </Text>
                 </TouchableOpacity>
 
@@ -914,8 +913,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </Text>
           </View>
         )}
-
-        <ComplianceDisclaimerCard style={{ marginTop: 16 }} />
       </ScrollView>
 
       {/* Barcode Scanner Modal */}

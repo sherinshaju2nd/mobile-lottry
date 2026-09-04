@@ -18,9 +18,8 @@ import {
   FileText,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { ALL_LOTTERIES, getLotteryMalayalamName } from "../constants/lotteries";
+import { ALL_LOTTERIES, getLotteryMalayalamName, getDayTranslated } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
@@ -171,7 +170,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
                 language === "ml" && { fontSize: 11.5 },
               ]}
             >
-              {language === "ml" ? "നറുക്കെടുപ്പ് ദിനം:" : "Draw Day:"} {lotteryMeta.day} • {filteredHistory.length} {language === "ml" ? "ഫലങ്ങൾ" : "Draws"}
+              {language === "ml" ? "നറുക്കെടുപ്പ് ദിനം:" : "Draw Day:"} {getDayTranslated(lotteryMeta.day, language)} • {filteredHistory.length} {language === "ml" ? "ഫലങ്ങൾ" : "Draws"}
             </Text>
           </View>
         </View>
@@ -250,12 +249,11 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             initialNumToRender={8}
             maxToRenderPerBatch={10}
             windowSize={5}
-            ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
           />
         ) : (
           <View style={styles.emptyContainer}>
             <FileText size={32} color={COLORS.textMuted} />
-            <Text style={styles.emptyText}>No historical draws matched your filter.</Text>
+            <Text style={styles.emptyText}>{t("no_archive_matches")}</Text>
           </View>
         )}
       </View>

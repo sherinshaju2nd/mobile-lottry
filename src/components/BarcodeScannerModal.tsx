@@ -17,8 +17,11 @@ import {
   useCameraPermissions,
   BarcodeScanningResult,
 } from "expo-camera";
-import { X, Scan, Zap, ZapOff, Camera, CheckCircle } from "lucide-react-native";
+import { X, Scan, Zap, ZapOff, Camera, CheckCircle, Sparkles } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
+import { scanTicketWithGeminiVision } from "../api/lotteryApi";
+import { ActivityIndicator, Alert } from "react-native";
+import { useLanguage } from "../context/LanguageContext";
 
 interface BarcodeScannerModalProps {
   visible: boolean;
@@ -31,7 +34,10 @@ export default function BarcodeScannerModal({
   onClose,
   onBarcodeScanned,
 }: BarcodeScannerModalProps) {
+  const { language, t } = useLanguage();
+  const isMl = language === "ml";
   const { width, height } = useWindowDimensions();
+
   const isLandscape = width > height;
   const scanBoxSize = Math.min(width * 0.72, height * (isLandscape ? 0.48 : 0.42), 290);
 
@@ -39,6 +45,8 @@ export default function BarcodeScannerModal({
   const [torchOn, setTorchOn] = useState(false);
   const [scanned, setScanned] = useState(false);
   const [manualCode, setManualCode] = useState("");
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const cameraRef = useRef<any>(null);
 
   // Laser animation line
   const scanLineAnim = useRef(new Animated.Value(0)).current;
@@ -85,6 +93,34 @@ export default function BarcodeScannerModal({
     }
   };
 
+  const handleAiPhotoScan = async () => {
+    if (!cameraRef.current || isAiScanning) return;
+    try {
+      setIsAiScanning(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
+        quality: 0.7,
+      });
+
+      if (photo?.base64) {
+        const res = await scanTicketWithGeminiVision(photo.base64);
+        if (res.ticketNumber) {
+          setScanned(true);
+          onBarcodeScanned(res.ticketNumber, "gemini-ai");
+        } else {
+          Alert.alert(
+            "Scan Notice",
+            "Ticket digits could not be clearly recognized. Please ensure good lighting and try again."
+          );
+        }
+      }
+    } catch (e: any) {
+      Alert.alert("AI Scan Notice", e.message || "Failed to analyze ticket with AI.");
+    } finally {
+      setIsAiScanning(false);
+    }
+  };
+
   if (!visible) return null;
 
   return (
@@ -102,7 +138,7 @@ export default function BarcodeScannerModal({
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Scan size={20} color={COLORS.gold} />
-            <Text style={styles.headerTitle}>Barcode Ticket Reader</Text>
+            <Text style={styles.headerTitle}>{t("scan_ticket_title")}</Text>
           </View>
           <TouchableOpacity
             style={[styles.torchBtn, torchOn && styles.torchBtnActive]}
@@ -120,10 +156,11 @@ export default function BarcodeScannerModal({
         {!permission || !permission.granted ? (
           <View style={styles.centerContainer}>
             <Scan size={64} color={COLORS.primary} />
-            <Text style={styles.permissionTitle}>Barcode Camera Reader</Text>
+            <Text style={styles.permissionTitle}>{t("scan_ticket_title")}</Text>
             <Text style={styles.permissionSub}>
-              Point camera at lottery ticket barcode or test scan sample
-              barcodes below:
+              {isMl
+                ? "ലോട്ടറി ടിക്കറ്റിന്റെ ബാർകോഡിലേക്ക് ക്യാമറ തിരിക്കുക അല്ലെങ്കിൽ താഴെ നൽകിയിരിക്കുന്ന സാമ്പിളുകൾ ഉപയോഗിക്കുക:"
+                : "Point camera at lottery ticket barcode or test scan sample barcodes below:"}
             </Text>
             <TouchableOpacity
               style={styles.grantBtn}
@@ -134,7 +171,9 @@ export default function BarcodeScannerModal({
                 color={COLORS.white}
                 style={{ marginRight: 6 }}
               />
-              <Text style={styles.grantBtnText}>Enable Live Camera Access</Text>
+              <Text style={styles.grantBtnText}>
+                {isMl ? "ക്യാമറ അനുമതി നൽകുക" : "Enable Live Camera Access"}
+              </Text>
             </TouchableOpacity>
 
             <View
@@ -149,7 +188,7 @@ export default function BarcodeScannerModal({
                   textAlign: "center",
                 }}
               >
-                SAMPLE BARCODE SIMULATOR (TAP TO SCAN)
+                {isMl ? "സാമ്പിൾ ബാർകോഡ് സിമുലേറ്റർ (തട്ടുക)" : "SAMPLE BARCODE SIMULATOR (TAP TO SCAN)"}
               </Text>
               <View
                 style={{
@@ -180,7 +219,7 @@ export default function BarcodeScannerModal({
                           fontSize: 13,
                         }}
                       >
-                        📷 Scan {sample}
+                        📷 {isMl ? "സ്‌കാൻ" : "Scan"} {sample}
                       </Text>
                     </TouchableOpacity>
                   ),
@@ -200,7 +239,7 @@ export default function BarcodeScannerModal({
                     backgroundColor: COLORS.cardBg,
                     fontSize: 13,
                   }}
-                  placeholder="Enter barcode text..."
+                  placeholder={isMl ? "ബാർകോഡ് നമ്പർ ടൈപ്പ് ചെയ്യുക..." : "Enter barcode text..."}
                   placeholderTextColor={COLORS.textLight}
                   value={manualCode}
                   onChangeText={setManualCode}
@@ -228,7 +267,7 @@ export default function BarcodeScannerModal({
                       fontSize: 13,
                     }}
                   >
-                    Scan
+                    {t("scan")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -236,6 +275,7 @@ export default function BarcodeScannerModal({
           </View>
         ) : (
           <CameraView
+            ref={cameraRef}
             style={StyleSheet.absoluteFillObject}
             facing="back"
             enableTorch={torchOn}
@@ -280,7 +320,9 @@ export default function BarcodeScannerModal({
                   {scanned && (
                     <View style={styles.scannedOverlay}>
                       <CheckCircle size={48} color={COLORS.successText} />
-                      <Text style={styles.scannedText}>Barcode Scanned!</Text>
+                      <Text style={styles.scannedText}>
+                        {isMl ? "ബാർകോഡ് സ്‌കാൻ ചെയ്തു!" : "Barcode Scanned!"}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -288,8 +330,43 @@ export default function BarcodeScannerModal({
               </View>
 
               <View style={styles.overlayBottom}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: COLORS.gold,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    paddingHorizontal: 20,
+                    paddingVertical: 12,
+                    borderRadius: 25,
+                    marginBottom: 10,
+                    elevation: 4,
+                  }}
+                  disabled={isAiScanning}
+                  onPress={handleAiPhotoScan}
+                >
+                  {isAiScanning ? (
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  ) : (
+                    <Sparkles size={18} color={COLORS.primary} />
+                  )}
+                  <Text
+                    style={{
+                      color: COLORS.primary,
+                      fontWeight: "800",
+                      fontSize: 14,
+                    }}
+                  >
+                    {isAiScanning
+                      ? (isMl ? "AI ടിക്കറ്റ് പരിശോധിക്കുന്നു..." : "AI Analyzing Ticket...")
+                      : (isMl ? "📸 AI ഫോട്ടോ സ്‌കാൻ" : "📸 AI Smart Photo Scan")}
+                  </Text>
+                </TouchableOpacity>
+
                 <Text style={styles.instructionSub}>
-                  Align the barcode at the bottom-right of your ticket
+                  {isMl
+                    ? "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക അല്ലെങ്കിൽ AI ഫോട്ടോ സ്‌കാൻ ഉപയോഗിക്കുക"
+                    : "Align barcode in box, or tap AI Smart Photo Scan above"}
                 </Text>
                 {/* Lottery ticket barcode hint image */}
                 <Image

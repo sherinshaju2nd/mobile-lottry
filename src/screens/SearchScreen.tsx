@@ -11,6 +11,7 @@ import {
   LayoutAnimation,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
 import {
   Ticket,
   Layers,
@@ -35,7 +36,7 @@ import {
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ModernDatePickerModal from "../components/ModernDatePickerModal";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
+import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function SearchScreen({ navigation }: any) {
@@ -44,6 +45,7 @@ export default function SearchScreen({ navigation }: any) {
   const [query, setQuery] = useState("");
   const [batchInput, setBatchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [singleResults, setSingleResults] = useState<SearchMatch[] | null>(
     null,
   );
@@ -299,6 +301,41 @@ export default function SearchScreen({ navigation }: any) {
               >
                 <Camera size={22} color={COLORS.primary} />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.cameraIconBtn,
+                  {
+                    backgroundColor: "#F0F4FF",
+                    borderColor: "#C7D2FE",
+                    borderWidth: 1.5,
+                    shadowColor: "#6366F1",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  },
+                ]}
+                onPress={() => setIsAiAssistantOpen(true)}
+              >
+                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                  <Defs>
+                    <LinearGradient id="geminiSearchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <Stop offset="0%" stopColor="#1A73E8" />
+                      <Stop offset="35%" stopColor="#7C3AED" />
+                      <Stop offset="70%" stopColor="#DB2777" />
+                      <Stop offset="100%" stopColor="#F59E0B" />
+                    </LinearGradient>
+                  </Defs>
+                  <Path
+                    d="M10.5 0C10.5 5.799 5.799 10.5 0 10.5C5.799 10.5 10.5 15.201 10.5 21C10.5 15.201 15.201 10.5 21 10.5C15.201 10.5 10.5 5.799 10.5 0Z"
+                    fill="url(#geminiSearchGrad)"
+                  />
+                  <Path
+                    d="M18.5 1.5C18.5 3.433 16.933 5 15 5C16.933 5 18.5 6.567 18.5 8.5C18.5 6.567 20.067 5 22 5C20.067 5 18.5 3.433 18.5 1.5Z"
+                    fill="#38BDF8"
+                  />
+                </Svg>
+              </TouchableOpacity>
             </View>
 
             {/* Date Filter Selection */}
@@ -483,7 +520,7 @@ export default function SearchScreen({ navigation }: any) {
                   </Text>
 
                   <Text style={[styles.detailsBtnText, { marginTop: 8, fontSize: 12, color: COLORS.primary }]}>
-                    Tap to view full prize breakdown →
+                    {t("tap_to_view_details")}
                   </Text>
                 </TouchableOpacity>
               ))
@@ -550,7 +587,9 @@ export default function SearchScreen({ navigation }: any) {
         {mode === "batch" && batchResults !== null && (
           <View style={styles.resultsSection}>
             <Text style={styles.resultsHeader}>
-              Batch Search Results ({batchResults.length} Tickets)
+              {language === "ml"
+                ? `ബാച്ച് പരിശോധന ഫലങ്ങൾ (${batchResults.length} ടിക്കറ്റുകൾ)`
+                : `Batch Search Results (${batchResults.length} Tickets)`}
             </Text>
 
             {batchResults.map((item, idx) => {
@@ -562,14 +601,14 @@ export default function SearchScreen({ navigation }: any) {
                 >
                   <View style={styles.resultBadgeRow}>
                     <Text style={styles.ticketLabel}>
-                      Ticket: {item.ticket}
+                      {t("ticket_number")}: {item.ticket}
                     </Text>
                     {hasWin ? (
                       <Text style={styles.matchFoundText}>
-                        🎉 {item.matches.length} MATCH FOUND
+                        🎉 {item.matches.length} {language === "ml" ? "മാച്ച് ലഭിച്ചു" : "MATCH FOUND"}
                       </Text>
                     ) : (
-                      <Text style={styles.noMatchText}>No Win</Text>
+                      <Text style={styles.noMatchText}>{t("no_win_badge")}</Text>
                     )}
                   </View>
 
@@ -596,7 +635,7 @@ export default function SearchScreen({ navigation }: any) {
                             {m.prize_tier} — {m.prize_amount || ""}
                           </Text>
                           <Text style={styles.batchMatchSub}>
-                            {m.draw_name} ({m.draw_code}) on {m.draw_date}
+                            {m.draw_name} ({m.draw_code}) · {m.draw_date}
                           </Text>
                         </View>
                         <Text style={{ fontSize: 18, color: COLORS.primary, fontWeight: "900", marginLeft: 8 }}>›</Text>
@@ -604,7 +643,9 @@ export default function SearchScreen({ navigation }: any) {
                     ))
                   ) : (
                     <Text style={styles.noMatchSub}>
-                      No winning prize match found in database.
+                      {language === "ml"
+                        ? "സമ്മാനാർഹമായ മാച്ച് ഒന്നും ലഭിച്ചില്ല."
+                        : "No winning prize match found in database."}
                     </Text>
                   )}
                 </View>
@@ -612,8 +653,6 @@ export default function SearchScreen({ navigation }: any) {
             })}
           </View>
         )}
-
-        <ComplianceDisclaimerCard style={{ marginTop: 20, marginBottom: 10 }} />
       </ScrollView>
 
       {/* Barcode Scanner Modal */}
@@ -641,6 +680,12 @@ export default function SearchScreen({ navigation }: any) {
         selectedDate={selectedDateFilter}
         onClose={() => setIsDatePickerOpen(false)}
         onSelectDate={(dateStr) => setSelectedDateFilter(dateStr)}
+      />
+
+      {/* AI Voice & Chat Assistant Modal */}
+      <AiVoiceAssistantModal
+        visible={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
       />
     </SafeAreaView>
   );

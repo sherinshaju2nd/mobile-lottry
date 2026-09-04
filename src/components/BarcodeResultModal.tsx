@@ -23,6 +23,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { searchTicketNumber, SearchMatch, DrawResult } from "../api/lotteryApi";
 import ModernDatePickerModal from "./ModernDatePickerModal";
+import { useLanguage } from "../context/LanguageContext";
 
 interface BarcodeResultModalProps {
   visible: boolean;
@@ -41,7 +42,10 @@ export default function BarcodeResultModal({
   onClose,
   onRescan,
 }: BarcodeResultModalProps) {
+  const { language, t } = useLanguage();
+  const isMl = language === "ml";
   const [selectedDate, setSelectedDate] = useState<string>("ALL");
+
   const [customDateInput, setCustomDateInput] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
   const [allMatches, setAllMatches] = useState<SearchMatch[] | null>(null);
@@ -147,16 +151,17 @@ export default function BarcodeResultModal({
                   <View style={styles.calendarIconBg}>
                     <Calendar size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.dateStepTitle}>Select Draw Date</Text>
+                  <Text style={styles.dateStepTitle}>{t("select_draw_date")}</Text>
                   <Text style={styles.dateStepSub}>
-                    Select the draw date for ticket "{scannedBarcode}"
-                    {targetLotteryCode ? ` (${targetLotteryCode})` : ""} to fetch accurate results.
+                    {isMl
+                      ? `"${scannedBarcode}" ${targetLotteryCode ? `(${targetLotteryCode}) ` : ""}ടിക്കറ്റിന്റെ ശരിയായ ഫലം ലഭിക്കാൻ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.`
+                      : `Select the draw date for ticket "${scannedBarcode}"${targetLotteryCode ? ` (${targetLotteryCode})` : ""} to fetch accurate results.`}
                   </Text>
                 </View>
 
                 {/* Custom Visual Date Picker Field */}
                 <View style={styles.customDateContainer}>
-                  <Text style={styles.chipSectionLabel}>Pick Draw Date:</Text>
+                  <Text style={styles.chipSectionLabel}>{t("pick_draw_date_label")}</Text>
                   <View style={styles.datePickerInputRow}>
                     <TouchableOpacity
                       style={[styles.dateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
@@ -164,7 +169,7 @@ export default function BarcodeResultModal({
                     >
                       <Calendar size={18} color={COLORS.primary} />
                       <Text style={{ flex: 1, fontSize: 13, color: customDateInput ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
-                        {customDateInput ? customDateInput : "Select from calendar..."}
+                        {customDateInput ? customDateInput : t("select_from_calendar")}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -177,14 +182,14 @@ export default function BarcodeResultModal({
                         }
                       }}
                     >
-                      <Text style={styles.fetchDateBtnText}>Fetch Result</Text>
+                      <Text style={styles.fetchDateBtnText}>{t("fetch_result_btn")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Quick Date Selection Chips */}
                 <Text style={[styles.chipSectionLabel, { marginTop: 16 }]}>
-                  Recent Published Dates:
+                  {t("recent_published_dates")}
                 </Text>
                 <View style={styles.chipsContainer}>
                   {dateOptions.map((dateStr, idx) => {
@@ -212,7 +217,7 @@ export default function BarcodeResultModal({
                             <Text style={styles.dateChipSubText}>{drawForDate.draw_name}</Text>
                           )}
                         </View>
-                        {idx === 0 && <Text style={styles.latestBadge}>LATEST</Text>}
+                        {idx === 0 && <Text style={styles.latestBadge}>{isMl ? "ഏറ്റവും പുതിയത്" : "LATEST"}</Text>}
                       </TouchableOpacity>
                     );
                   })}
@@ -225,10 +230,10 @@ export default function BarcodeResultModal({
                     <Globe size={16} color={COLORS.gold} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.dateChipText, { color: COLORS.gold }]}>
-                        Check All Draw History
+                        {t("check_all_draw_history")}
                       </Text>
                       <Text style={styles.dateChipSubText}>
-                        Search across all published draw records
+                        {t("search_across_all_records")}
                       </Text>
                     </View>
                     <ChevronRight size={16} color={COLORS.gold} />
@@ -239,10 +244,10 @@ export default function BarcodeResultModal({
               /* Loading State */
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Fetching draw results for date...</Text>
+                <Text style={styles.loadingText}>{t("fetching_results_loading")}</Text>
                 <Text style={styles.loadingSub}>
-                  Ticket: {scannedBarcode} • Date: {selectedDate}
-                  {targetLotteryCode ? ` • Lottery: ${targetLotteryCode}` : ""}
+                  {t("ticket_number")}: {scannedBarcode} • {t("draw_date")}: {selectedDate}
+                  {targetLotteryCode ? ` • ${targetLotteryCode}` : ""}
                 </Text>
               </View>
             ) : isWinner ? (
@@ -251,9 +256,13 @@ export default function BarcodeResultModal({
                 {/* Winner Celebration Banner */}
                 <View style={styles.winBanner}>
                   <Text style={styles.celebrationEmoji}>🎉 🏆 ✨</Text>
-                  <Text style={styles.winTitle}>WINNING TICKET MATCH!</Text>
+                  <Text style={styles.winTitle}>
+                    {isMl ? "സമ്മാനാർഹമായ ടിക്കറ്റ്!" : "WINNING TICKET MATCH!"}
+                  </Text>
                   <Text style={styles.winSubtitle}>
-                    Congratulations! Your scanned ticket won a prize!
+                    {isMl
+                      ? "അഭിനന്ദനങ്ങൾ! നിങ്ങൾ പരിശോധിച്ച ടിക്കറ്റിന് സമ്മാനം ലഭിച്ചിരിക്കുന്നു!"
+                      : "Congratulations! Your scanned ticket won a prize!"}
                   </Text>
                 </View>
 
@@ -266,25 +275,25 @@ export default function BarcodeResultModal({
                     </View>
 
                     <Text style={styles.prizeAmountText}>
-                      {match.prize_amount || "Winning Ticket"}
+                      {match.prize_amount || (isMl ? "സമ്മാനാർഹമായ ടിക്കറ്റ്" : "Winning Ticket")}
                     </Text>
 
                     <View style={styles.divider} />
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Ticket Matched:</Text>
+                      <Text style={styles.detailLabel}>{isMl ? "മാച്ച് ആയ ടിക്കറ്റ്:" : "Ticket Matched:"}</Text>
                       <Text style={styles.detailValueBold}>{match.ticket_matched}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Draw Name:</Text>
+                      <Text style={styles.detailLabel}>{isMl ? "ലോട്ടറി പേര്:" : "Draw Name:"}</Text>
                       <Text style={styles.detailValue}>
                         {match.draw_name} ({match.draw_code})
                       </Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Draw Date & Time:</Text>
+                      <Text style={styles.detailLabel}>{isMl ? "നറുക്കെടുപ്പ് തീയതി:" : "Draw Date & Time:"}</Text>
                       <Text style={styles.detailValue}>
                         {match.draw_date} • 3:00 PM IST
                       </Text>
@@ -296,10 +305,10 @@ export default function BarcodeResultModal({
                 {matchedDrawDetails?.first?.ticket && (
                   <View style={styles.drawContextCard}>
                     <Text style={styles.drawContextTitle}>
-                      Full Draw Info ({matchedDrawDetails.draw_name})
+                      {isMl ? `സമ്പൂർണ്ണ ഫലം (${matchedDrawDetails.draw_name})` : `Full Draw Info (${matchedDrawDetails.draw_name})`}
                     </Text>
                     <Text style={styles.drawContextSub}>
-                      1st Prize Ticket:{" "}
+                      {t("first_prize")}:{" "}
                       <Text style={{ fontWeight: "700", color: COLORS.primary }}>
                         {matchedDrawDetails.first.ticket}
                       </Text>
@@ -314,26 +323,24 @@ export default function BarcodeResultModal({
               <View style={styles.resultContainer}>
                 <View style={styles.noWinBanner}>
                   <Frown size={44} color="#6B7280" />
-                  <Text style={styles.noWinTitle}>No Prize Match Found</Text>
+                  <Text style={styles.noWinTitle}>{t("no_prize_found")}</Text>
                   <Text style={styles.noWinSub}>
-                    Scanned Ticket "{scannedBarcode}" did not win any prize in{" "}
-                    {selectedDate === "ALL"
-                      ? "any published draws"
-                      : `the draw for date ${selectedDate}`}
-                    .
+                    {isMl
+                      ? `സ്‌കാൻ ചെയ്ത ടിക്കറ്റ് "${scannedBarcode}" ${selectedDate === "ALL" ? "പ്രസിദ്ധീകരിച്ച ഫലങ്ങളിൽ സമ്മാനം നേടിയിട്ടില്ല." : `${selectedDate} തീയതിയിലെ നറുക്കെടുപ്പിൽ സമ്മാനം നേടിയിട്ടില്ല.`}`
+                      : `Scanned Ticket "${scannedBarcode}" did not win any prize in ${selectedDate === "ALL" ? "any published draws" : `the draw for date ${selectedDate}`}.`}
                   </Text>
                 </View>
 
                 {matchedDrawDetails && (
                   <View style={styles.drawContextCard}>
                     <Text style={styles.drawContextTitle}>
-                      Draw Summary for {matchedDrawDetails.draw_date}
+                      {isMl ? `${matchedDrawDetails.draw_date} നറുക്കെടുപ്പ് ചുരുക്കം` : `Draw Summary for ${matchedDrawDetails.draw_date}`}
                     </Text>
                     <Text style={styles.drawContextSub}>
-                      Draw: {matchedDrawDetails.draw_name} ({matchedDrawDetails.draw_code})
+                      {matchedDrawDetails.draw_name} ({matchedDrawDetails.draw_code})
                     </Text>
                     <Text style={styles.drawContextSub}>
-                      1st Prize ({matchedDrawDetails.prizes?.amounts?.["1st"] || "₹70L"}):{" "}
+                      {t("first_prize")} ({matchedDrawDetails.prizes?.amounts?.["1st"] || "₹70L"}):{" "}
                       {matchedDrawDetails.first?.ticket || "N/A"}
                     </Text>
                   </View>
@@ -344,7 +351,9 @@ export default function BarcodeResultModal({
                   onPress={() => setStep("select_date")}
                 >
                   <Calendar size={16} color={COLORS.primary} />
-                  <Text style={styles.changeDateBtnText}>Pick / Change Draw Date</Text>
+                  <Text style={styles.changeDateBtnText}>
+                    {isMl ? "തീയതി മാറ്റുക / തിരഞ്ഞെടുക്കുക" : "Pick / Change Draw Date"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -354,11 +363,11 @@ export default function BarcodeResultModal({
           <View style={styles.footer}>
             <TouchableOpacity style={styles.rescanBtn} onPress={onRescan}>
               <Camera size={18} color={COLORS.primary} />
-              <Text style={styles.rescanBtnText}>Scan Another Barcode</Text>
+              <Text style={styles.rescanBtnText}>{t("rescan_btn")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-              <Text style={styles.doneBtnText}>Close</Text>
+              <Text style={styles.doneBtnText}>{t("close")}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -49,6 +49,42 @@ export interface SearchMatch {
   ticket_matched: string;
 }
 
+export function hasAnyDrawResult(draw: DrawResult | null | undefined): boolean {
+  if (!draw) return false;
+  if (
+    draw.first?.ticket &&
+    draw.first.ticket.trim().length > 0 &&
+    draw.first.ticket.toLowerCase() !== "pending" &&
+    draw.first.ticket.toLowerCase() !== "n/a"
+  ) {
+    return true;
+  }
+  if (!draw.prizes) return false;
+  const tiers = [
+    "consolation",
+    "2nd",
+    "3rd",
+    "4th",
+    "5th",
+    "6th",
+    "7th",
+    "8th",
+    "9th",
+  ] as const;
+  for (const tier of tiers) {
+    const arr = (draw.prizes as any)?.[tier];
+    if (Array.isArray(arr) && arr.length > 0) {
+      return true;
+    }
+  }
+  for (const key of Object.keys(draw.prizes)) {
+    if (["amounts", "guess", "mc"].includes(key)) continue;
+    const val = (draw.prizes as any)[key];
+    if (Array.isArray(val) && val.length > 0) return true;
+  }
+  return false;
+}
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
@@ -620,4 +656,370 @@ export async function checkIsDatePostponed(
     return null;
   }
 }
+
+/**
+ * Scan a Kerala Lottery ticket image using Gemini Vision on Mobile
+ */
+export async function scanTicketWithGeminiVision(
+  base64Image: string,
+  mimeType: string = "image/jpeg"
+): Promise<{ ticketNumber: string; series?: string; lotteryName?: string; drawDate?: string }> {
+  const GEMINI_API_KEY =
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
+  const cleanBase64 = base64Image.replace(/^data:[^;]+;base64,/, "");
+
+  const prompt = `
+You are an expert Kerala State Lottery ticket scanner.
+Analyze this ticket photo and extract:
+1. "series": 2-letter ticket prefix (e.g. "KN", "WA", "SS")
+2. "ticket_number": 6-digit ticket number (e.g. "482910")
+3. "lottery_name": Name of the lottery if visible
+4. "draw_date": Draw date in YYYY-MM-DD if visible
+
+Return ONLY JSON:
+{"series": "KN", "ticket_number": "482910", "lottery_name": "Karunya Plus", "draw_date": "2026-03-15"}
+`;
+
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.5-flash",
+  ];
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inline_data: {
+                      mime_type: mimeType,
+                      data: cleanBase64,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.1,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+        const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+        const parsed = JSON.parse(cleaned);
+
+        const num = parsed.ticket_number || "";
+        const series = parsed.series || "";
+        const fullTicket = series && num ? `${series} ${num}` : num || series;
+
+        return {
+          ticketNumber: fullTicket,
+          series: parsed.series,
+          lotteryName: parsed.lottery_name,
+          drawDate: parsed.draw_date,
+        };
+      }
+    } catch (e) {
+      console.warn(`Mobile Gemini scan failed with ${model}:`, e);
+    }
+  }
+
+  throw new Error("Unable to read ticket digits. Please ensure the ticket number is clearly visible.");
+}
+
+/**
+ * Mobile Gemini AI Voice & Chat Assistant
+ */
+export async function chatWithGeminiAssistantMobile(
+  userMessage: string,
+  history: Array<{ role: "user" | "model"; text: string }> = [],
+  contextData?: string
+): Promise<string> {
+  const GEMINI_API_KEY =
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
+  const systemInstruction = `
+You are the Official Kerala State Lottery AI Assistant for the mobile app.
+Help users in natural, friendly Malayalam (മലയാളം) or English with live results, ticket verification, claim procedures, 30% TDS tax rules, and bumper draw dates.
+
+Official Rules:
+- Daily draws at 3:00 PM IST from Gorky Bhavan, Thiruvananthapuram.
+- Claim validity: 30 days.
+- 30% TDS on prizes > ₹10,000 + 10% agent commission.
+- Claim offices: Up to ₹5,000 at local agents; ₹5,000-₹1L at DLO; above ₹1L at Directorate.
+
+Grounding Context:
+${contextData || "No extra context."}
+`;
+
+  // Filter history to ensure contents[0] has role: "user"
+  const validHistory: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
+  for (const h of history) {
+    if (!h.text || !h.text.trim()) continue;
+    if (validHistory.length === 0 && h.role === "model") continue;
+    if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === h.role) {
+      validHistory[validHistory.length - 1].parts[0].text += `\n${h.text}`;
+    } else {
+      validHistory.push({
+        role: h.role,
+        parts: [{ text: h.text }],
+      });
+    }
+  }
+
+  const contents = [
+    ...validHistory,
+    {
+      role: "user",
+      parts: [{ text: userMessage }],
+    },
+  ];
+
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.5-flash",
+  ];
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: {
+              parts: [{ text: systemInstruction }],
+            },
+            contents,
+            generationConfig: {
+              temperature: 0.4,
+              max_output_tokens: 800,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to answer right now.";
+      }
+    } catch (e) {
+      console.warn(`Mobile chat model ${model} error:`, e);
+    }
+  }
+
+  throw new Error("AI Assistant is currently unavailable. Please try again.");
+}
+
+export interface AudioChatResponse {
+  userTranscript: string;
+  reply: string;
+}
+
+/**
+ * Mobile Gemini AI Direct Audio Voice Assistant
+ * Sends recorded microphone audio in Malayalam or English directly to Gemini 3.6
+ */
+export async function chatWithGeminiAudioMobile(
+  base64Audio: string,
+  mimeType: string = "audio/m4a",
+  history: Array<{ role: "user" | "model"; text: string }> = [],
+  contextData?: string
+): Promise<AudioChatResponse> {
+  const GEMINI_API_KEY =
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
+  const systemInstruction = `
+You are the Official Kerala State Lottery AI Voice Assistant.
+The user is speaking to you in Malayalam (മലയാളം) or English.
+1. Transcribe the user's spoken words accurately into "user_transcript".
+2. Provide a clear, helpful, and concise answer in "reply" in the user's language (Malayalam or English).
+
+Return ONLY valid JSON matching this schema:
+{
+  "user_transcript": "Exact transcription of user voice query in Malayalam or English",
+  "reply": "Your helpful lottery answer in Malayalam or English"
+}
+
+Official Rules:
+- Daily draws at 3:00 PM IST from Gorky Bhavan, Thiruvananthapuram.
+- Claim validity: 30 days.
+- 30% TDS on prizes > ₹10,000 + 10% agent commission.
+- Claim offices: Up to ₹5,000 at local agents; ₹5,000-₹1L at DLO; above ₹1L at Directorate.
+
+Grounding Context:
+${contextData || "No extra context."}
+`;
+
+  const validHistory: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
+  for (const h of history) {
+    if (!h.text || !h.text.trim()) continue;
+    if (validHistory.length === 0 && h.role === "model") continue;
+    validHistory.push({
+      role: h.role,
+      parts: [{ text: h.text }],
+    });
+  }
+
+  const cleanAudio = base64Audio.replace(/^data:[^;]+;base64,/, "");
+
+  const contents = [
+    ...validHistory,
+    {
+      role: "user",
+      parts: [
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: cleanAudio,
+          },
+        },
+        {
+          text: "Listen to the user's spoken audio query in Malayalam or English. 1. Transcribe their question into 'user_transcript'. 2. Provide a helpful, accurate lottery answer in 'reply'. Return JSON: {\"user_transcript\": \"...\", \"reply\": \"...\"}",
+        },
+      ],
+    },
+  ];
+
+  const models = [
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+  ];
+
+  let lastErrorMsg = "";
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemInstruction }],
+            },
+            contents,
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 800,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+        const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+        try {
+          const parsed = JSON.parse(cleaned);
+          return {
+            userTranscript: parsed.user_transcript || "🎙️ Voice Question",
+            reply: parsed.reply || cleaned,
+          };
+        } catch {
+          return {
+            userTranscript: "🎙️ Voice Question",
+            reply: cleaned || "Here is your lottery information.",
+          };
+        }
+      } else {
+        const errText = await response.text();
+        console.warn(`Gemini audio model ${model} HTTP ${response.status}:`, errText);
+        lastErrorMsg = errText;
+      }
+    } catch (e: any) {
+      console.warn(`Mobile audio chat model ${model} error:`, e);
+      lastErrorMsg = e?.message || "";
+    }
+  }
+
+  throw new Error(`AI Audio processing failed: ${lastErrorMsg || "Please try again."}`);
+}
+
+export interface MobileSocialDigest {
+  whatsapp_malayalam: string;
+  whatsapp_english: string;
+  telegram_post: string;
+}
+
+/**
+ * Generate viral WhatsApp Status & Telegram text for a draw result
+ */
+export async function generateSocialMediaDigestsMobile(
+  draw: any
+): Promise<MobileSocialDigest> {
+  const GEMINI_API_KEY =
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
+  const prompt = `
+Generate viral WhatsApp Status and Telegram broadcast message for this Kerala Lottery draw:
+Draw: ${draw.draw_name || draw.name} (${draw.draw_code || draw.code})
+Date: ${draw.draw_date || ""}
+1st Prize: ${draw.first?.ticket || draw.first_prize?.ticket || "N/A"} (${draw.first?.location || "Kerala"})
+Website: https://www.keralalotteryresultstoday.in
+
+Return ONLY JSON:
+{
+  "whatsapp_malayalam": "...",
+  "whatsapp_english": "...",
+  "telegram_post": "..."
+}
+`;
+
+  const models = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.3,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+        const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+        return JSON.parse(cleaned);
+      }
+    } catch (e) {
+      console.warn(`Digest model ${model} error:`, e);
+    }
+  }
+
+  throw new Error("Could not generate social digest.");
+}
+
+
 

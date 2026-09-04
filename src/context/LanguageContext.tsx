@@ -56,9 +56,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const t = (key: keyof typeof translations.en): string => {
-    const dict = translations[language] || translations.en;
-    return dict[key] || translations.en[key] || String(key);
+  const t = (key: keyof typeof translations.en): any => {
+    const dict = (translations as any)[language] || translations.en;
+    return dict[key] ?? (translations.en as any)[key] ?? String(key);
   };
 
   return (

@@ -55,10 +55,14 @@ import {
   checkIsDatePostponed,
   PostponedDraw,
   formatTicketSearchInput,
+  hasAnyDrawResult,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
+import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
+import AiSocialDigestModal from "../components/AiSocialDigestModal";
+import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import { useLanguage } from "../context/LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -72,6 +76,8 @@ export default function HomeScreen({ navigation }: any) {
     useState<PostponedDraw | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [isAiDigestOpen, setIsAiDigestOpen] = useState(false);
   const getIsBefore245PM = () => {
     try {
       const now = new Date();
@@ -267,6 +273,11 @@ export default function HomeScreen({ navigation }: any) {
     ) || lotteriesList[1];
 
   const todayDraw = allDraws.find((d) => d.draw_date === todayISTDate) || null;
+  const hasTodayResult =
+    Boolean(todayDraw) &&
+    todayDraw?.draw_date === todayISTDate &&
+    hasAnyDrawResult(todayDraw) &&
+    isAfter3PM;
   const previousDraw =
     allDraws.find((d) => d.draw_date !== todayISTDate) ||
     (allDraws.length > 1 ? allDraws[1] : allDraws[0]) ||
@@ -759,7 +770,7 @@ export default function HomeScreen({ navigation }: any) {
         })()}
 
         {heroTab === 0 &&
-          (todayDraw && todayDraw.first?.ticket ? (
+          (hasTodayResult && todayDraw ? (
             /* Today's Draw Published Card */
             <View style={styles.winnerCard}>
               <View style={styles.winnerHeroSection}>
@@ -785,14 +796,17 @@ export default function HomeScreen({ navigation }: any) {
 
                 <View style={styles.prizeBadgeContainer}>
                   <Text style={styles.winnerPrizeLabel}>
-                    {t("first_prize")} (
-                    {todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+                    {todayDraw.first?.ticket
+                      ? `${t("first_prize")} (${todayDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})`
+                      : language === "ml"
+                        ? "തത്സമയ സമ്മാനങ്ങൾ (1-9 & സമാശ്വാസം)"
+                        : "LIVE PRIZES (1-9th & Consolation)"}
                   </Text>
                 </View>
 
                 <View style={styles.heroTicketBox}>
                   <Text style={styles.winnerTicketNumber}>
-                    {todayDraw.first?.ticket || "N/A"}
+                    {todayDraw.first?.ticket || (language === "ml" ? "ഫലങ്ങൾ വരുന്നു..." : "LIVE DRAWING...")}
                   </Text>
                 </View>
 
@@ -1472,7 +1486,7 @@ export default function HomeScreen({ navigation }: any) {
                   )}
 
                   {isTodayLottery ? (
-                    latest && latest.draw_date === todayISTDate && latest.first?.ticket ? (
+                    latest && latest.draw_date === todayISTDate && hasAnyDrawResult(latest) && isAfter3PM ? (
                       <View
                         style={[
                           styles.latestHighlight,
@@ -1658,27 +1672,27 @@ export default function HomeScreen({ navigation }: any) {
 
         <View style={styles.footer}>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim")}>
-            <Text style={styles.footerLink}>Claim</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "സമ്മാന ക്ലെയിം" : "Claim"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/guide")}>
-            <Text style={styles.footerLink}>Guide</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "ഗൈഡ്" : "Guide"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/faq")}>
-            <Text style={styles.footerLink}>FAQ</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "പതിവ് ചോദ്യങ്ങൾ" : "FAQ"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions")}>
-            <Text style={styles.footerLink}>Terms</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "നിബന്ധനകൾ" : "Terms"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy")}>
-            <Text style={styles.footerLink}>Privacy</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "സ്വകാര്യത" : "Privacy"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
           <TouchableOpacity onPress={() => navigation.navigate("Contact")}>
-            <Text style={styles.footerLink}>Contact</Text>
+            <Text style={styles.footerLink}>{language === "ml" ? "ബന്ധപ്പെടുക" : "Contact"}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -1706,7 +1720,23 @@ export default function HomeScreen({ navigation }: any) {
         }}
       />
 
+      {/* Google Gemini Style Floating AI Assistant Launcher Button */}
+      <GeminiAiFloatingButton
+        onPress={() => setIsAiAssistantOpen(true)}
+      />
 
+      {/* AI Voice & Chat Assistant Modal */}
+      <AiVoiceAssistantModal
+        visible={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
+      />
+
+      {/* AI Social Digest Generator Modal */}
+      <AiSocialDigestModal
+        visible={isAiDigestOpen}
+        onClose={() => setIsAiDigestOpen(false)}
+        drawData={allDraws[0] || {}}
+      />
     </SafeAreaView>
   );
 }
@@ -2221,6 +2251,31 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
   heroDownloadPdfBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  floatingAiBtn: {
+    position: "absolute",
+    bottom: 20,
+    right: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#0B3C5D",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    shadowColor: "#0B3C5D",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 999,
+  },
+  floatingAiBtnText: {
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "800",

@@ -35,8 +35,10 @@ import {
   requestNotificationPermission,
 } from "../utils/notificationScheduler";
 import AddReminderModal from "../components/AddReminderModal";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import { AlertCircle, Settings } from "lucide-react-native";
+
+import { useLanguage } from "../context/LanguageContext";
+import { getDayTranslated } from "../constants/lotteries";
 
 // Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android and handles 12h/24h)
 function parseDrawDateTime(drawDate: string, drawTime?: string): number {
@@ -62,6 +64,8 @@ function parseDrawDateTime(drawDate: string, drawTime?: string): number {
 }
 
 export default function RemindersScreen({ navigation }: any) {
+  const { language, t } = useLanguage();
+  const isMl = language === "ml";
   const [reminders, setReminders] = useState<LotteryReminder[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editItem, setEditItem] = useState<LotteryReminder | null>(null);
@@ -87,12 +91,12 @@ export default function RemindersScreen({ navigation }: any) {
 
   const handleDelete = (item: LotteryReminder) => {
     Alert.alert(
-      "Delete Reminder",
-      `Remove reminder for ticket ${item.ticketNumber}?`,
+      t("delete_reminder_title"),
+      `${t("delete_reminder_confirm")} ${item.ticketNumber}?`,
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete"),
           style: "destructive",
           onPress: async () => {
             if (item.notificationId) {
@@ -117,7 +121,15 @@ export default function RemindersScreen({ navigation }: any) {
 
   const formatDate = (dateStr: string) => {
     const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+    const dateObj = new Date(y, m - 1, d);
+    if (isMl) {
+      const monthNamesMl = [
+        "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ",
+        "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
+      ];
+      return `${d} ${monthNamesMl[m - 1]} ${y}`;
+    }
+    return dateObj.toLocaleDateString("en-IN", {
       weekday: "short",
       day: "numeric",
       month: "short",
@@ -127,7 +139,7 @@ export default function RemindersScreen({ navigation }: any) {
 
   const formatTime = (timeStr: string) => {
     const [h, min] = timeStr.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
+    const ampm = h >= 12 ? (isMl ? "PM" : "PM") : (isMl ? "AM" : "AM");
     const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
     return `${displayHour}:${String(min).padStart(2, "0")} ${ampm}`;
   };
@@ -152,11 +164,11 @@ export default function RemindersScreen({ navigation }: any) {
             </Text>
             {upcoming ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>Upcoming</Text>
+                <Text style={styles.badgeText}>{t("status_upcoming")}</Text>
               </View>
             ) : (
               <View style={styles.badgePast}>
-                <Text style={styles.badgePastText}>Past</Text>
+                <Text style={styles.badgePastText}>{t("status_past")}</Text>
               </View>
             )}
           </View>
@@ -171,7 +183,9 @@ export default function RemindersScreen({ navigation }: any) {
           </View>
           <View style={styles.metaRow}>
             <Clock3 size={13} color={COLORS.textMuted} />
-            <Text style={styles.metaText}>Draw at {formatTime(item.drawTime)}</Text>
+            <Text style={styles.metaText}>
+              {isMl ? `നറുക്കെടുപ്പ് ${formatTime(item.drawTime)}` : `Draw at ${formatTime(item.drawTime)}`}
+            </Text>
           </View>
         </View>
 
@@ -207,7 +221,7 @@ export default function RemindersScreen({ navigation }: any) {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Bell size={20} color={COLORS.primary} />
-          <Text style={styles.headerTitle}>Ticket Reminders</Text>
+          <Text style={styles.headerTitle}>{t("reminders_title")}</Text>
         </View>
         <TouchableOpacity
           style={styles.addHeaderBtn}
@@ -223,7 +237,7 @@ export default function RemindersScreen({ navigation }: any) {
       {/* Subtitle */}
       <View style={styles.subtitleBar}>
         <Text style={styles.subtitleText}>
-          Get notified 5 mins before your ticket's draw time
+          {t("reminders_subtitle")}
         </Text>
       </View>
 
@@ -233,9 +247,9 @@ export default function RemindersScreen({ navigation }: any) {
           <View style={styles.permBannerLeft}>
             <AlertCircle size={20} color="#D97706" />
             <View style={styles.permBannerTextCol}>
-              <Text style={styles.permBannerTitle}>Notifications Disabled</Text>
+              <Text style={styles.permBannerTitle}>{t("notifications_disabled")}</Text>
               <Text style={styles.permBannerDesc}>
-                Turn on notifications to receive 3:00 PM draw alerts.
+                {t("notifications_disabled_desc")}
               </Text>
             </View>
           </View>
@@ -244,7 +258,7 @@ export default function RemindersScreen({ navigation }: any) {
             onPress={() => openNotificationSettings()}
           >
             <Settings size={14} color={COLORS.white} />
-            <Text style={styles.permSettingsBtnText}>Enable</Text>
+            <Text style={styles.permSettingsBtnText}>{t("enable")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -255,9 +269,9 @@ export default function RemindersScreen({ navigation }: any) {
           <View style={styles.emptyIcon}>
             <Bell size={48} color="#D1D5DB" />
           </View>
-          <Text style={styles.emptyTitle}>No Reminders Yet</Text>
+          <Text style={styles.emptyTitle}>{t("no_reminders_yet")}</Text>
           <Text style={styles.emptyDesc}>
-            Tap the + button to add your lottery ticket and get notified before the draw.
+            {t("no_reminders_desc")}
           </Text>
           <TouchableOpacity
             style={styles.emptyAddBtn}
@@ -267,7 +281,7 @@ export default function RemindersScreen({ navigation }: any) {
             }}
           >
             <Plus size={18} color={COLORS.white} />
-            <Text style={styles.emptyAddBtnText}>Add First Reminder</Text>
+            <Text style={styles.emptyAddBtnText}>{t("add_first_reminder")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -278,10 +292,10 @@ export default function RemindersScreen({ navigation }: any) {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={Platform.OS === "android"}
+
           scrollEventThrottle={16}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"
-          ListFooterComponent={<ComplianceDisclaimerCard style={{ marginTop: 12, marginBottom: 20 }} />}
         />
       )}
 

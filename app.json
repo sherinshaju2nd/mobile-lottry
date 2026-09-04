@@ -2,6 +2,7 @@
   "expo": {
     "name": "Kerala Lottery Results Today",
     "slug": "kerala-lottery-results",
+    "scheme": "keralalottery",
     "version": "1.0.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -20,6 +21,7 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Kerala Lottery Results to access your camera to scan lottery ticket barcodes.",
+        "NSMicrophoneUsageDescription": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "remote-notification"
@@ -35,6 +37,7 @@
       },
       "permissions": [
         "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.INTERNET",
         "android.permission.VIBRATE",

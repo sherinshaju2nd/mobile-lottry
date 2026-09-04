@@ -39,7 +39,8 @@ import {
   openNotificationSettings,
 } from "../utils/notificationScheduler";
 import { fetchLotteries, formatTicketSearchInput } from "../api/lotteryApi";
-import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
+import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta, getDayTranslated } from "../constants/lotteries";
+import { useLanguage } from "../context/LanguageContext";
 
 interface LotteryOption {
   name: string;
@@ -92,11 +93,16 @@ function getNextDrawDateForLottery(lotteryDay: string): Date {
   return result;
 }
 
-const MONTH_NAMES = [
+const MONTH_NAMES_EN = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
 ];
-const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_NAMES_ML = [
+  "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ",
+  "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
+];
+const DAY_NAMES_EN = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const DAY_NAMES_ML = ["ഞാ", "തി", "ചൊ", "ബു", "വ്യാ", "വെ", "ശ"];
 
 interface AddReminderModalProps {
   visible: boolean;
@@ -111,11 +117,19 @@ export default function AddReminderModal({
   onSaved,
   editReminder,
 }: AddReminderModalProps) {
+  const { language, t } = useLanguage();
+  const isMl = language === "ml";
+  const monthNames = isMl ? MONTH_NAMES_ML : MONTH_NAMES_EN;
+  const dayNames = isMl ? DAY_NAMES_ML : DAY_NAMES_EN;
+
   const [ticketNumber, setTicketNumber] = useState("");
   const [selectedLottery, setSelectedLottery] = useState<LotteryOption | null>(null);
   const [lotteries, setLotteries] = useState<LotteryOption[]>(ALL_LOTTERIES);
   const [loadingLotteries, setLoadingLotteries] = useState(false);
   const [activeSheet, setActiveSheet] = useState<"form" | "lotteryPicker" | "datePicker">("form");
+
+  const [ticketError, setTicketError] = useState<string | null>(null);
+  const [lotteryError, setLotteryError] = useState<string | null>(null);
 
   const [drawDate, setDrawDate] = useState<Date>(() => {
     const d = new Date();
@@ -133,6 +147,8 @@ export default function AddReminderModal({
   useEffect(() => {
     if (visible) {
       setActiveSheet("form");
+      setTicketError(null);
+      setLotteryError(null);
       setLoadingLotteries(true);
       fetchLotteries()
         .then((data) => {
@@ -148,6 +164,8 @@ export default function AddReminderModal({
   useEffect(() => {
     if (editReminder && visible) {
       setTicketNumber(editReminder.ticketNumber);
+      setTicketError(null);
+      setLotteryError(null);
       const [y, m, d] = editReminder.drawDate.split("-").map(Number);
       const targetDate = new Date(y, m - 1, d);
       setDrawDate(targetDate);
@@ -156,6 +174,8 @@ export default function AddReminderModal({
     } else if (!editReminder && visible) {
       setTicketNumber("");
       setSelectedLottery(null);
+      setTicketError(null);
+      setLotteryError(null);
       const d = new Date();
       d.setDate(d.getDate() + 1);
       setDrawDate(d);
@@ -184,6 +204,7 @@ export default function AddReminderModal({
 
   const handleLotterySelect = (item: LotteryOption) => {
     setSelectedLottery(item);
+    setLotteryError(null);
     if (!editReminder) {
       const nextDate = getNextDrawDateForLottery(item.day);
       setDrawDate(nextDate);
@@ -218,24 +239,55 @@ export default function AddReminderModal({
   };
 
   const handleSave = async () => {
-    if (!ticketNumber.trim()) {
-      Alert.alert("Missing Info", "Please enter your ticket number.");
-      return;
+    let hasError = false;
+    const cleanTicket = ticketNumber.trim();
+
+    if (!cleanTicket) {
+      setTicketError(isMl ? "ദയവായി ടിക്കറ്റ് നമ്പർ നൽകുക." : "Please enter your ticket number.");
+      hasError = true;
+    } else {
+      const digits = cleanTicket.replace(/\D/g, "");
+      if (digits.length < 4) {
+        setTicketError(
+          isMl
+            ? "കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: MJ 136429 അല്ലെങ്കിൽ 6429)"
+            : "Please enter at least 4 digits (e.g. MJ 136429, 136429, or 6429)"
+        );
+        hasError = true;
+      } else {
+        setTicketError(null);
+      }
     }
+
     if (!selectedLottery) {
-      Alert.alert("Missing Info", "Please select the lottery name.");
+      setLotteryError(isMl ? "ദയവായി ലോട്ടറി തിരഞ്ഞെടുക്കുക." : "Please select the lottery name.");
+      hasError = true;
+    } else {
+      setLotteryError(null);
+    }
+
+    if (hasError) {
+      Alert.alert(
+        isMl ? "വിവരം അപൂർണ്ണമാണ്" : "Validation Error",
+        !cleanTicket
+          ? isMl ? "ദയവായി നിങ്ങളുടെ ടിക്കറ്റ് നമ്പർ നൽകുക." : "Please enter your ticket number."
+          : cleanTicket.replace(/\D/g, "").length < 4
+          ? isMl ? "ദയവായി കുറഞ്ഞത് 4 അക്കങ്ങളെങ്കിലും നൽകുക (ഉദാ: MJ 136429 അല്ലെങ്കിൽ 6429)." : "Please enter at least 4 digits (e.g. MJ 136429, 136429, or 6429)."
+          : isMl ? "ദയവായി ലോട്ടറി പേര് തിരഞ്ഞെടുക്കുക." : "Please select the lottery name."
+      );
       return;
     }
+
     setSaving(true);
     try {
       if (editReminder?.notificationId) {
         await cancelReminderNotification(editReminder.notificationId);
       }
-      const drawTime24 = convertTo24h(selectedLottery.drawTime);
+      const drawTime24 = convertTo24h(selectedLottery!.drawTime);
       const reminder: LotteryReminder = {
         id: editReminder?.id ?? generateId(),
-        ticketNumber: ticketNumber.trim().toUpperCase(),
-        lotteryName: selectedLottery.name,
+        ticketNumber: cleanTicket.toUpperCase(),
+        lotteryName: selectedLottery!.name,
         drawDate: formatDate(drawDate),
         drawTime: drawTime24,
         createdAt: editReminder?.createdAt ?? new Date().toISOString(),
@@ -249,19 +301,24 @@ export default function AddReminderModal({
 
       if (!permState.granted && Platform.OS !== "web") {
         Alert.alert(
-          "Reminder Saved",
-          "Your reminder was saved! To receive push alerts 5 minutes before the draw, please enable notifications in Settings.",
+          isMl ? "റിമൈൻഡർ സേവ് ചെയ്തു" : "Reminder Saved",
+          isMl
+            ? "നിങ്ങളുടെ റിമൈൻഡർ സേവ് ചെയ്തു! നറുക്കെടുപ്പിന് 5 മിനിറ്റ് മുൻപ് അലേർട്ട് ലഭിക്കാൻ സെറ്റിംഗ്സിൽ നോട്ടിഫിക്കേഷൻ ഓൺ ചെയ്യുക."
+            : "Your reminder was saved! To receive push alerts 5 minutes before the draw, please enable notifications in Settings.",
           [
-            { text: "Not Now", style: "cancel" },
+            { text: isMl ? "ഇപ്പോൾ വേണ്ട" : "Not Now", style: "cancel" },
             {
-              text: "Open Settings",
+              text: isMl ? "സെറ്റിംഗ്സ് തുറക്കുക" : "Open Settings",
               onPress: () => openNotificationSettings(),
             },
           ]
         );
       }
     } catch {
-      Alert.alert("Error", "Failed to save reminder. Please try again.");
+      Alert.alert(
+        isMl ? "പിശക്" : "Error",
+        isMl ? "റിമൈൻഡർ സേവ് ചെയ്യാൻ സാധിച്ചില്ല. വീണ്ടും ശ്രമിക്കുക." : "Failed to save reminder. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -290,14 +347,13 @@ export default function AddReminderModal({
       >
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
-            {/* Sheet 1: Main Add/Edit Reminder Form */}
             {activeSheet === "form" && (
               <>
                 <View style={styles.header}>
                   <View style={styles.headerLeft}>
                     <Ticket size={20} color={COLORS.primary} />
                     <Text style={styles.headerTitle}>
-                      {editReminder ? "Edit Reminder" : "Add Ticket Reminder"}
+                      {editReminder ? t("edit_reminder_title") : t("add_reminder_title")}
                     </Text>
                   </View>
                   <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -310,15 +366,17 @@ export default function AddReminderModal({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                 >
-                  {/* Ticket Number */}
-                  <Text style={styles.label}>Ticket Number</Text>
-                  <View style={styles.inputRow}>
+                  <Text style={styles.label}>{t("ticket_number")}</Text>
+                  <View style={[styles.inputRow, ticketError && { borderColor: "#EF4444", borderWidth: 1.5 }]}>
                     <TextInput
                       style={styles.input}
-                      placeholder="e.g. MJ 136429, 136429, or 6429"
+                      placeholder={isMl ? "ഉദാ: MJ 136429 അല്ലെങ്കിൽ 6429" : "e.g. MJ 136429, 136429, or 6429"}
                       placeholderTextColor={COLORS.textMuted}
                       value={ticketNumber}
-                      onChangeText={(text) => setTicketNumber(formatTicketSearchInput(text))}
+                      onChangeText={(text) => {
+                        setTicketNumber(formatTicketSearchInput(text));
+                        if (ticketError) setTicketError(null);
+                      }}
                       autoCapitalize="characters"
                     />
                     <TouchableOpacity
@@ -328,11 +386,15 @@ export default function AddReminderModal({
                       <Scan size={20} color={COLORS.white} />
                     </TouchableOpacity>
                   </View>
+                  {ticketError && (
+                    <Text style={{ fontSize: 11, color: "#EF4444", fontWeight: "700", marginTop: 4, marginLeft: 2 }}>
+                      ⚠ {ticketError}
+                    </Text>
+                  )}
 
-                  {/* Lottery Name Selection */}
-                  <Text style={styles.label}>Lottery Name</Text>
+                  <Text style={[styles.label, { marginTop: 12 }]}>{t("select_lottery_label")}</Text>
                   <TouchableOpacity
-                    style={styles.selectBtn}
+                    style={[styles.selectBtn, lotteryError && { borderColor: "#EF4444", borderWidth: 1.5 }]}
                     onPress={() => setActiveSheet("lotteryPicker")}
                     activeOpacity={0.8}
                   >
@@ -345,20 +407,24 @@ export default function AddReminderModal({
                         numberOfLines={1}
                       >
                         {selectedLottery
-                          ? `${selectedLottery.name} ${selectedLottery.nameMl ? `(${selectedLottery.nameMl})` : ""}`
-                          : "Select lottery name..."}
+                          ? (isMl ? (selectedLottery.nameMl || selectedLottery.name) : selectedLottery.name)
+                          : t("choose_lottery")}
                       </Text>
                       {selectedLottery && (
                         <Text style={styles.selectBtnSubtext}>
-                          Draw Day: {selectedLottery.day} · {selectedLottery.drawTime}
+                          {t("draw_day")}: {getDayTranslated(selectedLottery.day, language)} · {selectedLottery.drawTime}
                         </Text>
                       )}
                     </View>
                     <ChevronDown size={18} color={COLORS.primary} />
                   </TouchableOpacity>
+                  {lotteryError && (
+                    <Text style={{ fontSize: 11, color: "#EF4444", fontWeight: "700", marginTop: 4, marginLeft: 2 }}>
+                      ⚠ {lotteryError}
+                    </Text>
+                  )}
 
-                  {/* Draw Date Selection */}
-                  <Text style={styles.label}>Draw Date</Text>
+                  <Text style={[styles.label, { marginTop: 12 }]}>{t("draw_date_label")}</Text>
                   <TouchableOpacity
                     style={styles.dateBtn}
                     onPress={() => {
@@ -377,10 +443,11 @@ export default function AddReminderModal({
                     <ChevronDown size={18} color={COLORS.primary} />
                   </TouchableOpacity>
 
-                  {/* Notification info banner */}
                   <View style={styles.notifInfo}>
                     <Text style={styles.notifInfoText}>
-                      🔔 You'll receive a high-priority push notification 5 minutes before the draw begins.
+                      🔔 {isMl
+                        ? "നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 5 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്."
+                        : "You'll receive a high-priority push notification 5 minutes before the draw begins."}
                     </Text>
                   </View>
 
@@ -392,23 +459,22 @@ export default function AddReminderModal({
                     <Save size={18} color={COLORS.white} />
                     <Text style={styles.saveBtnText}>
                       {saving
-                        ? "Saving..."
+                        ? t("loading")
                         : editReminder
-                        ? "Update Reminder"
-                        : "Save Reminder"}
+                        ? (isMl ? "മാറ്റം വരുത്തുക" : "Update Reminder")
+                        : t("save_reminder_btn")}
                     </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </>
             )}
 
-            {/* Sheet 2: Lottery Selector Overlay */}
             {activeSheet === "lotteryPicker" && (
               <View style={{ flex: 1, maxHeight: "100%" }}>
                 <View style={styles.header}>
                   <View style={styles.headerLeft}>
                     <Ticket size={20} color={COLORS.primary} />
-                    <Text style={styles.headerTitle}>Select Lottery</Text>
+                    <Text style={styles.headerTitle}>{isMl ? "ലോട്ടറി തിരഞ്ഞെടുക്കുക" : "Select Lottery"}</Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => setActiveSheet("form")}
@@ -432,71 +498,52 @@ export default function AddReminderModal({
                           isSelected && styles.lotteryCardSelected,
                         ]}
                         onPress={() => handleLotterySelect(item)}
-                        activeOpacity={0.7}
+                        activeOpacity={0.75}
                       >
-                        <View style={styles.lotteryCardContent}>
-                          <View style={styles.lotteryCardHeader}>
+                        <View style={styles.lotteryCardLeft}>
+                          <View
+                            style={[
+                              styles.codeBadge,
+                              isSelected && { backgroundColor: COLORS.primary },
+                            ]}
+                          >
                             <Text
                               style={[
-                                styles.lotteryCardTitle,
-                                isSelected && { color: COLORS.primary },
+                                styles.codeBadgeText,
+                                isSelected && { color: COLORS.white },
                               ]}
                             >
-                              {item.name}
+                              {item.code}
                             </Text>
-                            <View
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text
                               style={[
-                                styles.codeBadge,
-                                item.isBumper ? styles.codeBadgeBumper : styles.codeBadgeWeekly,
+                                styles.lotteryName,
+                                isSelected && { color: COLORS.primary, fontWeight: "900" },
                               ]}
                             >
-                              <Text
-                                style={[
-                                  styles.codeBadgeText,
-                                  item.isBumper ? styles.codeBadgeTextBumper : styles.codeBadgeTextWeekly,
-                                ]}
-                              >
-                                {item.code}
-                              </Text>
-                            </View>
-                          </View>
-
-                          {item.nameMl ? (
-                            <Text style={styles.lotteryCardMl}>{item.nameMl}</Text>
-                          ) : null}
-
-                          <View style={styles.lotteryCardMeta}>
-                            <View style={styles.metaPill}>
-                              <Calendar size={12} color="#0369A1" />
-                              <Text style={styles.metaPillText}>{item.day}</Text>
-                            </View>
-                            <View style={styles.metaPill}>
-                              <Clock size={12} color="#0369A1" />
-                              <Text style={styles.metaPillText}>{item.drawTime}</Text>
-                            </View>
+                              {isMl ? (item.nameMl || item.name) : item.name}
+                            </Text>
+                            <Text style={styles.lotteryMeta}>
+                              {getDayTranslated(item.day, language)} · {item.drawTime}
+                            </Text>
                           </View>
                         </View>
-
-                        {isSelected && (
-                          <View style={styles.checkCircle}>
-                            <Check size={16} color={COLORS.white} />
-                          </View>
-                        )}
+                        {isSelected && <Check size={18} color={COLORS.primary} />}
                       </TouchableOpacity>
                     );
                   }}
-                  ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                 />
               </View>
             )}
 
-            {/* Sheet 3: Date Picker Calendar Overlay */}
             {activeSheet === "datePicker" && (
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, maxHeight: "100%" }}>
                 <View style={styles.header}>
                   <View style={styles.headerLeft}>
                     <Calendar size={20} color={COLORS.primary} />
-                    <Text style={styles.headerTitle}>Select Draw Date</Text>
+                    <Text style={styles.headerTitle}>{isMl ? "തീയതി തിരഞ്ഞെടുക്കുക" : "Select Draw Date"}</Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => setActiveSheet("form")}
@@ -510,35 +557,32 @@ export default function AddReminderModal({
                   contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
                   showsVerticalScrollIndicator={false}
                 >
-                  {/* Month Navigation */}
-                  <View style={styles.calNav}>
+                  <View style={styles.monthNavRow}>
                     <TouchableOpacity
-                      style={styles.calNavBtn}
+                      style={styles.navArrowBtn}
                       onPress={handlePrevMonth}
                     >
-                      <ChevronLeft size={20} color={COLORS.textDark} />
+                      <ChevronLeft size={20} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <Text style={styles.calNavTitle}>
-                      {MONTH_NAMES[calMonth]} {calYear}
+                    <Text style={styles.monthNavTitle}>
+                      {monthNames[calMonth]} {calYear}
                     </Text>
                     <TouchableOpacity
-                      style={styles.calNavBtn}
+                      style={styles.navArrowBtn}
                       onPress={handleNextMonth}
                     >
-                      <ChevronRight size={20} color={COLORS.textDark} />
+                      <ChevronRight size={20} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
 
-                  {/* Day Headers (Su, Mo, Tu...) */}
                   <View style={styles.dayNamesRow}>
-                    {DAY_NAMES.map((name, idx) => (
+                    {dayNames.map((name, idx) => (
                       <Text key={idx} style={styles.dayNameCell}>
                         {name}
                       </Text>
                     ))}
                   </View>
 
-                  {/* Calendar Matrix */}
                   <View style={styles.calendarGrid}>
                     {Array.from({ length: firstDayIndex }).map((_, i) => (
                       <View key={`empty-${i}`} style={styles.calendarCell} />
@@ -573,8 +617,9 @@ export default function AddReminderModal({
                     })}
                   </View>
 
-                  {/* Quick Preset Buttons */}
-                  <Text style={[styles.label, { marginTop: 20 }]}>Quick Presets</Text>
+                  <Text style={[styles.label, { marginTop: 20 }]}>
+                    {isMl ? "ദ്രുത തീയതികൾ" : "Quick Presets"}
+                  </Text>
                   <View style={styles.presetsRow}>
                     <TouchableOpacity
                       style={styles.presetBtn}
@@ -584,7 +629,7 @@ export default function AddReminderModal({
                         setActiveSheet("form");
                       }}
                     >
-                      <Text style={styles.presetBtnText}>Today</Text>
+                      <Text style={styles.presetBtnText}>{isMl ? "ഇന്ന്" : "Today"}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.presetBtn}
@@ -595,7 +640,7 @@ export default function AddReminderModal({
                         setActiveSheet("form");
                       }}
                     >
-                      <Text style={styles.presetBtnText}>Tomorrow</Text>
+                      <Text style={styles.presetBtnText}>{isMl ? "നാളെ" : "Tomorrow"}</Text>
                     </TouchableOpacity>
                     {selectedLottery && (
                       <TouchableOpacity
@@ -607,7 +652,9 @@ export default function AddReminderModal({
                         }}
                       >
                         <Text style={[styles.presetBtnText, { color: "#065F46" }]}>
-                          Next {selectedLottery.day}
+                          {isMl
+                            ? `അടുത്ത ${getDayTranslated(selectedLottery.day, language)}`
+                            : `Next ${selectedLottery.day}`}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -624,7 +671,25 @@ export default function AddReminderModal({
         visible={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onBarcodeScanned={(value) => {
-          setTicketNumber(value);
+          const cleanVal = formatTicketSearchInput(value);
+          setTicketNumber(cleanVal);
+          setTicketError(null);
+          if (!selectedLottery && lotteries.length > 0) {
+            const upper = cleanVal.toUpperCase();
+            const matched = lotteries.find((l) =>
+              upper.startsWith(l.code) || upper.includes(l.code)
+            );
+            if (matched) {
+              setSelectedLottery(matched);
+              setLotteryError(null);
+              if (!editReminder) {
+                const nextDate = getNextDrawDateForLottery(matched.day);
+                setDrawDate(nextDate);
+                setCalYear(nextDate.getFullYear());
+                setCalMonth(nextDate.getMonth());
+              }
+            }
+          }
           setIsScannerOpen(false);
         }}
       />
@@ -769,42 +834,59 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#E5E7EB",
     backgroundColor: "#FFFFFF",
+    marginBottom: 8,
   },
   lotteryCardSelected: {
     borderColor: COLORS.primary,
     backgroundColor: "#F0FDF4",
   },
-  lotteryCardContent: { flex: 1, marginRight: 8 },
-  lotteryCardHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  lotteryCardTitle: { fontSize: 15, fontWeight: "800", color: "#1F2937" },
-  codeBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 },
-  codeBadgeWeekly: { backgroundColor: "#E0F2FE" },
-  codeBadgeBumper: { backgroundColor: "#FEF3C7" },
-  codeBadgeText: { fontSize: 11, fontWeight: "900" },
-  codeBadgeTextWeekly: { color: "#0369A1" },
-  codeBadgeTextBumper: { color: "#B45309" },
-  lotteryCardMl: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  lotteryCardMeta: { flexDirection: "row", gap: 8, marginTop: 6 },
-  metaPill: {
+  lotteryCardLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    backgroundColor: "#F0F9FF",
+    gap: 12,
+    flex: 1,
+  },
+  lotteryName: {
+    fontSize: 14.5,
+    fontWeight: "800",
+    color: "#1F2937",
+  },
+  lotteryMeta: {
+    fontSize: 11.5,
+    fontWeight: "600",
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  codeBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#E0F2FE",
   },
-  metaPillText: { fontSize: 11, fontWeight: "700", color: "#0369A1" },
-  checkCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  codeBadgeWeekly: { backgroundColor: "#E0F2FE" },
+  codeBadgeBumper: { backgroundColor: "#FEF3C7" },
+  codeBadgeText: { fontSize: 11, fontWeight: "900", color: "#0369A1" },
+  codeBadgeTextWeekly: { color: "#0369A1" },
+  codeBadgeTextBumper: { color: "#B45309" },
 
   // Calendar Picker Styles
+  monthNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  navArrowBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  monthNavTitle: { fontSize: 16, fontWeight: "800", color: "#1F2937" },
   calNav: {
     flexDirection: "row",
     alignItems: "center",

@@ -26,7 +26,6 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 
 const SUPPORT_EMAIL = "keralalotteryresultstoday@gmail.com";
 const WHATSAPP_PHONE = "+919778570477";
@@ -324,9 +323,6 @@ export default function ContactScreen({ navigation }: any) {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Compliance Notice */}
-          <ComplianceDisclaimerCard style={{ marginTop: 16, marginBottom: 24 }} />
         </ScrollView>
       </View>
     </SafeAreaView>
