@@ -13,8 +13,13 @@ import {
   Alert,
   Animated,
 } from "react-native";
-import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
+import {
+  useAudioRecorder,
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from "expo-audio";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Speech from "expo-speech";
 import {
   X,
@@ -163,7 +168,7 @@ export default function AiVoiceAssistantModal({
   }, [visible, language]);
 
 
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const timerRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const blinkAnim = useRef(new Animated.Value(1)).current;
@@ -260,8 +265,8 @@ export default function AiVoiceAssistantModal({
   const startRecording = async () => {
     stopAudio();
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status !== "granted") {
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
         Alert.alert(
           "Microphone Permission Required",
           "Please enable microphone access in your phone Settings so you can speak to Kerala Lottery AI in Malayalam or English.",
@@ -270,15 +275,13 @@ export default function AiVoiceAssistantModal({
         return;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
       setIsRecording(true);
       setRecordSeconds(0);
 
@@ -299,11 +302,10 @@ export default function AiVoiceAssistantModal({
   // 2. WhatsApp Voice Cancel / Trash Recording
   const cancelRecording = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (recordingRef.current) {
+    if (isRecording) {
       try {
-        await recordingRef.current.stopAndUnloadAsync();
+        await audioRecorder.stop();
       } catch {}
-      recordingRef.current = null;
     }
     setIsRecording(false);
     setRecordSeconds(0);
@@ -311,20 +313,17 @@ export default function AiVoiceAssistantModal({
 
   // 3. WhatsApp Voice Send Recording
   const sendRecording = async () => {
-    if (!recordingRef.current) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const recordingInstance = recordingRef.current;
     const duration = recordSeconds;
-    recordingRef.current = null;
     setIsRecording(false);
     setIsLoading(true);
 
     try {
-      await recordingInstance.stopAndUnloadAsync();
-      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      await audioRecorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
 
-      const uri = recordingInstance.getURI();
+      const uri = audioRecorder.uri;
       if (!uri) throw new Error("Audio file URI not found.");
 
       const base64Audio = await FileSystem.readAsStringAsync(uri, {

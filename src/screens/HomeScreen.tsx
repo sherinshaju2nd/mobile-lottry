@@ -283,6 +283,26 @@ export default function HomeScreen({ navigation }: any) {
     (allDraws.length > 1 ? allDraws[1] : allDraws[0]) ||
     null;
 
+  const yesterdayISTDate = (() => {
+    try {
+      const now = new Date();
+      const istDate = new Date(
+        now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
+      );
+      istDate.setDate(istDate.getDate() - 1);
+      const year = istDate.getFullYear();
+      const month = String(istDate.getMonth() + 1).padStart(2, "0");
+      const day = String(istDate.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch {
+      return "";
+    }
+  })();
+
+  const isPreviousDrawYesterday = Boolean(
+    previousDraw && previousDraw.draw_date === yesterdayISTDate,
+  );
+
   const handleQuickCheck = async () => {
     if (!ticketInput.trim()) return;
     const digits = ticketInput.replace(/\D/g, "");
@@ -512,12 +532,17 @@ export default function HomeScreen({ navigation }: any) {
                       style={[
                         styles.heroTabText,
                         heroTab === 1 && styles.heroTabActiveText,
+                        language === "ml" && { fontSize: 11 },
                       ]}
                       numberOfLines={1}
                     >
-                      {language === "ml"
-                        ? "ഇന്നലത്തെ ഫലം"
-                        : "Yesterday's Result"}{" "}
+                      {isPreviousDrawYesterday
+                        ? language === "ml"
+                          ? "ഇന്നലത്തെ ഫലം"
+                          : "Yesterday's Result"
+                        : language === "ml"
+                          ? "മുൻകാല ഫലം"
+                          : "Previous Result"}{" "}
                       ({previousDraw.draw_date})
                     </Text>
                   </TouchableOpacity>
@@ -597,9 +622,13 @@ export default function HomeScreen({ navigation }: any) {
                       ]}
                       numberOfLines={1}
                     >
-                      {language === "ml"
-                        ? "ഇന്നലത്തെ ഫലം"
-                        : "Yesterday's Result"}{" "}
+                      {isPreviousDrawYesterday
+                        ? language === "ml"
+                          ? "ഇന്നലത്തെ ഫലം"
+                          : "Yesterday's Result"
+                        : language === "ml"
+                          ? "മുൻകാല ഫലം"
+                          : "Previous Result"}{" "}
                       ({previousDraw.draw_date})
                     </Text>
                   </TouchableOpacity>
@@ -1255,84 +1284,170 @@ export default function HomeScreen({ navigation }: any) {
         {/* HERO TAB 1: YESTERDAY'S / PREVIOUS DRAW RESULT */}
         {heroTab === 1 && previousDraw && (
           <View style={styles.winnerCard}>
-            <View style={styles.winnerHeader}>
-              <Trophy size={15} color={COLORS.primary} />
-              <Text style={styles.winnerTextBadge}>
-                {language === "ml"
-                  ? "മുൻകാല നറുക്കെടുപ്പ് ഫലം"
-                  : "PREVIOUS DRAW RESULT"}{" "}
-                • {previousDraw.draw_date}
-              </Text>
-            </View>
-
-            <Text
-              style={[
-                styles.winnerTitle,
-                language === "ml" && { fontSize: 16.5, lineHeight: 24 },
-              ]}
-            >
-              {language === "ml" &&
-              getLotteryMalayalamName(previousDraw.lottery_code)
-                ? getLotteryMalayalamName(previousDraw.lottery_code)
-                : previousDraw.draw_name}{" "}
-              ({previousDraw.draw_code})
-            </Text>
-
-            <View style={styles.prizeBadgeContainer}>
-              <Text style={styles.winnerPrizeLabel}>
-                {t("first_prize")} (
-                {previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
-              </Text>
-            </View>
-
-            <View style={styles.heroTicketBox}>
-              <Text style={styles.winnerTicketNumber}>
-                {previousDraw.first?.ticket || "N/A"}
-              </Text>
-            </View>
-
-            {previousDraw.first?.location && (
-              <View style={styles.winnerMetaBox}>
-                <Text style={styles.winnerMeta}>
-                  {t("location")}: {previousDraw.first.location}
-                  {previousDraw.first?.agent
-                    ? `  |  ${t("agent")}: ${previousDraw.first.agent}`
-                    : ""}
+            <View style={styles.winnerHeroSection}>
+              <View style={styles.winnerHeader}>
+                <Trophy size={15} color={COLORS.primary} />
+                <Text style={styles.winnerTextBadge}>
+                  {isPreviousDrawYesterday
+                    ? language === "ml"
+                      ? "ഇന്നലത്തെ നറുക്കെടുപ്പ് ഫലം"
+                      : "YESTERDAY'S DRAW RESULT"
+                    : language === "ml"
+                      ? "മുൻകാല നറുക്കെടുപ്പ് ഫലം"
+                      : "PREVIOUS DRAW RESULT"}{" "}
+                  • {previousDraw.draw_date}
                 </Text>
               </View>
-            )}
 
-            <TouchableOpacity
-              style={[styles.heroDownloadPdfBtn, { marginBottom: 14 }]}
-              activeOpacity={0.8}
-              onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
-            >
-              <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-              <Text style={styles.heroDownloadPdfBtnText}>
-                {t("download_pdf")}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.viewBreakdownBtn}
-              onPress={() =>
-                navigation.navigate("DrawBreakdown", {
-                  code: previousDraw.lottery_code,
-                  date: previousDraw.draw_date,
-                })
-              }
-            >
               <Text
                 style={[
-                  styles.viewBreakdownText,
-                  language === "ml" && { fontSize: 12, lineHeight: 18 },
+                  styles.winnerTitle,
+                  language === "ml" && { fontSize: 16.5, lineHeight: 24 },
                 ]}
               >
-                {language === "ml"
-                  ? `${previousDraw.draw_date} തീയതിയിലെ സമ്പൂർണ്ണ ഫലം കാണുക →`
-                  : `View Full Breakdown for ${previousDraw.draw_date} →`}
+                {language === "ml" &&
+                getLotteryMalayalamName(previousDraw.lottery_code)
+                  ? getLotteryMalayalamName(previousDraw.lottery_code)
+                  : previousDraw.draw_name}{" "}
+                ({previousDraw.draw_code})
               </Text>
-            </TouchableOpacity>
+
+              <View style={styles.prizeBadgeContainer}>
+                <Text style={styles.winnerPrizeLabel}>
+                  {t("first_prize")} (
+                  {previousDraw.prizes?.amounts?.["1st"] || "₹70 Lakhs"})
+                </Text>
+              </View>
+
+              <View style={styles.heroTicketBox}>
+                <Text style={styles.winnerTicketNumber}>
+                  {previousDraw.first?.ticket || "N/A"}
+                </Text>
+              </View>
+
+              {((previousDraw.first?.location &&
+                previousDraw.first.location.toLowerCase() !== "n/a" &&
+                previousDraw.first.location.toLowerCase() !== "nan" &&
+                previousDraw.first.location.toLowerCase() !== "null") ||
+                (previousDraw.first?.agent &&
+                  previousDraw.first.agent.toLowerCase() !== "n/a" &&
+                  previousDraw.first.agent.toLowerCase() !== "nan" &&
+                  previousDraw.first.agent.toLowerCase() !== "null")) && (
+                <View style={styles.winnerMetaBox}>
+                  <Text style={styles.winnerMeta}>
+                    {previousDraw.first?.location &&
+                    previousDraw.first.location.toLowerCase() !== "n/a" &&
+                    previousDraw.first.location.toLowerCase() !== "nan" &&
+                    previousDraw.first.location.toLowerCase() !== "null"
+                      ? `${t("location")}: ${previousDraw.first.location}`
+                      : ""}
+                    {previousDraw.first?.agent &&
+                    previousDraw.first.agent.toLowerCase() !== "n/a" &&
+                    previousDraw.first.agent.toLowerCase() !== "nan" &&
+                    previousDraw.first.agent.toLowerCase() !== "null"
+                      ? `${previousDraw.first?.location && previousDraw.first.location.toLowerCase() !== "n/a" && previousDraw.first.location.toLowerCase() !== "nan" && previousDraw.first.location.toLowerCase() !== "null" ? "  |  " : ""}${t("agent")}: ${previousDraw.first.agent}`
+                      : ""}
+                  </Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={styles.heroDownloadPdfBtn}
+                activeOpacity={0.8}
+                onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
+              >
+                <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Text style={styles.heroDownloadPdfBtnText}>
+                  {t("download_pdf")}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Complete Full Prize Breakdown for Yesterday / Previous Draw */}
+            <Text
+              style={[
+                styles.sectionHeader,
+                { marginTop: 12, marginBottom: 6 },
+              ]}
+            >
+              {t("complete_prize_breakdown")}
+            </Text>
+            {[
+              {
+                key: "consolation",
+                label:
+                  language === "ml"
+                    ? "സമാശ്വാസ സമ്മാനം"
+                    : "Consolation Prize",
+                color: "#64748B",
+              },
+              {
+                key: "2nd",
+                label: language === "ml" ? "രണ്ടാം സമ്മാനം" : "2nd Prize",
+                color: "#D97706",
+              },
+              {
+                key: "3rd",
+                label: language === "ml" ? "മൂന്നാം സമ്മാനം" : "3rd Prize",
+                color: "#2563EB",
+              },
+              {
+                key: "4th",
+                label: language === "ml" ? "നാലാം സമ്മാനം" : "4th Prize",
+                color: "#9333EA",
+              },
+              {
+                key: "5th",
+                label: language === "ml" ? "അഞ്ചാം സമ്മാനം" : "5th Prize",
+                color: "#334155",
+              },
+              {
+                key: "6th",
+                label: language === "ml" ? "ആറാം സമ്മാനം" : "6th Prize",
+                color: "#0D9488",
+              },
+              {
+                key: "7th",
+                label: language === "ml" ? "ഏഴാം സമ്മാനം" : "7th Prize",
+                color: "#EA580C",
+              },
+              {
+                key: "8th",
+                label: language === "ml" ? "എട്ടാം സമ്മാനം" : "8th Prize",
+                color: "#475569",
+              },
+              {
+                key: "9th",
+                label: language === "ml" ? "ഒൻപതാം സമ്മാനം" : "9th Prize",
+                color: "#6B7280",
+              },
+            ].map(({ key, label }) => {
+              const numbers = (previousDraw.prizes as any)?.[key] as
+                | string[]
+                | undefined;
+              const amount = previousDraw.prizes?.amounts?.[key];
+              if (!numbers || !Array.isArray(numbers) || numbers.length === 0)
+                return null;
+
+              return (
+                <View key={key} style={styles.tierCard}>
+                  <View style={styles.tierHeader}>
+                    <Text style={styles.tierTitle}>{label}</Text>
+                    {amount && (
+                      <Text style={styles.tierAmount}>{amount}</Text>
+                    )}
+                  </View>
+
+                  <View style={styles.numbersGrid}>
+                    {numbers.map((num, idx) => (
+                      <View key={idx} style={styles.numberChip}>
+                        <Text style={styles.numberChipText}>{num}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
           </View>
         )}
       </>

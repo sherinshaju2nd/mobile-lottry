@@ -78,7 +78,8 @@
         {
           "cameraPermission": "Allow Kerala Lottery Results to access your camera to scan ticket barcodes."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

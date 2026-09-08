@@ -274,28 +274,30 @@ export default function BarcodeScannerModal({
             </View>
           </View>
         ) : (
-          <CameraView
-            ref={cameraRef}
-            style={StyleSheet.absoluteFillObject}
-            facing="back"
-            enableTorch={torchOn}
-            barcodeScannerSettings={{
-              barcodeTypes: [
-                "code128",
-                "code39",
-                "code93",
-                "ean13",
-                "ean8",
-                "upc_a",
-                "upc_e",
-                "itf14",
-                "codabar",
-              ],
-            }}
-            onBarcodeScanned={scanned ? undefined : handleScan}
-          >
-            {/* Viewfinder Reticle Overlay */}
-            <View style={styles.overlay}>
+          <View style={styles.cameraContainer}>
+            <CameraView
+              ref={cameraRef}
+              style={StyleSheet.absoluteFillObject}
+              facing="back"
+              enableTorch={torchOn}
+              barcodeScannerSettings={{
+                barcodeTypes: [
+                  "code128",
+                  "code39",
+                  "code93",
+                  "ean13",
+                  "ean8",
+                  "upc_a",
+                  "upc_e",
+                  "itf14",
+                  "codabar",
+                ],
+              }}
+              onBarcodeScanned={scanned ? undefined : handleScan}
+            />
+
+            {/* Viewfinder Reticle Overlay positioned on top */}
+            <View style={styles.overlay} pointerEvents="box-none">
               <View style={styles.overlayTop} />
 
               <View style={[styles.overlayMiddleRow, { height: scanBoxSize }]}>
@@ -332,29 +334,36 @@ export default function BarcodeScannerModal({
               <View style={styles.overlayBottom}>
                 <TouchableOpacity
                   style={{
-                    backgroundColor: COLORS.gold,
+                    backgroundColor: COLORS.primary,
+                    borderColor: "#38BDF8",
+                    borderWidth: 1.5,
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 8,
-                    paddingHorizontal: 20,
-                    paddingVertical: 12,
+                    paddingHorizontal: 22,
+                    paddingVertical: 13,
                     borderRadius: 25,
                     marginBottom: 10,
-                    elevation: 4,
+                    shadowColor: "#0B3C5D",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 10,
+                    elevation: 6,
                   }}
                   disabled={isAiScanning}
                   onPress={handleAiPhotoScan}
                 >
                   {isAiScanning ? (
-                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <ActivityIndicator size="small" color={COLORS.white} />
                   ) : (
-                    <Sparkles size={18} color={COLORS.primary} />
+                    <Sparkles size={18} color={COLORS.gold} />
                   )}
                   <Text
                     style={{
-                      color: COLORS.primary,
-                      fontWeight: "800",
+                      color: COLORS.white,
+                      fontWeight: "900",
                       fontSize: 14,
+                      letterSpacing: 0.3,
                     }}
                   >
                     {isAiScanning
@@ -363,11 +372,23 @@ export default function BarcodeScannerModal({
                   </Text>
                 </TouchableOpacity>
 
-                <Text style={styles.instructionSub}>
-                  {isMl
-                    ? "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക അല്ലെങ്കിൽ AI ഫോട്ടോ സ്‌കാൻ ഉപയോഗിക്കുക"
-                    : "Align barcode in box, or tap AI Smart Photo Scan above"}
-                </Text>
+                <View
+                  style={{
+                    backgroundColor: "rgba(11, 60, 93, 0.75)",
+                    paddingHorizontal: 14,
+                    paddingVertical: 6,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: "rgba(255, 255, 255, 0.2)",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={styles.instructionSub}>
+                    {isMl
+                      ? "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക അല്ലെങ്കിൽ AI ഫോട്ടോ സ്‌കാൻ ഉപയോഗിക്കുക"
+                      : "Align barcode in box, or tap AI Smart Photo Scan above"}
+                  </Text>
+                </View>
                 {/* Lottery ticket barcode hint image */}
                 <Image
                   source={require("../../assets/barcode_hint.png")}
@@ -376,7 +397,7 @@ export default function BarcodeScannerModal({
                 />
               </View>
             </View>
-          </CameraView>
+          </View>
         )}
       </View>
     </Modal>
@@ -386,7 +407,7 @@ export default function BarcodeScannerModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#0B3C5D",
   },
   header: {
     height: Platform.OS === "ios" ? 100 : 70,
@@ -395,7 +416,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "#0B3C5D",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.12)",
     zIndex: 10,
   },
   closeBtn: {
@@ -409,26 +432,29 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: COLORS.white,
     fontSize: 17,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   torchBtn: {
     padding: 8,
     borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
   torchBtnActive: {
-    backgroundColor: "rgba(234, 179, 8, 0.2)",
+    backgroundColor: "rgba(234, 179, 8, 0.3)",
+    borderWidth: 1,
+    borderColor: COLORS.gold,
   },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-    backgroundColor: "#111827",
+    backgroundColor: COLORS.background,
   },
   permissionTitle: {
-    color: COLORS.white,
+    color: COLORS.primary,
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 16,
     marginBottom: 8,
   },
@@ -440,72 +466,84 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   permissionText: {
-    color: COLORS.white,
+    color: COLORS.textDark,
     fontSize: 16,
   },
   grantBtn: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   grantBtnText: {
     color: COLORS.white,
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 15,
   },
-  overlay: {
+  cameraContainer: {
     flex: 1,
+    position: "relative",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
   },
   overlayTop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(11, 60, 93, 0.55)",
   },
   overlayMiddleRow: {
     flexDirection: "row",
   },
   overlaySide: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
+    backgroundColor: "rgba(11, 60, 93, 0.55)",
   },
   scanBox: {
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
   },
   corner: {
     position: "absolute",
-    width: 24,
-    height: 24,
-    borderColor: COLORS.gold,
+    width: 26,
+    height: 26,
+    borderColor: "#38BDF8",
   },
   topLeft: {
     top: 0,
     left: 0,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderTopLeftRadius: 8,
+    borderTopLeftRadius: 10,
   },
   topRight: {
     top: 0,
     right: 0,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderTopRightRadius: 8,
+    borderTopRightRadius: 10,
   },
   bottomLeft: {
     bottom: 0,
     left: 0,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderBottomLeftRadius: 8,
+    borderBottomLeftRadius: 10,
   },
   bottomRight: {
     bottom: 0,
     right: 0,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderBottomRightRadius: 8,
+    borderBottomRightRadius: 10,
   },
   scanLine: {
     position: "absolute",
@@ -513,28 +551,28 @@ const styles = StyleSheet.create({
     left: 4,
     right: 4,
     height: 3,
-    backgroundColor: "#EF4444",
-    shadowColor: "#EF4444",
+    backgroundColor: "#38BDF8",
+    shadowColor: "#00D2FF",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    elevation: 6,
   },
   scannedOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.85)",
+    backgroundColor: "rgba(11, 60, 93, 0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
   scannedText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 8,
   },
   overlayBottom: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.72)",
+    backgroundColor: "rgba(11, 60, 93, 0.65)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 16,

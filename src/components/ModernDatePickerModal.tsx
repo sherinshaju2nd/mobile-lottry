@@ -16,6 +16,7 @@ import {
   Check,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
+import { useLanguage } from "../context/LanguageContext";
 
 interface ModernDatePickerModalProps {
   visible: boolean;
@@ -30,41 +31,65 @@ export default function ModernDatePickerModal({
   onClose,
   onSelectDate,
 }: ModernDatePickerModalProps) {
-  // Parse initial date or default to today IST
+  const { language, t } = useLanguage();
+  const isMl = language === "ml";
+
+  // Calculate IST Dates
   const getTodayIST = () => {
     return new Date().toLocaleDateString("en-CA", {
       timeZone: "Asia/Kolkata",
     });
   };
 
-  const initialDateStr = selectedDate || getTodayIST();
+  const getYesterdayIST = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  };
+
+  const todayStr = getTodayIST();
+  const yesterdayStr = getYesterdayIST();
+
+  const [tempSelectedDate, setTempSelectedDate] = useState<string>(() => {
+    return selectedDate || todayStr;
+  });
+
   const [activeYear, setActiveYear] = useState<number>(() => {
-    const parts = initialDateStr.split("-");
+    const parts = (tempSelectedDate || todayStr).split("-");
     return parts.length === 3 ? parseInt(parts[0], 10) : new Date().getFullYear();
   });
+
   const [activeMonth, setActiveMonth] = useState<number>(() => {
-    const parts = initialDateStr.split("-");
+    const parts = (tempSelectedDate || todayStr).split("-");
     return parts.length === 3 ? parseInt(parts[1], 10) - 1 : new Date().getMonth();
   });
-  const [tempSelectedDate, setTempSelectedDate] = useState<string | null>(selectedDate);
 
   useEffect(() => {
     if (visible) {
-      const cur = selectedDate || getTodayIST();
-      setTempSelectedDate(selectedDate);
-      const parts = cur.split("-");
+      const initial = selectedDate || todayStr;
+      setTempSelectedDate(initial);
+
+      const parts = initial.split("-");
       if (parts.length === 3) {
         setActiveYear(parseInt(parts[0], 10));
         setActiveMonth(parseInt(parts[1], 10) - 1);
       }
     }
-  }, [visible, selectedDate]);
+  }, [visible, selectedDate, todayStr]);
 
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const monthNames = isMl
+    ? [
+        "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ",
+        "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
+      ]
+    : [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+  const dayNames = isMl
+    ? ["ഞായർ", "തിങ്കൾ", "ചൊവ്വ", "ബുധൻ", "വ്യാഴം", "വെള്ളി", "ശനി"]
+    : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handlePrevMonth = () => {
     if (activeMonth === 0) {
@@ -88,12 +113,14 @@ export default function ModernDatePickerModal({
   const daysInMonth = new Date(activeYear, activeMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(activeYear, activeMonth, 1).getDay();
 
-  const todayStr = getTodayIST();
-
   const handleDaySelect = (day: number) => {
     const monthStr = String(activeMonth + 1).padStart(2, "0");
     const dayStr = String(day).padStart(2, "0");
     const formatted = `${activeYear}-${monthStr}-${dayStr}`;
+
+    // Block future dates
+    if (formatted > todayStr) return;
+
     setTempSelectedDate(formatted);
   };
 
@@ -103,24 +130,14 @@ export default function ModernDatePickerModal({
   };
 
   const handleQuickToday = () => {
-    const t = getTodayIST();
-    setTempSelectedDate(t);
-    onSelectDate(t);
+    setTempSelectedDate(todayStr);
+    onSelectDate(todayStr);
     onClose();
   };
 
   const handleQuickYesterday = () => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    const yStr = d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    setTempSelectedDate(yStr);
-    onSelectDate(yStr);
-    onClose();
-  };
-
-  const handleClear = () => {
-    setTempSelectedDate(null);
-    onSelectDate(null);
+    setTempSelectedDate(yesterdayStr);
+    onSelectDate(yesterdayStr);
     onClose();
   };
 
@@ -137,126 +154,142 @@ export default function ModernDatePickerModal({
         <View style={styles.modalCard}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
             {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <View style={styles.iconBadge}>
-                <CalendarIcon size={18} color={COLORS.primary} />
+            <View style={styles.header}>
+              <View style={styles.headerTitleRow}>
+                <View style={styles.iconBadge}>
+                  <CalendarIcon size={18} color={COLORS.primary} />
+                </View>
+                <Text style={styles.headerTitle}>
+                  {isMl ? "നറുക്കെടുപ്പ് തീയതി" : "Select Draw Date"}
+                </Text>
               </View>
-              <Text style={styles.headerTitle}>Select Draw Date</Text>
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+                <X size={20} color={COLORS.textDark} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <X size={20} color={COLORS.textDark} />
-            </TouchableOpacity>
-          </View>
 
-          {/* Quick Presets */}
-          <View style={styles.presetRow}>
-            <TouchableOpacity style={styles.presetBtn} onPress={handleQuickToday}>
-              <Text style={styles.presetBtnText}>Today</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.presetBtn} onPress={handleQuickYesterday}>
-              <Text style={styles.presetBtnText}>Yesterday</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.presetBtn, tempSelectedDate === null && styles.activePresetBtn]}
-              onPress={handleClear}
-            >
-              <Text
+            {/* Quick Presets: Only Today & Yesterday */}
+            <View style={styles.presetRow}>
+              <TouchableOpacity
                 style={[
-                  styles.presetBtnText,
-                  tempSelectedDate === null && styles.activePresetBtnText,
+                  styles.presetBtn,
+                  tempSelectedDate === todayStr && styles.activePresetBtn,
                 ]}
+                onPress={handleQuickToday}
               >
-                All Draws (Full DB)
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Month / Year Navigator */}
-          <View style={styles.monthNav}>
-            <TouchableOpacity style={styles.navArrowBtn} onPress={handlePrevMonth}>
-              <ChevronLeft size={20} color={COLORS.textDark} />
-            </TouchableOpacity>
-            <Text style={styles.monthTitle}>
-              {monthNames[activeMonth]} {activeYear}
-            </Text>
-            <TouchableOpacity style={styles.navArrowBtn} onPress={handleNextMonth}>
-              <ChevronRight size={20} color={COLORS.textDark} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Day of Week Headers */}
-          <View style={styles.daysHeaderRow}>
-            {dayNames.map((dName) => (
-              <Text key={dName} style={styles.dayHeaderCell}>
-                {dName}
-              </Text>
-            ))}
-          </View>
-
-          {/* Calendar Days Grid */}
-          <View style={styles.calendarGrid}>
-            {/* Empty slots before first day */}
-            {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-              <View key={`empty-${i}`} style={styles.dayCell} />
-            ))}
-
-            {/* Days of month */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const dayNum = i + 1;
-              const monthStr = String(activeMonth + 1).padStart(2, "0");
-              const dayStr = String(dayNum).padStart(2, "0");
-              const currentCellDate = `${activeYear}-${monthStr}-${dayStr}`;
-              const isSelected = tempSelectedDate === currentCellDate;
-              const isToday = todayStr === currentCellDate;
-              const isFuture = currentCellDate > todayStr;
-
-              return (
-                <TouchableOpacity
-                  key={`day-${dayNum}`}
+                <Text
                   style={[
-                    styles.dayCell,
-                    isSelected && styles.selectedDayCell,
-                    isToday && !isSelected && styles.todayDayCell,
+                    styles.presetBtnText,
+                    tempSelectedDate === todayStr && styles.activePresetBtnText,
                   ]}
-                  disabled={isFuture}
-                  onPress={() => handleDaySelect(dayNum)}
                 >
-                  <Text
+                  {isMl ? "ഇന്ന്" : "Today"} ({todayStr})
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.presetBtn,
+                  tempSelectedDate === yesterdayStr && styles.activePresetBtn,
+                ]}
+                onPress={handleQuickYesterday}
+              >
+                <Text
+                  style={[
+                    styles.presetBtnText,
+                    tempSelectedDate === yesterdayStr && styles.activePresetBtnText,
+                  ]}
+                >
+                  {isMl ? "ഇന്നലെ" : "Yesterday"} ({yesterdayStr})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Month / Year Navigator */}
+            <View style={styles.monthNav}>
+              <TouchableOpacity style={styles.navArrowBtn} onPress={handlePrevMonth}>
+                <ChevronLeft size={20} color={COLORS.textDark} />
+              </TouchableOpacity>
+              <Text style={styles.monthTitle}>
+                {monthNames[activeMonth]} {activeYear}
+              </Text>
+              <TouchableOpacity style={styles.navArrowBtn} onPress={handleNextMonth}>
+                <ChevronRight size={20} color={COLORS.textDark} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Day of Week Headers */}
+            <View style={styles.daysHeaderRow}>
+              {dayNames.map((dName) => (
+                <Text key={dName} style={styles.dayHeaderCell}>
+                  {dName}
+                </Text>
+              ))}
+            </View>
+
+            {/* Calendar Days Grid */}
+            <View style={styles.calendarGrid}>
+              {/* Empty slots before first day */}
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                <View key={`empty-${i}`} style={styles.dayCell} />
+              ))}
+
+              {/* Days of month */}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const monthStr = String(activeMonth + 1).padStart(2, "0");
+                const dayStr = String(dayNum).padStart(2, "0");
+                const currentCellDate = `${activeYear}-${monthStr}-${dayStr}`;
+                const isSelected = tempSelectedDate === currentCellDate;
+                const isToday = todayStr === currentCellDate;
+                const isFuture = currentCellDate > todayStr;
+
+                return (
+                  <TouchableOpacity
+                    key={`day-${dayNum}`}
                     style={[
-                      styles.dayCellText,
-                      isSelected && styles.selectedDayCellText,
-                      isToday && !isSelected && styles.todayDayCellText,
-                      isFuture && styles.futureDayCellText,
+                      styles.dayCell,
+                      isSelected && styles.selectedDayCell,
+                      isToday && !isSelected && styles.todayDayCell,
                     ]}
+                    disabled={isFuture}
+                    onPress={() => handleDaySelect(dayNum)}
                   >
-                    {dayNum}
+                    <Text
+                      style={[
+                        styles.dayCellText,
+                        isSelected && styles.selectedDayCellText,
+                        isToday && !isSelected && styles.todayDayCellText,
+                        isFuture && styles.futureDayCellText,
+                      ]}
+                    >
+                      {dayNum}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Selected Date Summary & Actions Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.selectedDateText}>
+                {isMl ? "തിരഞ്ഞെടുത്ത തീയതി: " : "Selected Date: "}
+                <Text style={styles.selectedDateValue}>{tempSelectedDate}</Text>
+              </Text>
+
+              <View style={styles.footerBtnRow}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                  <Text style={styles.cancelBtnText}>{t("cancel") || "Cancel"}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
+                  <Check size={16} color={COLORS.white} />
+                  <Text style={styles.confirmBtnText}>
+                    {isMl ? "ഫലം കാണുക" : "View Results"}
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Selected Date Summary & Actions Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.selectedDateText}>
-              Selected:{" "}
-              <Text style={styles.selectedDateValue}>
-                {tempSelectedDate ? tempSelectedDate : "Full Database (All Draws)"}
-              </Text>
-            </Text>
-
-            <View style={styles.footerBtnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-                <Check size={16} color={COLORS.white} />
-                <Text style={styles.confirmBtnText}>Apply Filter</Text>
-              </TouchableOpacity>
+              </View>
             </View>
-          </View>
           </ScrollView>
         </View>
       </View>
@@ -314,12 +347,12 @@ const styles = StyleSheet.create({
   },
   presetRow: {
     flexDirection: "row",
-    gap: 6,
-    marginBottom: 14,
+    gap: 8,
+    marginBottom: 10,
   },
   presetBtn: {
     flex: 1,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: COLORS.background,
@@ -331,13 +364,39 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
+  disabledPresetBtn: {
+    opacity: 0.5,
+    backgroundColor: COLORS.background,
+    borderColor: COLORS.border,
+  },
   presetBtnText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
     color: COLORS.textDark,
   },
   activePresetBtnText: {
     color: COLORS.white,
+  },
+  disabledPresetBtnText: {
+    color: COLORS.textLight,
+  },
+  liveNoticeBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FDE68A",
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  liveNoticeText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#B45309",
+    flex: 1,
   },
   monthNav: {
     flexDirection: "row",
@@ -390,6 +449,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryLight,
+  },
+  lockedDayCell: {
+    backgroundColor: "rgba(0,0,0,0.03)",
+    opacity: 0.45,
   },
   dayCellText: {
     fontSize: 13,

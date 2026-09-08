@@ -26,7 +26,30 @@ import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
+import { LogBox } from "react-native";
 import { COLORS } from "./src/constants/colors";
+// Suppress benign Expo Go development sandbox notices from terminal output and UI
+LogBox.ignoreLogs([
+  "Android Push notifications",
+  "expo-notifications",
+  "`expo-notifications` functionality is not fully supported in Expo Go",
+]);
+
+if (__DEV__) {
+  const _warn = console.warn;
+  console.warn = (...args) => {
+    const text = args.map((a) => (typeof a === "string" ? a : JSON.stringify(a) || "")).join(" ");
+    if (
+      text.includes("expo-notifications") ||
+      text.includes("Android Push notifications") ||
+      text.includes("Use a development build instead of Expo Go") ||
+      text.includes("not fully supported in Expo Go")
+    ) {
+      return;
+    }
+    _warn(...args);
+  };
+}
 
 // Configure foreground notification display
 try {
