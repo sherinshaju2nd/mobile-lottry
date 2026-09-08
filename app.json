@@ -3,7 +3,7 @@
     "name": "Kerala Lottery Results Today",
     "slug": "kerala-lottery-results",
     "scheme": "keralalottery",
-    "version": "1.0.1",
+    "version": "1.0.4",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.keralalotteryresultstoday.app",
-      "buildNumber": "1",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Kerala Lottery Results to access your camera to scan lottery ticket barcodes.",
         "NSMicrophoneUsageDescription": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
@@ -30,7 +30,7 @@
     },
     "android": {
       "package": "com.keralalotteryresultstoday.app",
-      "versionCode": 3,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
@@ -58,7 +58,10 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.0.21"
+            "kotlinVersion": "2.0.21",
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-dontwarn com.facebook.react.turbomodule.**\n-keepattributes *Annotation*\n-keepattributes Signature\n-keepattributes EnclosingMethod\n-dontwarn sun.misc.**\n-dontwarn javax.annotation.**\n-keep class com.facebook.react.** { *; }"
           },
           "ios": {
             "deploymentTarget": "15.1"
