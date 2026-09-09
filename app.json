@@ -23,6 +23,19 @@
         "NSCameraUsageDescription": "Allow Kerala Lottery Results to access your camera to scan lottery ticket barcodes.",
         "NSMicrophoneUsageDescription": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
         "ITSAppUsesNonExemptEncryption": false,
+        "UIRequiresFullScreen": false,
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ],
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ],
         "UIBackgroundModes": [
           "remote-notification"
         ]
@@ -54,6 +67,7 @@
       }
     },
     "plugins": [
+      "./plugins/withLargeScreenSupport",
       [
         "expo-build-properties",
         {
