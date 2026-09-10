@@ -657,6 +657,8 @@ export async function checkIsDatePostponed(
   }
 }
 
+const BACKEND_API_BASE = "https://www.keralalotteryresultstoday.in";
+
 /**
  * Scan a Kerala Lottery ticket image using Gemini Vision on Mobile
  */
@@ -682,61 +684,88 @@ Return ONLY JSON:
 `;
 
   const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
     "gemini-3.6-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-3.1-pro",
     "gemini-2.5-flash",
+    "gemini-2.5-pro",
   ];
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: prompt },
-                  {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: cleanBase64,
+  if (GEMINI_API_KEY) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt },
+                    {
+                      inline_data: {
+                        mime_type: mimeType,
+                        data: cleanBase64,
+                      },
                     },
-                  },
-                ],
+                  ],
+                },
+              ],
+              generationConfig: {
+                response_mime_type: "application/json",
+                temperature: 0.1,
               },
-            ],
-            generationConfig: {
-              response_mime_type: "application/json",
-              temperature: 0.1,
-            },
-          }),
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+          const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+          const parsed = JSON.parse(cleaned);
+
+          const num = parsed.ticket_number || "";
+          const series = parsed.series || "";
+          const fullTicket = series && num ? `${series} ${num}` : num || series;
+
+          return {
+            ticketNumber: fullTicket,
+            series: parsed.series,
+            lotteryName: parsed.lottery_name,
+            drawDate: parsed.draw_date,
+          };
         }
-      );
+      } catch (e) {
+        console.warn(`Mobile Gemini direct scan failed with ${model}:`, e);
+      }
+    }
+  }
 
-      if (response.ok) {
-        const data = await response.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-        const cleaned = rawText.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-        const parsed = JSON.parse(cleaned);
-
-        const num = parsed.ticket_number || "";
-        const series = parsed.series || "";
-        const fullTicket = series && num ? `${series} ${num}` : num || series;
-
+  // Backup fallback: Call backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: cleanBase64, mimeType }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.ticket) {
+        const t = json.ticket;
+        const fullTicket = t.series && t.ticket_number ? `${t.series} ${t.ticket_number}` : t.ticket_number || t.series || "";
         return {
           ticketNumber: fullTicket,
-          series: parsed.series,
-          lotteryName: parsed.lottery_name,
-          drawDate: parsed.draw_date,
+          series: t.series,
+          lotteryName: t.lottery_name,
+          drawDate: t.draw_date,
         };
       }
-    } catch (e) {
-      console.warn(`Mobile Gemini scan failed with ${model}:`, e);
     }
+  } catch (backendErr) {
+    console.warn("Backend scan fallback error:", backendErr);
   }
 
   throw new Error("Unable to read ticket digits. Please ensure the ticket number is clearly visible.");
@@ -791,40 +820,61 @@ ${contextData || "No extra context."}
   ];
 
   const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
     "gemini-3.6-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-3.1-pro",
     "gemini-2.5-flash",
+    "gemini-2.5-pro",
   ];
 
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: {
-              parts: [{ text: systemInstruction }],
-            },
-            contents,
-            generationConfig: {
-              temperature: 0.4,
-              max_output_tokens: 800,
-            },
-          }),
-        }
-      );
+  if (GEMINI_API_KEY) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: systemInstruction }],
+              },
+              contents,
+              generationConfig: {
+                temperature: 0.4,
+                max_output_tokens: 800,
+              },
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to answer right now.";
+        if (response.ok) {
+          const data = await response.json();
+          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText) return replyText;
+        }
+      } catch (e) {
+        console.warn(`Mobile direct chat model ${model} error:`, e);
       }
-    } catch (e) {
-      console.warn(`Mobile chat model ${model} error:`, e);
     }
+  }
+
+  // Backup fallback: Call backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage, history }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.reply) {
+        return json.reply;
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend chat fallback error:", backendErr);
   }
 
   throw new Error("AI Assistant is currently unavailable. Please try again.");
@@ -837,7 +887,7 @@ export interface AudioChatResponse {
 
 /**
  * Mobile Gemini AI Direct Audio Voice Assistant
- * Sends recorded microphone audio in Malayalam or English directly to Gemini 3.6
+ * Sends recorded microphone audio in Malayalam or English directly to Gemini
  */
 export async function chatWithGeminiAudioMobile(
   base64Audio: string,
@@ -888,8 +938,8 @@ ${contextData || "No extra context."}
       role: "user",
       parts: [
         {
-          inlineData: {
-            mimeType: mimeType,
+          inline_data: {
+            mime_type: mimeType,
             data: cleanAudio,
           },
         },
@@ -901,58 +951,62 @@ ${contextData || "No extra context."}
   ];
 
   const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
     "gemini-3.6-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-3.1-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
   ];
 
   let lastErrorMsg = "";
 
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: {
-              parts: [{ text: systemInstruction }],
-            },
-            contents,
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 800,
-            },
-          }),
-        }
-      );
+  if (GEMINI_API_KEY) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: systemInstruction }],
+              },
+              contents,
+              generationConfig: {
+                temperature: 0.2,
+                max_output_tokens: 800,
+              },
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-        const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-        try {
-          const parsed = JSON.parse(cleaned);
-          return {
-            userTranscript: parsed.user_transcript || "🎙️ Voice Question",
-            reply: parsed.reply || cleaned,
-          };
-        } catch {
-          return {
-            userTranscript: "🎙️ Voice Question",
-            reply: cleaned || "Here is your lottery information.",
-          };
+        if (response.ok) {
+          const data = await response.json();
+          const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+          try {
+            const parsed = JSON.parse(cleaned);
+            return {
+              userTranscript: parsed.user_transcript || "🎙️ Voice Question",
+              reply: parsed.reply || cleaned,
+            };
+          } catch {
+            return {
+              userTranscript: "🎙️ Voice Question",
+              reply: cleaned || "Here is your lottery information.",
+            };
+          }
+        } else {
+          const errText = await response.text();
+          console.warn(`Gemini audio model ${model} HTTP ${response.status}:`, errText);
+          lastErrorMsg = errText;
         }
-      } else {
-        const errText = await response.text();
-        console.warn(`Gemini audio model ${model} HTTP ${response.status}:`, errText);
-        lastErrorMsg = errText;
+      } catch (e: any) {
+        console.warn(`Mobile audio chat model ${model} error:`, e);
+        lastErrorMsg = e?.message || "";
       }
-    } catch (e: any) {
-      console.warn(`Mobile audio chat model ${model} error:`, e);
-      lastErrorMsg = e?.message || "";
     }
   }
 
@@ -989,36 +1043,71 @@ Return ONLY JSON:
 }
 `;
 
-  const models = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              response_mime_type: "application/json",
-              temperature: 0.3,
-            },
-          }),
-        }
-      );
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.1-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+  ];
+  if (GEMINI_API_KEY) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                response_mime_type: "application/json",
+                temperature: 0.3,
+              },
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const data = await response.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-        const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-        return JSON.parse(cleaned);
+        if (response.ok) {
+          const data = await response.json();
+          const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+          const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+          const parsed = JSON.parse(cleaned);
+          return {
+            whatsapp_malayalam: parsed.whatsapp_malayalam || "",
+            whatsapp_english: parsed.whatsapp_english || "",
+            telegram_post: parsed.telegram_post || "",
+          };
+        }
+      } catch (e) {
+        console.warn(`Digest model ${model} error:`, e);
       }
-    } catch (e) {
-      console.warn(`Digest model ${model} error:`, e);
     }
   }
 
-  throw new Error("Could not generate social digest.");
+  // Backup fallback: Call backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/digest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ draw }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.digest) {
+        return json.digest;
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend digest fallback error:", backendErr);
+  }
+
+  return {
+    whatsapp_malayalam: `🎉 ${draw.draw_name || "കേരള ലോട്ടറി"} (${draw.draw_date})\n🏆 ഒന്നാം സമ്മാനം: ${draw.first?.ticket || "ഫലം ലഭ്യമാണ്"}\n👉 ലൈവ് റിസൾട്ട്: https://www.keralalotteryresultstoday.in`,
+    whatsapp_english: `🎉 ${draw.draw_name || "Kerala Lottery"} (${draw.draw_date})\n🏆 1st Prize: ${draw.first?.ticket || "Published"}\n👉 Live Result: https://www.keralalotteryresultstoday.in`,
+    telegram_post: `📢 Kerala Lottery Result: ${draw.draw_name} (${draw.draw_date})\n🏆 1st Prize Winner: ${draw.first?.ticket || "N/A"}\n👉 Check all prizes: https://www.keralalotteryresultstoday.in`,
+  };
 }
 
 
