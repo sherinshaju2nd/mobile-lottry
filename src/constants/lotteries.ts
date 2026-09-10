@@ -1,3 +1,5 @@
+export * from "./lotteryConfig";
+
 export interface LotteryMeta {
   day: string;
   name: string;

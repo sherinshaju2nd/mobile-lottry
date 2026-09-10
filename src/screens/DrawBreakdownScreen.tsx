@@ -23,7 +23,7 @@ import {
   Clock,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { ALL_LOTTERIES } from "../constants/lotteries";
+import { ALL_LOTTERIES, getDrawTimeDisplay } from "../constants/lotteries";
 import {
   fetchDrawByDate,
   fetchAllDraws,
@@ -55,7 +55,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     nameMl: "",
     code: codeUpper,
     day: "Scheduled Draw",
-    drawTime: "3:00 PM",
+    drawTime: getDrawTimeDisplay(false),
   };
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);

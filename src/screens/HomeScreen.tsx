@@ -49,6 +49,11 @@ import {
   getLotteryMalayalamName,
   LotteryMeta,
   getDayTranslated,
+  getIsBeforeSwitchTime,
+  getIsAfterDrawTime,
+  calculateDrawCountdown,
+  getIsPollingWindow,
+  getDrawTimeDisplay,
 } from "../constants/lotteries";
 import {
   fetchAllDraws,
@@ -82,6 +87,7 @@ export default function HomeScreen({ navigation }: any) {
     useState<LotteryMeta[]>(WEEKLY_LOTTERIES);
   const [bumperLotteries, setBumperLotteries] =
     useState<LotteryMeta[]>(BUMPER_LOTTERIES);
+  const bumperLotteriesRef = useRef<LotteryMeta[]>(BUMPER_LOTTERIES);
   const [todayPostponement, setTodayPostponement] =
     useState<PostponedDraw | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,27 +109,17 @@ export default function HomeScreen({ navigation }: any) {
     isDrawPassed: false,
   });
 
-  const getIsBefore245PM = () => {
-    try {
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString("en-GB", {
-        timeZone: "Asia/Kolkata",
-        hour12: false,
-      });
-      const [hStr, mStr] = timeStr.split(":");
-      const totalMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
-      return totalMinutes < 14 * 60 + 45; // Before 2:45 PM IST
-    } catch {
-      return false;
-    }
-  };
-
-  const [isBefore245PM, setIsBefore245PM] =
-    useState<boolean>(getIsBefore245PM());
-  const [isAfter3PM, setIsAfter3PM] = useState<boolean>(false);
+  const [isBeforeSwitchTime, setIsBeforeSwitchTime] = useState<boolean>(() => {
+    return getIsBeforeSwitchTime(false);
+  });
+  const [isAfter3PM, setIsAfter3PM] = useState<boolean>(() => {
+    return getIsAfterDrawTime(false);
+  });
   // Hero Section Tab: 0 = Today's Draw, 1 = Yesterday's Result
-  // Before 2:45 PM IST, default to Yesterday's Result (1), after 2:45 PM default to Today's Draw (0)
-  const [heroTab, setHeroTab] = useState<number>(getIsBefore245PM() ? 1 : 0);
+  // Before switch threshold (e.g. 2:45 PM for regular, 1:30 PM for bumper), default to Yesterday's Result (1)
+  const [heroTab, setHeroTab] = useState<number>(() => {
+    return getIsBeforeSwitchTime(false) ? 1 : 0;
+  });
 
   const handleHeroTabChange = (newTab: number) => {
     if (newTab === heroTab) return;
@@ -194,6 +190,7 @@ export default function HomeScreen({ navigation }: any) {
         setLotteriesList(lotteries);
       }
       if (bumpers && bumpers.length > 0) {
+        bumperLotteriesRef.current = bumpers;
         setBumperLotteries(bumpers);
       }
 
@@ -220,26 +217,14 @@ export default function HomeScreen({ navigation }: any) {
 
     const updateCountdown = () => {
       try {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString("en-GB", {
-          timeZone: "Asia/Kolkata",
-          hour12: false,
-        });
-        const [hStr, mStr, sStr] = timeStr.split(":");
-        const hours = parseInt(hStr, 10);
-        const minutes = parseInt(mStr, 10);
-        const seconds = parseInt(sStr || "0", 10);
-        const totalMinutes = hours * 60 + minutes;
         const todayDate = new Date().toLocaleDateString("en-CA", {
           timeZone: "Asia/Kolkata",
         });
-        const isBumperDay = (bumperLotteries || []).some((b: any) => b.draw_date === todayDate);
-        const switchThresholdMins = isBumperDay ? 13 * 60 + 30 : 14 * 60 + 45; // 1:30 PM for Bumper, 2:45 PM for Regular
-        const drawPassedMins = isBumperDay ? 14 * 60 : 15 * 60; // 2:00 PM for Bumper, 3:00 PM for Regular
+        const isBumperDay = (bumperLotteriesRef.current || []).some((b: any) => b.draw_date === todayDate);
 
-        const beforeDrawSwitch = totalMinutes < switchThresholdMins;
-        const afterDrawTime = totalMinutes >= drawPassedMins;
-        setIsBefore245PM(beforeDrawSwitch);
+        const beforeDrawSwitch = getIsBeforeSwitchTime(isBumperDay);
+        const afterDrawTime = getIsAfterDrawTime(isBumperDay);
+        setIsBeforeSwitchTime(beforeDrawSwitch);
         setIsAfter3PM(afterDrawTime);
 
         // If draw switch time reached, switch hero tab to today's draw
@@ -247,26 +232,10 @@ export default function HomeScreen({ navigation }: any) {
           setHeroTab((prev) => (prev === 1 ? 0 : prev));
         }
 
-        const targetHour = isBumperDay ? 14 : 15;
-        const targetTotalSeconds = targetHour * 3600;
-        const currentTotalSeconds = hours * 3600 + minutes * 60 + seconds;
-        const diffSeconds = targetTotalSeconds - currentTotalSeconds;
-
-        if (diffSeconds <= 0) {
-          setCountdown({ hours: 0, minutes: 0, seconds: 0, isDrawPassed: true });
-        } else {
-          const remHours = Math.floor(diffSeconds / 3600);
-          const remMinutes = Math.floor((diffSeconds % 3600) / 60);
-          const remSeconds = diffSeconds % 60;
-          setCountdown({
-            hours: remHours,
-            minutes: remMinutes,
-            seconds: remSeconds,
-            isDrawPassed: false,
-          });
-        }
+        const cd = calculateDrawCountdown(isBumperDay);
+        setCountdown(cd);
       } catch {
-        setIsBefore245PM(false);
+        setIsBeforeSwitchTime(false);
         setIsAfter3PM(false);
         setCountdown({ hours: 0, minutes: 0, seconds: 0, isDrawPassed: true });
       }
@@ -325,23 +294,11 @@ export default function HomeScreen({ navigation }: any) {
     // Intelligent Polling Backup: Poll every 15s during active draw window
     const pollInterval = setInterval(() => {
       try {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString("en-GB", {
-          timeZone: "Asia/Kolkata",
-          hour12: false,
-        });
-        const [hStr, mStr] = timeStr.split(":");
-        const hours = parseInt(hStr, 10);
-        const minutes = parseInt(mStr, 10);
-        const totalMins = hours * 60 + minutes;
         const todayDate = new Date().toLocaleDateString("en-CA", {
           timeZone: "Asia/Kolkata",
         });
-        const isBumperDay = (bumperLotteries || []).some((b: any) => b.draw_date === todayDate);
-        const drawStartMins = isBumperDay ? 13 * 60 + 50 : 14 * 60 + 50; // 1:50 PM for Bumper, 2:50 PM for Regular
-        const isDrawWindow = totalMins >= drawStartMins && totalMins <= 18 * 60; // Up to 6:00 PM IST
-
-        if (isDrawWindow) {
+        const isBumperDay = (bumperLotteriesRef.current || []).some((b: any) => b.draw_date === todayDate);
+        if (getIsPollingWindow(isBumperDay)) {
           loadData();
         }
       } catch {}
@@ -633,7 +590,7 @@ export default function HomeScreen({ navigation }: any) {
           style={styles.heroTabScrollView}
         >
           <View style={styles.heroTabBar}>
-            {isBefore245PM ? (
+            {isBeforeSwitchTime ? (
               <>
                 {previousDraw && (
                   <TouchableOpacity

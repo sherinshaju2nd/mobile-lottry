@@ -20,7 +20,7 @@ import {
   FileText,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { ALL_LOTTERIES, getLotteryMalayalamName, getDayTranslated } from "../constants/lotteries";
+import { ALL_LOTTERIES, getLotteryMalayalamName, getDayTranslated, getDrawTimeDisplay } from "../constants/lotteries";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -34,7 +34,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     nameMl: "",
     code: codeUpper,
     day: "Scheduled Draw",
-    drawTime: "3:00 PM",
+    drawTime: getDrawTimeDisplay(false),
   };
 
   const todayISTDate = new Date().toLocaleDateString("en-CA", {
