@@ -52,6 +52,10 @@ import {
   triggerLiveChimeHaptic,
 } from "../utils/haptics";
 import {
+  sendInstantWinnerNotification,
+  sendFullResultPublishedNotification,
+} from "../utils/notificationScheduler";
+import {
   getFavoriteLotteries,
   toggleFavoriteLottery,
 } from "../utils/favorites";
@@ -282,9 +286,28 @@ export default function HomeScreen({ navigation }: any) {
             setHeroTab(0);
             setSocketStatus("live_updating");
             try {
-              Vibration.vibrate(100);
+              triggerLiveChimeHaptic();
             } catch {}
             setTimeout(() => setSocketStatus("connected"), 4000);
+
+            // Dispatch instant stage push notification if enabled
+            if (newRow.first?.ticket && newRow.first.ticket !== "N/A") {
+              sendInstantWinnerNotification(
+                newRow.lottery_code,
+                newRow.draw_name,
+                newRow.draw_date,
+                newRow.first.ticket,
+                newRow.first.location,
+                newRow.prizes?.amounts?.["1st"]
+              );
+            }
+            if (hasAnyDrawResult(newRow)) {
+              sendFullResultPublishedNotification(
+                newRow.lottery_code,
+                newRow.draw_name,
+                newRow.draw_date
+              );
+            }
           }
           loadData();
         },

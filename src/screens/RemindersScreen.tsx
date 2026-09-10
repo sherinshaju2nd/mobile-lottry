@@ -35,6 +35,7 @@ import {
   requestNotificationPermission,
 } from "../utils/notificationScheduler";
 import AddReminderModal from "../components/AddReminderModal";
+import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { AlertCircle, Settings } from "lucide-react-native";
 
 import { useLanguage } from "../context/LanguageContext";
@@ -68,6 +69,7 @@ export default function RemindersScreen({ navigation }: any) {
   const isMl = language === "ml";
   const [reminders, setReminders] = useState<LotteryReminder[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [editItem, setEditItem] = useState<LotteryReminder | null>(null);
   const [hasPermission, setHasPermission] = useState(true);
 
@@ -223,15 +225,24 @@ export default function RemindersScreen({ navigation }: any) {
           <Bell size={20} color={COLORS.primary} />
           <Text style={styles.headerTitle}>{t("reminders_title")}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.addHeaderBtn}
-          onPress={() => {
-            setEditItem(null);
-            setShowAdd(true);
-          }}
-        >
-          <Plus size={22} color={COLORS.white} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity
+            style={styles.settingsHeaderBtn}
+            onPress={() => setShowSettings(true)}
+            accessibilityLabel="Notification Preferences"
+          >
+            <Settings size={18} color={COLORS.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addHeaderBtn}
+            onPress={() => {
+              setEditItem(null);
+              setShowAdd(true);
+            }}
+          >
+            <Plus size={22} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Subtitle */}
@@ -310,6 +321,11 @@ export default function RemindersScreen({ navigation }: any) {
         }}
         editReminder={editItem}
       />
+
+      <NotificationSettingsModal
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -328,6 +344,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#F3F4F6",
     backgroundColor: "#FFFFFF",
+  },
+  settingsHeaderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
   },
   backBtn: {
     width: 36,

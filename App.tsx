@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { LogBox } from "react-native";
 import { COLORS } from "./src/constants/colors";
+import { triggerLightHaptic } from "./src/utils/haptics";
 // Suppress benign Expo Go development sandbox notices from terminal output and UI
 LogBox.ignoreLogs([
   "Android Push notifications",
@@ -77,6 +78,7 @@ function CalendarTabDummy() {
 
 function AnimatedScanButton({ onPress }: { onPress: () => void }) {
   const { t } = useLanguage();
+  const isAndroid = Platform.OS === "android";
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -92,9 +94,10 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
   }, [pulseAnim]);
 
   const handlePress = () => {
+    triggerLightHaptic();
     Animated.sequence([
       Animated.spring(scaleAnim, {
-        toValue: 0.84,
+        toValue: 0.85,
         useNativeDriver: true,
         friction: 4,
       }),
@@ -127,7 +130,10 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
       <TouchableOpacity
         activeOpacity={0.88}
         onPress={handlePress}
-        style={tabStyles.scanButtonContainer}
+        style={[
+          tabStyles.scanButtonContainer,
+          isAndroid ? tabStyles.scanButtonContainerAndroid : tabStyles.scanButtonContainerIOS,
+        ]}
       >
         <Animated.View
           style={[
@@ -142,15 +148,23 @@ function AnimatedScanButton({ onPress }: { onPress: () => void }) {
         <Animated.View
           style={[
             tabStyles.scanButtonInner,
+            isAndroid ? tabStyles.scanButtonInnerAndroid : tabStyles.scanButtonInnerIOS,
             {
               transform: [{ scale: scaleAnim }],
             },
           ]}
         >
-          <Camera size={24} color={COLORS.white} />
+          <Camera size={23} color={COLORS.white} strokeWidth={2.2} />
         </Animated.View>
       </TouchableOpacity>
-      <Text style={tabStyles.tabLabelText}>{t("tab_scan")}</Text>
+      <Text
+        style={[
+          tabStyles.tabLabelText,
+          isAndroid && { fontWeight: "800", fontSize: 10.5 },
+        ]}
+      >
+        {t("tab_scan")}
+      </Text>
     </View>
   );
 }
@@ -167,13 +181,14 @@ function AnimatedTabIcon({
   size: number;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isAndroid = Platform.OS === "android";
 
   useEffect(() => {
     if (focused) {
       Animated.sequence([
         Animated.timing(scaleAnim, {
-          toValue: 1.25,
-          duration: 130,
+          toValue: isAndroid ? 1.08 : 1.2,
+          duration: 120,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
@@ -191,12 +206,40 @@ function AnimatedTabIcon({
         useNativeDriver: true,
       }).start();
     }
-  }, [focused, scaleAnim]);
+  }, [focused, scaleAnim, isAndroid]);
 
+  if (isAndroid) {
+    // Material Design 3 Active Pill Container
+    return (
+      <View
+        style={[
+          tabStyles.androidIconContainer,
+          focused && tabStyles.androidActivePill,
+        ]}
+      >
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <IconComponent
+            size={size}
+            color={focused ? COLORS.primary : color}
+            strokeWidth={focused ? 2.4 : 2}
+          />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // iOS Cupertino Style with Micro-Bounce & Subtle Glow
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <IconComponent size={size} color={color} />
-    </Animated.View>
+    <View style={tabStyles.iosIconContainer}>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <IconComponent
+          size={size}
+          color={color}
+          strokeWidth={focused ? 2.4 : 1.8}
+        />
+      </Animated.View>
+      {focused && <View style={tabStyles.iosActiveDot} />}
+    </View>
   );
 }
 
@@ -221,39 +264,67 @@ function BottomTabNavigator({ navigation }: any) {
   return (
     <>
       <Tab.Navigator
-        screenOptions={({ route }: { route: { name: string } }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.textMuted,
-          tabBarStyle: {
-            backgroundColor: COLORS.white,
-            borderTopColor: COLORS.border,
-            height: (language === "ml" ? 52 : 58) + (insets.bottom > 0 ? insets.bottom - 4 : 0),
-            paddingBottom: (language === "ml" ? 3 : 6) + (insets.bottom > 0 ? insets.bottom - 6 : 0),
-            paddingTop: language === "ml" ? 3 : 5,
+        screenListeners={{
+          tabPress: () => {
+            triggerLightHaptic();
           },
-          tabBarLabelStyle: {
-            fontSize: language === "ml" ? 9.5 : 11,
-            fontWeight: "700",
-          },
-          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => {
-            const iconSize = language === "ml" ? 18 : 22;
-            let IconComp: any = Home;
-            if (route.name === "HomeTab") IconComp = Home;
-            else if (route.name === "LotteriesTab") IconComp = Ticket;
-            else if (route.name === "SearchTab") IconComp = SearchIcon;
-            else if (route.name === "DateTab") IconComp = CalendarIcon;
+        }}
+        screenOptions={({ route }: { route: { name: string } }) => {
+          const isIOS = Platform.OS === "ios";
+          return {
+            headerShown: false,
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: isIOS ? "#8E8E93" : "#64748B",
+            tabBarStyle: isIOS
+              ? {
+                  backgroundColor: "rgba(255, 255, 255, 0.94)",
+                  borderTopColor: "rgba(0, 0, 0, 0.08)",
+                  borderTopWidth: 0.5,
+                  height: (language === "ml" ? 54 : 58) + (insets.bottom > 0 ? insets.bottom : 20),
+                  paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom - 4 : 12),
+                  paddingTop: language === "ml" ? 4 : 6,
+                  shadowColor: "#000000",
+                  shadowOffset: { width: 0, height: -3 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 10,
+                }
+              : {
+                  backgroundColor: "#FFFFFF",
+                  borderTopColor: "#E2E8F0",
+                  borderTopWidth: 1,
+                  height: (language === "ml" ? 60 : 66) + (insets.bottom > 0 ? insets.bottom : 6),
+                  paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom : 6),
+                  paddingTop: language === "ml" ? 5 : 7,
+                  elevation: 12,
+                },
+            tabBarLabelStyle: {
+              fontSize: language === "ml" ? (isIOS ? 9 : 9.5) : (isIOS ? 10 : 10.5),
+              fontWeight: isIOS ? "600" : "800",
+              letterSpacing: isIOS ? -0.1 : 0.2,
+              marginTop: isIOS ? 1 : 2,
+            },
+            tabBarItemStyle: {
+              paddingVertical: 2,
+            },
+            tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => {
+              const iconSize = language === "ml" ? (isIOS ? 18 : 19) : (isIOS ? 21 : 22);
+              let IconComp: any = Home;
+              if (route.name === "HomeTab") IconComp = Home;
+              else if (route.name === "LotteriesTab") IconComp = Ticket;
+              else if (route.name === "SearchTab") IconComp = SearchIcon;
+              else if (route.name === "DateTab") IconComp = CalendarIcon;
 
-            return (
-              <AnimatedTabIcon
-                IconComponent={IconComp}
-                color={color}
-                focused={focused}
-                size={iconSize}
-              />
-            );
-          },
-        })}
+              return (
+                <AnimatedTabIcon
+                  IconComponent={IconComp}
+                  color={color}
+                  focused={focused}
+                  size={iconSize}
+                />
+              );
+            },
+          };
+        }}
       >
         <Tab.Screen
           name="HomeTab"
@@ -312,15 +383,24 @@ const tabStyles = StyleSheet.create({
   scanButtonContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -18,
-    width: 52,
-    height: 52,
+    marginTop: -20,
+    width: 54,
+    height: 54,
+  },
+  scanButtonContainerIOS: {
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+  },
+  scanButtonContainerAndroid: {
+    elevation: 8,
   },
   pulseRing: {
     position: "absolute",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: COLORS.primary,
   },
   scanButtonInner: {
@@ -330,19 +410,47 @@ const tabStyles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  scanButtonInnerIOS: {
+    borderWidth: 2.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+  },
+  scanButtonInnerAndroid: {
     borderWidth: 3,
-    borderColor: COLORS.white,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    elevation: 8,
+    borderColor: "#FFFFFF",
+    elevation: 6,
   },
   tabLabelText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: "700",
     color: COLORS.primary,
     marginTop: 2,
+  },
+  androidIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 14,
+  },
+  androidActivePill: {
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  iosIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  iosActiveDot: {
+    position: "absolute",
+    bottom: -5,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
   },
 });
 
