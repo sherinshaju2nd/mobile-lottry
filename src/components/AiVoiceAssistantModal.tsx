@@ -36,6 +36,7 @@ import {
   chatWithGeminiAssistantMobile,
   chatWithGeminiAudioMobile,
 } from "../api/lotteryApi";
+import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 
 import { useLanguage } from "../context/LanguageContext";
 
@@ -402,6 +403,7 @@ export default function AiVoiceAssistantModal({
     const text = (textToSend || inputText).trim();
     if (!text || isLoading || isRecording) return;
 
+    triggerLightHaptic();
     stopAudio();
 
     const userMsg: Message = {
@@ -435,6 +437,7 @@ export default function AiVoiceAssistantModal({
         }),
       };
       setMessages((prev) => [...prev, botMsg]);
+      triggerSuccessHaptic();
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
@@ -493,8 +496,9 @@ export default function AiVoiceAssistantModal({
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.container}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
         >
           {/* Mobile Bottom Sheet Pull Pill */}
           <View style={styles.sheetHandleWrap}>
@@ -594,6 +598,8 @@ export default function AiVoiceAssistantModal({
             ref={scrollViewRef}
             style={styles.chatScroll}
             contentContainerStyle={styles.chatContent}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
           >
             {messages.map((m) => (
               <View
@@ -740,6 +746,11 @@ export default function AiVoiceAssistantModal({
                   editable={!isLoading}
                   onSubmitEditing={() => handleSendText()}
                   returnKeyType="send"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 150);
+                  }}
                 />
 
                 {inputText.trim().length > 0 ? (

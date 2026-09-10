@@ -44,6 +44,7 @@
     "android": {
       "package": "com.keralalotteryresultstoday.app",
       "versionCode": 5,
+      "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
@@ -78,7 +79,7 @@
             "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-dontwarn com.facebook.react.turbomodule.**\n-keepattributes *Annotation*\n-keepattributes Signature\n-keepattributes EnclosingMethod\n-dontwarn sun.misc.**\n-dontwarn javax.annotation.**\n-keep class com.facebook.react.** { *; }"
           },
           "ios": {
-            "deploymentTarget": "15.1"
+            "deploymentTarget": "16.4"
           }
         }
       ],

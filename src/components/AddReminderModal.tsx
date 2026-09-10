@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import {
   Scan,
@@ -346,26 +347,32 @@ export default function AddReminderModal({
         }}
       >
         <View style={styles.backdrop}>
-          <View style={styles.sheet}>
-            {activeSheet === "form" && (
-              <>
-                <View style={styles.header}>
-                  <View style={styles.headerLeft}>
-                    <Ticket size={20} color={COLORS.primary} />
-                    <Text style={styles.headerTitle}>
-                      {editReminder ? t("edit_reminder_title") : t("add_reminder_title")}
-                    </Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ width: "100%", justifyContent: "flex-end" }}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+          >
+            <View style={styles.sheet}>
+              {activeSheet === "form" && (
+                <>
+                  <View style={styles.header}>
+                    <View style={styles.headerLeft}>
+                      <Ticket size={20} color={COLORS.primary} />
+                      <Text style={styles.headerTitle}>
+                        {editReminder ? t("edit_reminder_title") : t("add_reminder_title")}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                      <X size={22} color={COLORS.textMuted} />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                    <X size={22} color={COLORS.textMuted} />
-                  </TouchableOpacity>
-                </View>
 
-                <ScrollView
-                  contentContainerStyle={styles.body}
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                >
+                  <ScrollView
+                    contentContainerStyle={styles.body}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    automaticallyAdjustKeyboardInsets={true}
+                  >
                   <Text style={styles.label}>{t("ticket_number")}</Text>
                   <View style={[styles.inputRow, ticketError && { borderColor: "#EF4444", borderWidth: 1.5 }]}>
                     <TextInput
@@ -663,6 +670,7 @@ export default function AddReminderModal({
               </View>
             )}
           </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

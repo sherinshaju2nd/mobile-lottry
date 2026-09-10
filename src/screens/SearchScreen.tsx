@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -11,6 +11,7 @@ import {
   LayoutAnimation,
   AppState,
   AppStateStatus,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
@@ -26,8 +27,11 @@ import {
   RotateCw,
   Trophy,
   XCircle,
+  X,
+  Clock,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
+import * as Clipboard from "expo-clipboard";
 import {
   searchTicketNumber,
   SearchMatch,
@@ -36,6 +40,18 @@ import {
   formatTicketSearchInput,
   supabase,
 } from "../api/lotteryApi";
+import {
+  triggerLightHaptic,
+  triggerSuccessHaptic,
+  triggerErrorHaptic,
+} from "../utils/haptics";
+import {
+  getRecentSearches,
+  saveRecentSearch,
+  removeRecentSearch,
+  RecentSearchItem,
+} from "../utils/recentSearches";
+import ConfettiEffect from "../components/ConfettiEffect";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ModernDatePickerModal from "../components/ModernDatePickerModal";
@@ -44,6 +60,7 @@ import { useLanguage } from "../context/LanguageContext";
 
 export default function SearchScreen({ navigation }: any) {
   const { t, language } = useLanguage();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [query, setQuery] = useState("");
   const [batchInput, setBatchInput] = useState("");
@@ -65,6 +82,29 @@ export default function SearchScreen({ navigation }: any) {
   const [customDateInput, setCustomDateInput] = useState<string>("");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
+  // UX Upgrades State
+  const [clipboardTicket, setClipboardTicket] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>([]);
+  const [showConfetti, setShowConfetti] = useState<boolean>(false);
+
+  const checkClipboard = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      if (text) {
+        const clean = text.trim();
+        // Check for 2 letters + 4-6 digits or just 4-6 digits
+        const match =
+          clean.match(/^[A-Za-z]{1,3}\s*\d{4,6}$/) ||
+          clean.match(/^\d{4,6}$/);
+        if (match && clean.toUpperCase() !== query.toUpperCase()) {
+          setClipboardTicket(clean.toUpperCase());
+        }
+      }
+    } catch {
+      // Ignore clipboard error
+    }
+  };
+
   useEffect(() => {
     const loadDraws = () => {
       fetchAllDraws()
@@ -72,6 +112,8 @@ export default function SearchScreen({ navigation }: any) {
         .catch(() => setAllDraws([]));
     };
     loadDraws();
+    getRecentSearches().then(setRecentSearches);
+    checkClipboard();
 
     const channelName = `realtime-mobile-search-${Date.now()}`;
     const channel = supabase
@@ -88,6 +130,7 @@ export default function SearchScreen({ navigation }: any) {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
         loadDraws();
+        checkClipboard();
       }
     };
     const appStateSub = AppState.addEventListener("change", handleAppStateChange);
@@ -114,10 +157,12 @@ export default function SearchScreen({ navigation }: any) {
     setScannedBarcode(extractedTicket);
     setQuery(extractedTicket);
     setIsBarcodeResultOpen(true);
+    triggerSuccessHaptic();
   };
 
   const handleModeChange = (newMode: "single" | "batch") => {
     if (newMode === mode) return;
+    triggerLightHaptic();
     LayoutAnimation.configureNext({
       duration: 250,
       create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
@@ -134,10 +179,12 @@ export default function SearchScreen({ navigation }: any) {
   }
   const [batchResults, setBatchResults] = useState<BatchItem[] | null>(null);
 
-  const handleSingleSearch = async () => {
-    if (!query.trim()) return;
-    const digits = query.replace(/\D/g, "");
+  const handleSingleSearch = async (overrideQuery?: string) => {
+    const target = (overrideQuery || query).trim();
+    if (!target) return;
+    const digits = target.replace(/\D/g, "");
     if (digits.length < 4) {
+      triggerErrorHaptic();
       setErrorMessage(
         language === "ml"
           ? "തിരയാൻ കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935)"
@@ -145,17 +192,29 @@ export default function SearchScreen({ navigation }: any) {
       );
       return;
     }
+    if (overrideQuery) {
+      setQuery(target);
+    }
     setIsSearching(true);
     setErrorMessage(null);
     try {
       const matches = await searchTicketNumber(
-        query.trim(),
+        target,
         selectedDateFilter || undefined,
       );
       setSingleResults(matches);
+      if (matches && matches.length > 0) {
+        triggerSuccessHaptic();
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4500);
+      } else {
+        triggerLightHaptic();
+      }
+      saveRecentSearch(target, matches?.length || 0).then(setRecentSearches);
     } catch (err: any) {
       setSingleResults([]);
       setErrorMessage(err.message || "Failed to search ticket.");
+      triggerErrorHaptic();
     } finally {
       setIsSearching(false);
     }
@@ -168,6 +227,7 @@ export default function SearchScreen({ navigation }: any) {
       .filter((t) => t.replace(/\D/g, "").length >= 4);
 
     if (rawList.length === 0) {
+      triggerErrorHaptic();
       setErrorMessage(
         language === "ml"
           ? "ഓരോ ടിക്കറ്റ് നമ്പറിലും കുറഞ്ഞത് 4 അക്കങ്ങൾ ഉണ്ടായിരിക്കണം"
@@ -179,42 +239,64 @@ export default function SearchScreen({ navigation }: any) {
     setErrorMessage(null);
     try {
       const compiled: BatchItem[] = [];
+      let totalWinningMatches = 0;
       for (const ticket of rawList) {
         const matches = await searchTicketNumber(
           ticket,
           selectedDateFilter || undefined,
         );
+        if (matches && matches.length > 0) {
+          totalWinningMatches += matches.length;
+        }
         compiled.push({ ticket, matches });
       }
       setBatchResults(compiled);
+      if (totalWinningMatches > 0) {
+        triggerSuccessHaptic();
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 4500);
+      } else {
+        triggerLightHaptic();
+      }
     } catch (err: any) {
       setBatchResults([]);
       setErrorMessage(err.message || "Failed to search batch tickets.");
+      triggerErrorHaptic();
     } finally {
       setIsSearching(false);
     }
   };
 
   const handleReset = () => {
+    triggerLightHaptic();
     setQuery("");
     setBatchInput("");
     setSingleResults(null);
     setBatchResults(null);
     setErrorMessage(null);
+    setShowConfetti(false);
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        removeClippedSubviews={Platform.OS === "android"}
-        overScrollMode="never"
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+      <ConfettiEffect active={showConfetti} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={Platform.OS === "android"}
+          overScrollMode="never"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets={true}
+        >
         <View style={styles.header}>
           <Text
             style={[
@@ -324,6 +406,11 @@ export default function SearchScreen({ navigation }: any) {
                 value={query}
                 onChangeText={(text) => setQuery(formatTicketSearchInput(text))}
                 autoCapitalize="characters"
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                  }, 150);
+                }}
               />
               <TouchableOpacity
                 style={styles.cameraIconBtn}
@@ -367,6 +454,75 @@ export default function SearchScreen({ navigation }: any) {
                 </Svg>
               </TouchableOpacity>
             </View>
+
+            {/* Instant Clipboard Paste Pill */}
+            {clipboardTicket && clipboardTicket !== query && (
+              <TouchableOpacity
+                style={styles.clipboardPill}
+                activeOpacity={0.8}
+                onPress={() => {
+                  triggerLightHaptic();
+                  setQuery(clipboardTicket);
+                  setClipboardTicket(null);
+                }}
+              >
+                <View style={styles.clipboardBadge}>
+                  <Text style={styles.clipboardBadgeText}>WhatsApp / SMS</Text>
+                </View>
+                <Text style={styles.clipboardText} numberOfLines={1}>
+                  {language === "ml"
+                    ? "📋 ക്ലിപ്പ്ബോർഡിൽ നിന്ന് പേസ്റ്റ് ചെയ്യുക: "
+                    : "📋 Paste from Clipboard: "}
+                  <Text style={{ fontWeight: "900", color: COLORS.primary }}>
+                    {clipboardTicket}
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Recent Searches Carousel */}
+            {recentSearches.length > 0 && (
+              <View style={styles.recentSearchesWrap}>
+                <View style={styles.recentHeaderRow}>
+                  <Text style={styles.recentTitle}>
+                    {language === "ml" ? "സമീപകാല തിരയലുകൾ" : "Recent Searches"}
+                  </Text>
+                </View>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.recentChipsScroll}
+                >
+                  {recentSearches.map((item) => (
+                    <View key={item.id} style={styles.recentChip}>
+                      <TouchableOpacity
+                        style={styles.recentChipBtn}
+                        onPress={() => {
+                          triggerLightHaptic();
+                          handleSingleSearch(item.query);
+                        }}
+                      >
+                        <Clock size={11} color={COLORS.primary} style={{ marginRight: 4 }} />
+                        <Text style={styles.recentChipText}>{item.query}</Text>
+                        {item.matchCount && item.matchCount > 0 ? (
+                          <Text style={styles.recentWinBadge}>🎉</Text>
+                        ) : null}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.recentDeleteBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        onPress={() => {
+                          triggerLightHaptic();
+                          removeRecentSearch(item.query).then(setRecentSearches);
+                        }}
+                      >
+                        <X size={11} color={COLORS.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Date Filter Selection */}
             <Text style={styles.label}>{t("draw_date_filter")}</Text>
@@ -413,7 +569,7 @@ export default function SearchScreen({ navigation }: any) {
                   styles.primaryBtn,
                   (!query.trim() || isSearching) && { backgroundColor: "#94A3B8" },
                 ]}
-                onPress={handleSingleSearch}
+                onPress={() => handleSingleSearch()}
                 disabled={!query.trim() || isSearching}
               >
                 {isSearching ? (
@@ -442,6 +598,11 @@ export default function SearchScreen({ navigation }: any) {
               multiline
               numberOfLines={4}
               autoCapitalize="characters"
+              onFocus={() => {
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollTo({ y: 50, animated: true });
+                }, 150);
+              }}
             />
 
             <Text style={styles.label}>{t("draw_date_filter")}</Text>
@@ -514,7 +675,23 @@ export default function SearchScreen({ navigation }: any) {
             </Text>
 
             {singleResults.length > 0 ? (
-              singleResults.map((match, idx) => (
+              <>
+                <View style={styles.winnerCelebrationBanner}>
+                  <View style={styles.winnerCelebrationRow}>
+                    <Trophy size={20} color="#D97706" />
+                    <Text style={styles.winnerCelebrationTitle}>
+                      {language === "ml"
+                        ? "🎉 അഭിനന്ദനങ്ങൾ! സമ്മാനം ലഭിച്ചു!"
+                        : "🎉 Congratulations! You Won a Prize!"}
+                    </Text>
+                  </View>
+                  <Text style={styles.winnerCelebrationSub}>
+                    {language === "ml"
+                      ? "സമ്മാനത്തുക ക്ലെയിം ചെയ്യുന്നതിനായി താഴെയുള്ള വിശദാംശങ്ങൾ പരിശോധിക്കുക."
+                      : "Check the prize breakdown below to verify and claim your win."}
+                  </Text>
+                </View>
+                {singleResults.map((match, idx) => (
                 <TouchableOpacity
                   key={idx}
                   activeOpacity={0.75}
@@ -553,7 +730,8 @@ export default function SearchScreen({ navigation }: any) {
                     {t("tap_to_view_details")}
                   </Text>
                 </TouchableOpacity>
-              ))
+              ))}
+              </>
             ) : (
               <View style={styles.noMatchCard}>
                 <XCircle
@@ -684,6 +862,7 @@ export default function SearchScreen({ navigation }: any) {
           </View>
         )}
       </ScrollView>
+    </KeyboardAvoidingView>
 
       {/* Barcode Scanner Modal */}
       <BarcodeScannerModal
@@ -994,4 +1173,105 @@ const styles = StyleSheet.create({
   },
   batchMatchTier: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
   batchMatchSub: { fontSize: 11, color: COLORS.textMuted },
+  clipboardPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1.5,
+    borderColor: "#93C5FD",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+    gap: 8,
+  },
+  clipboardBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  clipboardBadgeText: {
+    color: COLORS.white,
+    fontSize: 9.5,
+    fontWeight: "900",
+  },
+  clipboardText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.textDark,
+    fontWeight: "600",
+  },
+  recentSearchesWrap: {
+    marginBottom: 12,
+  },
+  recentHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  recentTitle: {
+    fontSize: 11.5,
+    fontWeight: "800",
+    color: COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  recentChipsScroll: {
+    gap: 8,
+    paddingVertical: 2,
+  },
+  recentChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    paddingLeft: 8,
+    paddingRight: 4,
+    paddingVertical: 4,
+  },
+  recentChipBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  recentChipText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.textDark,
+  },
+  recentWinBadge: {
+    fontSize: 10.5,
+    marginLeft: 4,
+  },
+  recentDeleteBtn: {
+    padding: 3,
+    marginLeft: 4,
+  },
+  winnerCelebrationBanner: {
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1.5,
+    borderColor: "#F59E0B",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  winnerCelebrationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  winnerCelebrationTitle: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#92400E",
+  },
+  winnerCelebrationSub: {
+    fontSize: 11.5,
+    color: "#78350F",
+    fontWeight: "600",
+  },
 });

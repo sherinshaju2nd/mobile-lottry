@@ -24,6 +24,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { ALL_LOTTERIES, getDrawTimeDisplay } from "../constants/lotteries";
+import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 import {
   fetchDrawByDate,
   fetchAllDraws,
@@ -411,6 +412,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
         removeClippedSubviews={Platform.OS === "android"}
         overScrollMode="never"
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
       >
         {/* Header Bar */}
         <View style={styles.header}>
@@ -566,6 +568,11 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   value={checkTicket}
                   onChangeText={setCheckTicket}
                   autoCapitalize="characters"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 150, animated: true });
+                    }, 150);
+                  }}
                 />
 
                 <TouchableOpacity

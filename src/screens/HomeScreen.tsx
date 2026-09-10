@@ -16,12 +16,13 @@ import {
   AppState,
   AppStateStatus,
   Vibration,
+  KeyboardAvoidingView,
 } from "react-native";
 
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental &&
-  !(global as any).nativeFabricUIManager
+  !(globalThis as any).nativeFabricUIManager
 ) {
   try {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -41,8 +42,19 @@ import {
   Download,
   Bell,
   Zap,
+  Star,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
+import LiveDrawBanner from "../components/LiveDrawBanner";
+import {
+  triggerLightHaptic,
+  triggerSuccessHaptic,
+  triggerLiveChimeHaptic,
+} from "../utils/haptics";
+import {
+  getFavoriteLotteries,
+  toggleFavoriteLottery,
+} from "../utils/favorites";
 import {
   WEEKLY_LOTTERIES,
   BUMPER_LOTTERIES,
@@ -121,8 +133,22 @@ export default function HomeScreen({ navigation }: any) {
     return getIsBeforeSwitchTime(false) ? 1 : 0;
   });
 
+  // UX Upgrade State: Favorites
+  const [favoriteLotteries, setFavoriteLotteries] = useState<string[]>([]);
+
+  useEffect(() => {
+    getFavoriteLotteries().then(setFavoriteLotteries);
+  }, []);
+
+  const handleToggleFavorite = async (code: string) => {
+    triggerLightHaptic();
+    const res = await toggleFavoriteLottery(code);
+    setFavoriteLotteries(res.favorites);
+  };
+
   const handleHeroTabChange = (newTab: number) => {
     if (newTab === heroTab) return;
+    triggerLightHaptic();
     LayoutAnimation.configureNext({
       duration: 260,
       create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
@@ -226,11 +252,6 @@ export default function HomeScreen({ navigation }: any) {
         const afterDrawTime = getIsAfterDrawTime(isBumperDay);
         setIsBeforeSwitchTime(beforeDrawSwitch);
         setIsAfter3PM(afterDrawTime);
-
-        // If draw switch time reached, switch hero tab to today's draw
-        if (!beforeDrawSwitch) {
-          setHeroTab((prev) => (prev === 1 ? 0 : prev));
-        }
 
         const cd = calculateDrawCountdown(isBumperDay);
         setCountdown(cd);
@@ -418,23 +439,29 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        removeClippedSubviews={Platform.OS === "android"}
-        overScrollMode="never"
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[COLORS.primary]}
-          />
-        }
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={Platform.OS === "android"}
+          overScrollMode="never"
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={[COLORS.primary]}
+            />
+          }
+        >
         {/* App Header */}
         <View style={styles.header}>
           <View
@@ -529,6 +556,23 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           </View>
         </View>
+
+        {/* 3:00 PM Live Draw In Progress Banner */}
+        <LiveDrawBanner
+          lotteryName={
+            language === "ml" && todayDraw?.lottery_code && getLotteryMalayalamName(todayDraw.lottery_code)
+              ? getLotteryMalayalamName(todayDraw.lottery_code)
+              : todayDraw?.draw_name || todayLottery.name
+          }
+          onPress={() => {
+            if (todayDraw) {
+              navigation.navigate("DrawBreakdown", {
+                code: todayDraw.lottery_code,
+                date: todayDraw.draw_date,
+              });
+            }
+          }}
+        />
 
         {/* Hero Banner Skeleton or Real Content */}
         {isLoading ? (
@@ -778,6 +822,11 @@ export default function HomeScreen({ navigation }: any) {
                   onChangeText={(text) => setTicketInput(formatTicketSearchInput(text))}
                   keyboardType="default"
                   autoCapitalize="characters"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 50, animated: true });
+                    }, 150);
+                  }}
                 />
 
                 <TouchableOpacity
@@ -1229,12 +1278,12 @@ export default function HomeScreen({ navigation }: any) {
                     <Zap size={11} color="#B45309" />
                     <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>⚡ STREAMING LIVE</Text>
                   </View>
-                ) : (
+                ) : getIsPollingWindow(isTodayBumper) && socketStatus === "connected" ? (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#ECFDF5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#A7F3D0" }}>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" }} />
                     <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#065F46" }}>LIVE SYNC ACTIVE</Text>
                   </View>
-                )}
+                ) : null}
               </View>
 
               <Text
@@ -1319,12 +1368,7 @@ export default function HomeScreen({ navigation }: any) {
                     <Zap size={11} color="#B45309" />
                     <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>⚡ STREAMING LIVE</Text>
                   </View>
-                ) : (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#ECFDF5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#A7F3D0" }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" }} />
-                    <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#065F46" }}>LIVE SYNC ACTIVE</Text>
-                  </View>
-                )}
+                ) : null}
               </View>
 
               <Text
@@ -1500,16 +1544,16 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               )}
 
-              <TouchableOpacity
-                style={styles.heroDownloadPdfBtn}
-                activeOpacity={0.8}
-                onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
-              >
-                <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                <Text style={styles.heroDownloadPdfBtnText}>
-                  {t("download_pdf")}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.heroDownloadPdfBtn}
+                  activeOpacity={0.8}
+                  onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
+                >
+                  <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.heroDownloadPdfBtnText}>
+                    {t("download_pdf")}
+                  </Text>
+                </TouchableOpacity>
             </View>
 
             {/* Complete Full Prize Breakdown for Yesterday / Previous Draw */}
@@ -1681,6 +1725,34 @@ export default function HomeScreen({ navigation }: any) {
                       <View style={styles.codeChip}>
                         <Text style={styles.codeChipText}>{lottery.code}</Text>
                       </View>
+                      {(() => {
+                        const isFav = favoriteLotteries.includes(lottery.code);
+                        return (
+                          <TouchableOpacity
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 13,
+                              backgroundColor: isFav ? "#FEF3C7" : "#F8FAFC",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              borderWidth: 1,
+                              borderColor: isFav ? "#F59E0B" : "#E2E8F0",
+                            }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleToggleFavorite(lottery.code);
+                            }}
+                            accessibilityLabel="Toggle Favorite Lottery"
+                          >
+                            <Star
+                              size={12}
+                              color={isFav ? "#D97706" : "#94A3B8"}
+                              fill={isFav ? "#F59E0B" : "transparent"}
+                            />
+                          </TouchableOpacity>
+                        );
+                      })()}
                       {(() => {
                         const isCardScannerDisabled =
                           isTodayLottery &&
@@ -1960,6 +2032,7 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+    </KeyboardAvoidingView>
 
       {/* Barcode Scanner Modal */}
       <BarcodeScannerModal

@@ -17,11 +17,12 @@ import {
   useCameraPermissions,
   BarcodeScanningResult,
 } from "expo-camera";
-import { X, Scan, Zap, ZapOff, Camera, CheckCircle, Sparkles } from "lucide-react-native";
+import { X, Scan, Zap, ZapOff, Camera, CheckCircle, Sparkles, Flashlight } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { scanTicketWithGeminiVision } from "../api/lotteryApi";
 import { ActivityIndicator, Alert } from "react-native";
 import { useLanguage } from "../context/LanguageContext";
+import { triggerSuccessHaptic, triggerLightHaptic } from "../utils/haptics";
 
 interface BarcodeScannerModalProps {
   visible: boolean;
@@ -48,14 +49,14 @@ export default function BarcodeScannerModal({
   const [isAiScanning, setIsAiScanning] = useState(false);
   const cameraRef = useRef<any>(null);
 
-  // Laser animation line
+  // Animated laser line value
   const scanLineAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       setScanned(false);
-      setTorchOn(false);
       setManualCode("");
+      setIsAiScanning(false);
 
       if (!permission || !permission.granted) {
         requestPermission();
@@ -88,6 +89,7 @@ export default function BarcodeScannerModal({
     if (scanned) return;
     const rawVal = result.data ? result.data.trim() : "";
     if (rawVal) {
+      triggerSuccessHaptic();
       setScanned(true);
       onBarcodeScanned(rawVal, result.type);
     }
@@ -96,6 +98,7 @@ export default function BarcodeScannerModal({
   const handleAiPhotoScan = async () => {
     if (!cameraRef.current || isAiScanning) return;
     try {
+      triggerLightHaptic();
       setIsAiScanning(true);
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
@@ -105,6 +108,7 @@ export default function BarcodeScannerModal({
       if (photo?.base64) {
         const res = await scanTicketWithGeminiVision(photo.base64);
         if (res.ticketNumber) {
+          triggerSuccessHaptic();
           setScanned(true);
           onBarcodeScanned(res.ticketNumber, "gemini-ai");
         } else {
@@ -277,7 +281,7 @@ export default function BarcodeScannerModal({
           <View style={styles.cameraContainer}>
             <CameraView
               ref={cameraRef}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               facing="back"
               enableTorch={torchOn}
               barcodeScannerSettings={{
@@ -297,8 +301,7 @@ export default function BarcodeScannerModal({
             />
 
             {/* Viewfinder Reticle Overlay positioned on top */}
-            <View style={styles.overlay} pointerEvents="box-none">
-              <View style={styles.overlayTop} />
+            <View style={styles.overlayTop} />
 
               <View style={[styles.overlayMiddleRow, { height: scanBoxSize }]}>
                 <View style={styles.overlaySide} />
@@ -332,6 +335,38 @@ export default function BarcodeScannerModal({
               </View>
 
               <View style={styles.overlayBottom}>
+                {/* Floating Torch Toggle Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.floatingTorchBtn,
+                    torchOn && styles.floatingTorchBtnActive,
+                  ]}
+                  onPress={() => {
+                    triggerLightHaptic();
+                    setTorchOn(!torchOn);
+                  }}
+                >
+                  {torchOn ? (
+                    <Zap size={16} color="#0F172A" />
+                  ) : (
+                    <ZapOff size={16} color="#FFFFFF" />
+                  )}
+                  <Text
+                    style={[
+                      styles.floatingTorchText,
+                      torchOn && { color: "#0F172A", fontWeight: "900" },
+                    ]}
+                  >
+                    {torchOn
+                      ? isMl
+                        ? "ഫ്ലാഷ്‌ലൈറ്റ് ഓഫ്"
+                        : "Flashlight Off"
+                      : isMl
+                        ? "ഫ്ലാഷ്‌ലൈറ്റ് ഓൺ"
+                        : "Flashlight On"}
+                  </Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   style={{
                     backgroundColor: COLORS.primary,
@@ -397,7 +432,6 @@ export default function BarcodeScannerModal({
                 />
               </View>
             </View>
-          </View>
         )}
       </View>
     </Modal>
@@ -492,7 +526,11 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   overlayTop: {
     flex: 1,
@@ -559,7 +597,11 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   scannedOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(11, 60, 93, 0.9)",
     justifyContent: "center",
     alignItems: "center",
@@ -598,5 +640,26 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 10,
     opacity: 0.9,
+  },
+  floatingTorchBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    marginBottom: 10,
+  },
+  floatingTorchBtnActive: {
+    backgroundColor: "#FDE047",
+    borderColor: "#FACC15",
+  },
+  floatingTorchText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

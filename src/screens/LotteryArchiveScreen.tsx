@@ -264,6 +264,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             removeClippedSubviews={Platform.OS === "android"}
             scrollEventThrottle={16}
             keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
             overScrollMode="never"
             initialNumToRender={8}
             maxToRenderPerBatch={10}
