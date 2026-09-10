@@ -15,6 +15,7 @@ import {
   UIManager,
   AppState,
   AppStateStatus,
+  Vibration,
 } from "react-native";
 
 if (
@@ -39,47 +40,69 @@ import {
   RotateCw,
   Download,
   Bell,
+  Zap,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
   WEEKLY_LOTTERIES,
   BUMPER_LOTTERIES,
   getLotteryMalayalamName,
+  LotteryMeta,
+  getDayTranslated,
 } from "../constants/lotteries";
 import {
   fetchAllDraws,
-  DrawResult,
-  searchTicketNumber,
-  SearchMatch,
-  supabase,
   fetchLotteries,
   fetchBumperLotteries,
+  DrawResult,
+  SearchMatch,
+  searchTicketNumber,
+  supabase,
   checkIsDatePostponed,
   PostponedDraw,
-  formatTicketSearchInput,
   hasAnyDrawResult,
+  formatTicketSearchInput,
 } from "../api/lotteryApi";
+import { useFocusEffect } from "@react-navigation/native";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import AiSocialDigestModal from "../components/AiSocialDigestModal";
+import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import { useLanguage } from "../context/LanguageContext";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function HomeScreen({ navigation }: any) {
+  const { t, language, setShowLanguageModal } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
-  const { language, setShowLanguageModal, t } = useLanguage();
+
+  // Core Data States
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
-  const [lotteriesList, setLotteriesList] = useState(WEEKLY_LOTTERIES);
-  const [bumperLotteries, setBumperLotteries] = useState(BUMPER_LOTTERIES);
+  const [lotteriesList, setLotteriesList] =
+    useState<LotteryMeta[]>(WEEKLY_LOTTERIES);
+  const [bumperLotteries, setBumperLotteries] =
+    useState<LotteryMeta[]>(BUMPER_LOTTERIES);
   const [todayPostponement, setTodayPostponement] =
     useState<PostponedDraw | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isAiDigestOpen, setIsAiDigestOpen] = useState(false);
+  const [socketStatus, setSocketStatus] = useState<
+    "connecting" | "connected" | "live_updating"
+  >("connecting");
+  const [countdown, setCountdown] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isDrawPassed: boolean;
+  }>({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isDrawPassed: false,
+  });
+
   const getIsBefore245PM = () => {
     try {
       const now = new Date();
@@ -195,16 +218,17 @@ export default function HomeScreen({ navigation }: any) {
   useEffect(() => {
     loadData();
 
-    const checkTime = () => {
+    const updateCountdown = () => {
       try {
         const now = new Date();
         const timeStr = now.toLocaleTimeString("en-GB", {
           timeZone: "Asia/Kolkata",
           hour12: false,
         });
-        const [hStr, mStr] = timeStr.split(":");
+        const [hStr, mStr, sStr] = timeStr.split(":");
         const hours = parseInt(hStr, 10);
         const minutes = parseInt(mStr, 10);
+        const seconds = parseInt(sStr || "0", 10);
         const totalMinutes = hours * 60 + minutes;
         const todayDate = new Date().toLocaleDateString("en-CA", {
           timeZone: "Asia/Kolkata",
@@ -222,13 +246,34 @@ export default function HomeScreen({ navigation }: any) {
         if (!beforeDrawSwitch) {
           setHeroTab((prev) => (prev === 1 ? 0 : prev));
         }
+
+        const targetHour = isBumperDay ? 14 : 15;
+        const targetTotalSeconds = targetHour * 3600;
+        const currentTotalSeconds = hours * 3600 + minutes * 60 + seconds;
+        const diffSeconds = targetTotalSeconds - currentTotalSeconds;
+
+        if (diffSeconds <= 0) {
+          setCountdown({ hours: 0, minutes: 0, seconds: 0, isDrawPassed: true });
+        } else {
+          const remHours = Math.floor(diffSeconds / 3600);
+          const remMinutes = Math.floor((diffSeconds % 3600) / 60);
+          const remSeconds = diffSeconds % 60;
+          setCountdown({
+            hours: remHours,
+            minutes: remMinutes,
+            seconds: remSeconds,
+            isDrawPassed: false,
+          });
+        }
       } catch {
         setIsBefore245PM(false);
         setIsAfter3PM(false);
+        setCountdown({ hours: 0, minutes: 0, seconds: 0, isDrawPassed: true });
       }
     };
-    checkTime();
-    const timeInterval = setInterval(checkTime, 15000);
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    const timeInterval = setInterval(updateCountdown, 15000);
 
     // Realtime listener for live cron job updates, admin updates, and draw announcements
     const channelName = `realtime-mobile-home-${Date.now()}`;
@@ -245,6 +290,11 @@ export default function HomeScreen({ navigation }: any) {
           if (newRow && newRow.draw_date === currentToday) {
             // Auto-switch to today's tab when results start streaming in
             setHeroTab(0);
+            setSocketStatus("live_updating");
+            try {
+              Vibration.vibrate(100);
+            } catch {}
+            setTimeout(() => setSocketStatus("connected"), 4000);
           }
           loadData();
         },
@@ -265,7 +315,10 @@ export default function HomeScreen({ navigation }: any) {
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
+          setSocketStatus("connected");
           console.log("[Mobile Socket] Subscribed to live draw results channel.");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setSocketStatus("connecting");
         }
       });
 
@@ -297,7 +350,7 @@ export default function HomeScreen({ navigation }: any) {
     // AppState listener: Instant live data refresh when app returns from background
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
-        checkTime();
+        updateCountdown();
         loadData();
       }
     };
@@ -305,6 +358,7 @@ export default function HomeScreen({ navigation }: any) {
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(countdownInterval);
       clearInterval(timeInterval);
       clearInterval(pollInterval);
       appStateSub.remove();
@@ -1196,19 +1250,34 @@ export default function HomeScreen({ navigation }: any) {
           ) : isAfter3PM ? (
             /* Today's Draw Live In-Progress Card */
             <View style={[styles.scheduledCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
-              <View style={styles.scheduledBadgeRow}>
-                <ActivityIndicator size="small" color="#2563EB" />
-                <Text
-                  style={[
-                    styles.scheduledBadgeText,
-                    { color: "#1D4ED8" },
-                    language === "ml" && { fontSize: 10.5 },
-                  ]}
-                >
-                  {language === "ml"
-                    ? "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു"
-                    : "LIVE DRAW IN PROGRESS"}
-                </Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                <View style={styles.scheduledBadgeRow}>
+                  <ActivityIndicator size="small" color="#2563EB" />
+                  <Text
+                    style={[
+                      styles.scheduledBadgeText,
+                      { color: "#1D4ED8" },
+                      language === "ml" && { fontSize: 10.5 },
+                    ]}
+                  >
+                    {language === "ml"
+                      ? "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു"
+                      : "LIVE DRAW IN PROGRESS"}
+                  </Text>
+                </View>
+
+                {/* Live Socket Status Pill */}
+                {socketStatus === "live_updating" ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#F59E0B" }}>
+                    <Zap size={11} color="#B45309" />
+                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>⚡ STREAMING LIVE</Text>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#ECFDF5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#A7F3D0" }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" }} />
+                    <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#065F46" }}>LIVE SYNC ACTIVE</Text>
+                  </View>
+                )}
               </View>
 
               <Text
@@ -1240,7 +1309,7 @@ export default function HomeScreen({ navigation }: any) {
               >
                 {language === "ml"
                   ? "തത്സമയ നറുക്കെടുപ്പ് ഇപ്പോൾ നടന്നു കൊണ്ടിരിക്കുന്നു. ഫലം ഉടൻ ലൈവായി ലഭ്യമാകും."
-                  : "The live draw is currently in progress. Results will update automatically shortly on this page."}
+                  : "The live draw is currently in progress. Results will update automatically without manual refresh."}
               </Text>
             </View>
           ) : (
@@ -1255,34 +1324,50 @@ export default function HomeScreen({ navigation }: any) {
                 },
               ]}
             >
-              <View
-                style={[
-                  styles.scheduledBadgeRow,
-                  isTodayBumper && { backgroundColor: "#FEF3C7" },
-                ]}
-              >
-                {isTodayBumper ? (
-                  <Sparkles size={13} color="#B45309" />
-                ) : (
-                  <Clock size={13} color={COLORS.primary} />
-                )}
-                <Text
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                <View
                   style={[
-                    styles.scheduledBadgeText,
-                    isTodayBumper
-                      ? { color: "#92400E", fontWeight: "900" }
-                      : { color: COLORS.primary },
-                    language === "ml" && { fontSize: 10.5 },
+                    styles.scheduledBadgeRow,
+                    isTodayBumper && { backgroundColor: "#FEF3C7" },
+                    { marginBottom: 0 },
                   ]}
                 >
-                  {isTodayBumper
-                    ? language === "ml"
-                      ? "👑 കേരള ബംപർ ലോട്ടറി ഇന്ന്"
-                      : "👑 KERALA BUMPER LOTTERY TODAY"
-                    : language === "ml"
-                      ? "ഫലം ഉടൻ ലഭ്യമാകും"
-                      : "RESULT COMING SOON"}
-                </Text>
+                  {isTodayBumper ? (
+                    <Sparkles size={13} color="#B45309" />
+                  ) : (
+                    <Clock size={13} color={COLORS.primary} />
+                  )}
+                  <Text
+                    style={[
+                      styles.scheduledBadgeText,
+                      isTodayBumper
+                        ? { color: "#92400E", fontWeight: "900" }
+                        : { color: COLORS.primary },
+                      language === "ml" && { fontSize: 10.5 },
+                    ]}
+                  >
+                    {isTodayBumper
+                      ? language === "ml"
+                        ? "👑 കേരള ബംപർ ലോട്ടറി ഇന്ന്"
+                        : "👑 KERALA BUMPER LOTTERY TODAY"
+                      : language === "ml"
+                        ? "ഫലം ഉടൻ ലഭ്യമാകും"
+                        : "RESULT COMING SOON"}
+                  </Text>
+                </View>
+
+                {/* Live Socket Status Pill */}
+                {socketStatus === "live_updating" ? (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#F59E0B" }}>
+                    <Zap size={11} color="#B45309" />
+                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>⚡ STREAMING LIVE</Text>
+                  </View>
+                ) : (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#ECFDF5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#A7F3D0" }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" }} />
+                    <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#065F46" }}>LIVE SYNC ACTIVE</Text>
+                  </View>
+                )}
               </View>
 
               <Text
@@ -1314,6 +1399,48 @@ export default function HomeScreen({ navigation }: any) {
                     <Text style={{ color: "#78350F", fontWeight: "800", fontSize: 11 }}>
                       ⏰ {todayLottery.drawTime || "2:00 PM"}
                     </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Digital Countdown Timer Box */}
+              {!countdown.isDrawPassed && (
+                <View
+                  style={{
+                    backgroundColor: isTodayBumper ? "#FEF3C7" : "#F0FDF4",
+                    borderRadius: 14,
+                    padding: 12,
+                    marginVertical: 10,
+                    borderWidth: 1,
+                    borderColor: isTodayBumper ? "#FCD34D" : "#BBF7D0",
+                  }}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <Text style={{ fontSize: 11, fontWeight: "800", color: isTodayBumper ? "#92400E" : "#166534", textTransform: "uppercase" }}>
+                      ⏰ {language === "ml" ? "നറുക്കെടുപ്പ് കൗണ്ട്ഡൗൺ" : "Live Draw Countdown"} ({todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})
+                    </Text>
+                    <Text style={{ fontSize: 10, fontWeight: "700", color: "#6B7280" }}>Official IST</Text>
+                  </View>
+
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
+                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                        {String(countdown.hours).padStart(2, "0")}
+                      </Text>
+                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>HRS</Text>
+                    </View>
+                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
+                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                        {String(countdown.minutes).padStart(2, "0")}
+                      </Text>
+                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>MIN</Text>
+                    </View>
+                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
+                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                        {String(countdown.seconds).padStart(2, "0")}
+                      </Text>
+                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>SEC</Text>
+                    </View>
                   </View>
                 </View>
               )}
