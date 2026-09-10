@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Platform,
   LayoutAnimation,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
@@ -32,6 +34,7 @@ import {
   fetchAllDraws,
   DrawResult,
   formatTicketSearchInput,
+  supabase,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -62,10 +65,37 @@ export default function SearchScreen({ navigation }: any) {
   const [customDateInput, setCustomDateInput] = useState<string>("");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
 
-  React.useEffect(() => {
-    fetchAllDraws()
-      .then(setAllDraws)
-      .catch(() => setAllDraws([]));
+  useEffect(() => {
+    const loadDraws = () => {
+      fetchAllDraws()
+        .then(setAllDraws)
+        .catch(() => setAllDraws([]));
+    };
+    loadDraws();
+
+    const channelName = `realtime-mobile-search-${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "draw_results" },
+        () => {
+          loadDraws();
+        }
+      )
+      .subscribe();
+
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        loadDraws();
+      }
+    };
+    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
+
+    return () => {
+      supabase.removeChannel(channel);
+      appStateSub.remove();
+    };
   }, []);
 
   const handleBarcodeScanned = (scannedValue: string) => {

@@ -9,6 +9,8 @@ import {
   TextInput,
   Linking,
   Platform,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -31,6 +33,9 @@ import {
   PostponedDraw,
   findTopPrizePartialHint,
   getSearchFeedbackMessage,
+  hasAnyDrawResult,
+  WinnerInfo,
+  PrizeBreakdown,
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
@@ -114,18 +119,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
   useEffect(() => {
     async function loadData() {
-      setIsLoading(true);
-      scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: false });
       try {
         const [result, postp] = await Promise.all([
           fetchDrawByDate(codeUpper, date),
           checkIsDatePostponed(date, codeUpper),
         ]);
-        setDrawResult(result);
+        if (result) setDrawResult(result);
         setPostponement(postp);
       } catch {
-        setDrawResult(null);
-        setPostponement(null);
+        // Keep current state on transient failure
       } finally {
         setIsLoading(false);
       }
@@ -141,11 +143,43 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           event: "*",
           schema: "public",
           table: "draw_results",
-          filter: `lottery_code=eq.${codeUpper}`,
         },
         (payload) => {
           const newRow = payload.new as any;
-          if (newRow && newRow.draw_date === date) {
+          if (
+            newRow &&
+            newRow.draw_date === date &&
+            (!newRow.lottery_code ||
+              newRow.lottery_code.toUpperCase() === codeUpper)
+          ) {
+            // Immediate UI hydration from socket payload
+            try {
+              let firstObj: WinnerInfo = {};
+              let prizesObj: PrizeBreakdown = {};
+              firstObj =
+                typeof newRow.first_prize === "string"
+                  ? JSON.parse(newRow.first_prize)
+                  : newRow.first_prize || {};
+              prizesObj =
+                typeof newRow.prizes === "string"
+                  ? JSON.parse(newRow.prizes)
+                  : newRow.prizes || {};
+
+              const liveDraw: DrawResult = {
+                id: newRow.id,
+                draw_date: newRow.draw_date,
+                draw_name: newRow.draw_name,
+                draw_code: newRow.draw_code,
+                lottery_code: newRow.lottery_code,
+                first: firstObj,
+                prizes: prizesObj,
+                created_at: newRow.created_at,
+              };
+              if (hasAnyDrawResult(liveDraw)) {
+                setDrawResult(liveDraw);
+              }
+            } catch {}
+
             loadData();
           }
         },
@@ -161,10 +195,33 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           loadData();
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log(`[Mobile Socket] Subscribed to ${codeUpper} (${date})`);
+        }
+      });
+
+    // Smart polling for today's draw
+    const todayDate = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Kolkata",
+    });
+    const pollInterval = setInterval(() => {
+      if (date === todayDate && (!drawResult || !hasAnyDrawResult(drawResult))) {
+        loadData();
+      }
+    }, 15000);
+
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        loadData();
+      }
+    };
+    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+      appStateSub.remove();
     };
   }, [codeUpper, date]);
 

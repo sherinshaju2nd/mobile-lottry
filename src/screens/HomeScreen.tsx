@@ -13,6 +13,8 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 
 if (
@@ -204,23 +206,46 @@ export default function HomeScreen({ navigation }: any) {
         const hours = parseInt(hStr, 10);
         const minutes = parseInt(mStr, 10);
         const totalMinutes = hours * 60 + minutes;
-        setIsBefore245PM(totalMinutes < 14 * 60 + 45);
-        setIsAfter3PM(hours >= 15);
+        const todayDate = new Date().toLocaleDateString("en-CA", {
+          timeZone: "Asia/Kolkata",
+        });
+        const isBumperDay = (bumperLotteries || []).some((b: any) => b.draw_date === todayDate);
+        const switchThresholdMins = isBumperDay ? 13 * 60 + 30 : 14 * 60 + 45; // 1:30 PM for Bumper, 2:45 PM for Regular
+        const drawPassedMins = isBumperDay ? 14 * 60 : 15 * 60; // 2:00 PM for Bumper, 3:00 PM for Regular
+
+        const beforeDrawSwitch = totalMinutes < switchThresholdMins;
+        const afterDrawTime = totalMinutes >= drawPassedMins;
+        setIsBefore245PM(beforeDrawSwitch);
+        setIsAfter3PM(afterDrawTime);
+
+        // If draw switch time reached, switch hero tab to today's draw
+        if (!beforeDrawSwitch) {
+          setHeroTab((prev) => (prev === 1 ? 0 : prev));
+        }
       } catch {
         setIsBefore245PM(false);
         setIsAfter3PM(false);
       }
     };
     checkTime();
+    const timeInterval = setInterval(checkTime, 15000);
 
-    // Realtime listener for live cron job updates and postponed draws
+    // Realtime listener for live cron job updates, admin updates, and draw announcements
     const channelName = `realtime-mobile-home-${Date.now()}`;
     const channel = supabase
       .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
-        () => {
+        (payload) => {
+          const newRow = payload.new as any;
+          const currentToday = new Date().toLocaleDateString("en-CA", {
+            timeZone: "Asia/Kolkata",
+          });
+          if (newRow && newRow.draw_date === currentToday) {
+            // Auto-switch to today's tab when results start streaming in
+            setHeroTab(0);
+          }
           loadData();
         },
       )
@@ -238,10 +263,51 @@ export default function HomeScreen({ navigation }: any) {
           loadData();
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[Mobile Socket] Subscribed to live draw results channel.");
+        }
+      });
+
+    // Intelligent Polling Backup: Poll every 15s during active draw window
+    const pollInterval = setInterval(() => {
+      try {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString("en-GB", {
+          timeZone: "Asia/Kolkata",
+          hour12: false,
+        });
+        const [hStr, mStr] = timeStr.split(":");
+        const hours = parseInt(hStr, 10);
+        const minutes = parseInt(mStr, 10);
+        const totalMins = hours * 60 + minutes;
+        const todayDate = new Date().toLocaleDateString("en-CA", {
+          timeZone: "Asia/Kolkata",
+        });
+        const isBumperDay = (bumperLotteries || []).some((b: any) => b.draw_date === todayDate);
+        const drawStartMins = isBumperDay ? 13 * 60 + 50 : 14 * 60 + 50; // 1:50 PM for Bumper, 2:50 PM for Regular
+        const isDrawWindow = totalMins >= drawStartMins && totalMins <= 18 * 60; // Up to 6:00 PM IST
+
+        if (isDrawWindow) {
+          loadData();
+        }
+      } catch {}
+    }, 15000);
+
+    // AppState listener: Instant live data refresh when app returns from background
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        checkTime();
+        loadData();
+      }
+    };
+    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(timeInterval);
+      clearInterval(pollInterval);
+      appStateSub.remove();
     };
   }, []);
 
@@ -276,8 +342,7 @@ export default function HomeScreen({ navigation }: any) {
   const hasTodayResult =
     Boolean(todayDraw) &&
     todayDraw?.draw_date === todayISTDate &&
-    hasAnyDrawResult(todayDraw) &&
-    isAfter3PM;
+    hasAnyDrawResult(todayDraw);
   const previousDraw =
     allDraws.find((d) => d.draw_date !== todayISTDate) ||
     (allDraws.length > 1 ? allDraws[1] : allDraws[0]) ||

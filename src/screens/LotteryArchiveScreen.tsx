@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -46,8 +48,8 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
   const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
-    async function loadHistory() {
-      setIsLoading(true);
+    async function loadHistory(isSilent = false) {
+      if (!isSilent) setIsLoading(true);
       try {
         const [results, lotRes] = await Promise.all([
           fetchLotteryHistory(codeUpper),
@@ -63,10 +65,12 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           setLotteryDbMeta(lotRes.data);
         }
       } catch {
-        setHistory([]);
-        setFilteredHistory([]);
+        if (!isSilent) {
+          setHistory([]);
+          setFilteredHistory([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!isSilent) setIsLoading(false);
       }
     }
     loadHistory();
@@ -77,21 +81,36 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
-        () => {
-          loadHistory();
+        (payload) => {
+          const newRow = payload.new as any;
+          if (
+            !newRow ||
+            !newRow.lottery_code ||
+            newRow.lottery_code.toUpperCase() === codeUpper
+          ) {
+            loadHistory(true);
+          }
         }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "lotteries" },
         () => {
-          loadHistory();
+          loadHistory(true);
         }
       )
       .subscribe();
 
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        loadHistory(true);
+      }
+    };
+    const appStateSub = AppState.addEventListener("change", handleAppStateChange);
+
     return () => {
       supabase.removeChannel(channel);
+      appStateSub.remove();
     };
   }, [codeUpper]);
 
