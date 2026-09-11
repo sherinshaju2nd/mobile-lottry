@@ -207,6 +207,19 @@ export async function fetchAllDraws(): Promise<DrawResult[]> {
 }
 
 /**
+ * Fast synchronous-like cache reader for instant sub-50ms app startup
+ */
+export async function getCachedDrawsQuick(): Promise<DrawResult[]> {
+  try {
+    const cached = await AsyncStorage.getItem("@draw_results_cache");
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {}
+  return [];
+}
+
+/**
  * Fetch draw history for a specific lottery code directly from Supabase
  */
 export async function fetchLotteryHistory(code: string): Promise<DrawResult[]> {

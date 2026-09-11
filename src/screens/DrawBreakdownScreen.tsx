@@ -21,6 +21,8 @@ import {
   RotateCw,
   Download,
   Clock,
+  Share2,
+  Sparkles,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { ALL_LOTTERIES, getDrawTimeDisplay } from "../constants/lotteries";
@@ -40,6 +42,8 @@ import {
 } from "../api/lotteryApi";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
+import ConfettiCelebration from "../components/ConfettiCelebration";
+import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
@@ -76,6 +80,14 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
   const [copiedToast, setCopiedToast] = useState<string | null>(null);
+
+  // Confetti & Multi-Ticket Celebration State
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationDetails, setCelebrationDetails] = useState<{
+    prizeTier?: string;
+    amount?: string;
+    ticket?: string;
+  }>({});
 
   const handleCopyTicket = (ticketNum: string) => {
     if (!ticketNum || ticketNum === "N/A") return;
@@ -312,9 +324,14 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     if (!targetTicket.trim() || !drawResult || !drawResult.prizes) return;
     const query = targetTicket.trim();
 
-    // Require at least 4 digits
-    const queryDigits = query.replace(/\D/g, "");
-    if (queryDigits.length < 4) {
+    // Support multi-ticket parsing (e.g. "WA 136429, 6429, 8812")
+    const subTickets = query.split(/[,;\n]+/).map((s) => s.trim()).filter((s) => s.length > 0);
+    const targetQueries = subTickets.length > 1 ? subTickets : [query];
+
+    // Require at least 4 digits in queries
+    const validQueries = targetQueries.filter((q) => q.replace(/\D/g, "").length >= 4);
+
+    if (validQueries.length === 0) {
       setCheckMatches(null);
       setCheckErrorMsg(
         language === "ml"
@@ -331,20 +348,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
       seriesNote?: string;
     }> = [];
 
-    // 1st Prize check
-    if (drawResult.first?.ticket) {
-      const matchRes = validateTicketMatch(query, drawResult.first.ticket);
-      if (matchRes.isMatch) {
-        matchesList.push({
-          tier: language === "ml" ? "1-ാം സമ്മാന വിജയി" : "1st Prize Winner",
-          amount: drawResult.prizes.amounts?.["1st"] || "₹70 Lakhs",
-          matchedNumber: drawResult.first.ticket,
-          seriesNote: matchRes.seriesNote,
-        });
-      }
-    }
-
-    // Check Other Tiers
     const tiers = [
       "consolation",
       "2nd",
@@ -357,21 +360,37 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
       "9th",
     ] as const;
 
-    for (const t of tiers) {
-      const nums = (drawResult.prizes as any)[t] as string[] | undefined;
-      const amount = drawResult.prizes.amounts?.[t] || "";
-      const label = t === "consolation" ? (language === "ml" ? "സമാശ്വാസ സമ്മാനം" : "Consolation Prize") : `${t} Prize`;
+    for (const q of validQueries) {
+      // 1st Prize check
+      if (drawResult.first?.ticket) {
+        const matchRes = validateTicketMatch(q, drawResult.first.ticket);
+        if (matchRes.isMatch) {
+          matchesList.push({
+            tier: language === "ml" ? "1-ാം സമ്മാന വിജയി" : "1st Prize Winner",
+            amount: drawResult.prizes.amounts?.["1st"] || "1st Prize",
+            matchedNumber: drawResult.first.ticket,
+            seriesNote: matchRes.seriesNote ? `${matchRes.seriesNote} (${q})` : undefined,
+          });
+        }
+      }
 
-      if (nums && Array.isArray(nums)) {
-        for (const num of nums) {
-          const matchRes = validateTicketMatch(query, num);
-          if (matchRes.isMatch) {
-            matchesList.push({
-              tier: label,
-              amount: amount,
-              matchedNumber: num,
-              seriesNote: matchRes.seriesNote,
-            });
+      // Check Other Tiers
+      for (const t of tiers) {
+        const nums = (drawResult.prizes as any)[t] as string[] | undefined;
+        const amount = drawResult.prizes.amounts?.[t] || "";
+        const label = t === "consolation" ? (language === "ml" ? "സമാശ്വാസ സമ്മാനം" : "Consolation Prize") : `${t} Prize`;
+
+        if (nums && Array.isArray(nums)) {
+          for (const num of nums) {
+            const matchRes = validateTicketMatch(q, num);
+            if (matchRes.isMatch) {
+              matchesList.push({
+                tier: label,
+                amount: amount,
+                matchedNumber: num,
+                seriesNote: matchRes.seriesNote ? `${matchRes.seriesNote} (${q})` : undefined,
+              });
+            }
           }
         }
       }
@@ -380,9 +399,18 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
     if (matchesList.length > 0) {
       setCheckMatches(matchesList);
       setCheckErrorMsg(null);
+      triggerSuccessHaptic();
+
+      // Trigger Celebration Confetti Modal
+      setCelebrationDetails({
+        prizeTier: matchesList[0].tier,
+        amount: matchesList[0].amount,
+        ticket: targetTicket,
+      });
+      setShowCelebration(true);
     } else {
       setCheckMatches(null);
-      const topHint = findTopPrizePartialHint(query, drawResult);
+      const topHint = findTopPrizePartialHint(validQueries[0], drawResult);
       setCheckErrorMsg(getSearchFeedbackMessage(targetTicket, language, date, topHint));
     }
   };
@@ -443,14 +471,34 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </Text>
           </View>
           {drawResult && (
-            <TouchableOpacity
-              style={styles.pdfDownloadBtn}
-              activeOpacity={0.8}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`)}
-            >
-              <Download size={18} color={COLORS.primary} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <TouchableOpacity
+                style={{
+                  padding: 8,
+                  borderRadius: 8,
+                  backgroundColor: "#25D366",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                onPress={() => {
+                  triggerLightHaptic();
+                  shareDrawResultToWhatsApp(drawResult, language);
+                }}
+              >
+                <Share2 size={16} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.pdfDownloadBtn}
+                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`)}
+              >
+                <Download size={18} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -997,6 +1045,15 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
           setIsBarcodeResultOpen(false);
           setIsScannerOpen(true);
         }}
+      />
+
+      {/* Confetti Celebration on Prize Match */}
+      <ConfettiCelebration
+        visible={showCelebration}
+        onDismiss={() => setShowCelebration(false)}
+        prizeTier={celebrationDetails.prizeTier}
+        prizeAmount={celebrationDetails.amount}
+        ticketNumber={celebrationDetails.ticket}
       />
     </SafeAreaView>
   );

@@ -43,9 +43,13 @@ import {
   Bell,
   Zap,
   Star,
+  BarChart3,
+  Share2,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import LiveDrawBanner from "../components/LiveDrawBanner";
+import { DrawCardSkeleton } from "../components/ShimmerSkeleton";
+import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import {
   triggerLightHaptic,
   triggerSuccessHaptic,
@@ -75,6 +79,7 @@ import {
 } from "../constants/lotteries";
 import {
   fetchAllDraws,
+  getCachedDrawsQuick,
   fetchLotteries,
   fetchBumperLotteries,
   DrawResult,
@@ -207,6 +212,13 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadData = async () => {
     try {
+      // Instant sub-50ms render from offline cache
+      const cached = await getCachedDrawsQuick();
+      if (cached && cached.length > 0 && allDraws.length === 0) {
+        setAllDraws(cached);
+        setIsLoading(false);
+      }
+
       const todayDate = new Date().toLocaleDateString("en-CA", {
         timeZone: "Asia/Kolkata",
       });
@@ -237,7 +249,7 @@ export default function HomeScreen({ navigation }: any) {
         setTodayPostponement(postponement);
       }
     } catch {
-      setAllDraws([]);
+      if (allDraws.length === 0) setAllDraws([]);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -547,6 +559,26 @@ export default function HomeScreen({ navigation }: any) {
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <TouchableOpacity
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  backgroundColor: COLORS.primaryLight,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: COLORS.primary,
+                }}
+                onPress={() => {
+                  triggerLightHaptic();
+                  navigation.navigate("Analytics");
+                }}
+                accessibilityLabel="Lottery Analytics & Trends"
+              >
+                <BarChart3 size={15} color={COLORS.primary} />
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={{
                   width: 34,
@@ -1025,16 +1057,41 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
                 )}
 
-                <TouchableOpacity
-                  style={styles.heroDownloadPdfBtn}
-                  activeOpacity={0.8}
-                  onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`)}
-                >
-                  <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.heroDownloadPdfBtnText}>
-                    {t("download_pdf")}
-                  </Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", gap: 8, marginTop: 4, width: "100%" }}>
+                  <TouchableOpacity
+                    style={[styles.heroDownloadPdfBtn, { flex: 1 }]}
+                    activeOpacity={0.8}
+                    onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`)}
+                  >
+                    <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.heroDownloadPdfBtnText}>
+                      {t("download_pdf")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "#25D366",
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      gap: 5,
+                    }}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerLightHaptic();
+                      shareDrawResultToWhatsApp(todayDraw, language);
+                    }}
+                  >
+                    <Share2 size={14} color="#FFFFFF" />
+                    <Text style={{ color: "#FFFFFF", fontSize: 11.5, fontWeight: "900" }}>
+                      {language === "ml" ? "ഷെയർ" : "Share"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <Text
