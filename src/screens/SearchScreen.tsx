@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -30,6 +30,8 @@ import {
   X,
   Clock,
   ChevronLeft,
+  FileText,
+  Target,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import * as Clipboard from "expo-clipboard";
@@ -39,6 +41,7 @@ import {
   fetchAllDraws,
   DrawResult,
   formatTicketSearchInput,
+  hasAnyDrawResult,
   supabase,
 } from "../api/lotteryApi";
 import {
@@ -57,13 +60,24 @@ import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import ModernDatePickerModal from "../components/ModernDatePickerModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
+import JustMissModal from "../components/JustMissModal";
 import { useLanguage } from "../context/LanguageContext";
+
+function formatDisplayDate(dateStr?: string | null) {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+}
 
 export default function SearchScreen({ navigation }: any) {
   const { t, language } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [query, setQuery] = useState("");
+  const [searchedQuery, setSearchedQuery] = useState("");
   const [batchInput, setBatchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
@@ -76,12 +90,26 @@ export default function SearchScreen({ navigation }: any) {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [isBarcodeResultOpen, setIsBarcodeResultOpen] = useState(false);
+  const [isJustMissOpen, setIsJustMissOpen] = useState(false);
 
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(
     null,
   );
   const [customDateInput, setCustomDateInput] = useState<string>("");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+
+  const publishedDraws = useMemo(() => {
+    return allDraws.filter((d) => hasAnyDrawResult(d));
+  }, [allDraws]);
+
+  const selectedDraw = useMemo(() => {
+    return allDraws.find((d) => d.draw_date === selectedDateFilter) || null;
+  }, [allDraws, selectedDateFilter]);
+
+  const isSelectedDrawPublished = useMemo(() => {
+    if (!selectedDateFilter) return true;
+    return selectedDraw ? hasAnyDrawResult(selectedDraw) : false;
+  }, [selectedDraw, selectedDateFilter]);
 
   // UX Upgrades State
   const [clipboardTicket, setClipboardTicket] = useState<string | null>(null);
@@ -193,9 +221,13 @@ export default function SearchScreen({ navigation }: any) {
       );
       return;
     }
-    if (overrideQuery) {
-      setQuery(target);
+    if (!selectedDateFilter) {
+      triggerErrorHaptic();
+      setErrorMessage(t("please_select_date_error"));
+      return;
     }
+    setQuery(target);
+    setSearchedQuery(target);
     setIsSearching(true);
     setErrorMessage(null);
     try {
@@ -236,6 +268,11 @@ export default function SearchScreen({ navigation }: any) {
       );
       return;
     }
+    if (!selectedDateFilter) {
+      triggerErrorHaptic();
+      setErrorMessage(t("please_select_date_error"));
+      return;
+    }
     setIsSearching(true);
     setErrorMessage(null);
     try {
@@ -271,6 +308,7 @@ export default function SearchScreen({ navigation }: any) {
   const handleReset = () => {
     triggerLightHaptic();
     setQuery("");
+    setSearchedQuery("");
     setBatchInput("");
     setSingleResults(null);
     setBatchResults(null);
@@ -417,19 +455,52 @@ export default function SearchScreen({ navigation }: any) {
                 marginBottom: 12,
               }}
             >
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder={language === "ml" ? "ഉദാ: MJ 136429, 136429, അല്ലെങ്കിൽ 6429" : "e.g. MJ 136429, 136429, or 6429"}
-                placeholderTextColor={COLORS.textLight}
-                value={query}
-                onChangeText={(text) => setQuery(formatTicketSearchInput(text))}
-                autoCapitalize="characters"
-                onFocus={() => {
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                  }, 150);
-                }}
-              />
+              <View style={{ flex: 1, position: "relative", justifyContent: "center" }}>
+                <TextInput
+                  style={[styles.input, query.length > 0 && { paddingRight: 36 }]}
+                  placeholder={language === "ml" ? "ഉദാ: MJ 136429, 136429, അല്ലെങ്കിൽ 6429" : "e.g. MJ 136429, 136429, or 6429"}
+                  placeholderTextColor={COLORS.textLight}
+                  value={query}
+                  onChangeText={(text) => {
+                    const formatted = formatTicketSearchInput(text);
+                    setQuery(formatted);
+                    if (!formatted.trim()) {
+                      setSingleResults(null);
+                      setSearchedQuery("");
+                      setErrorMessage(null);
+                    }
+                  }}
+                  autoCapitalize="characters"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                    }, 150);
+                  }}
+                />
+                {query.length > 0 && (
+                  <TouchableOpacity
+                    style={{
+                      position: "absolute",
+                      right: 10,
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: "#E2E8F0",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    onPress={() => {
+                      setQuery("");
+                      setSearchedQuery("");
+                      setSingleResults(null);
+                      setErrorMessage(null);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <X size={13} color="#64748B" />
+                  </TouchableOpacity>
+                )}
+              </View>
               <TouchableOpacity
                 style={styles.cameraIconBtn}
                 onPress={() => setIsScannerOpen(true)}
@@ -566,7 +637,13 @@ export default function SearchScreen({ navigation }: any) {
                   {selectedDateFilter ? selectedDateFilter : t("all_draws")}
                 </Text>
                 {selectedDateFilter && (
-                  <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedDateFilter(null);
+                      setSingleResults(null);
+                      setBatchResults(null);
+                    }}
+                  >
                     <Text
                       style={{
                         fontSize: 11,
@@ -581,14 +658,87 @@ export default function SearchScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
+            {/* OR Divider & Previous Draws List */}
+            {publishedDraws && publishedDraws.length > 0 && (
+              <View style={{ marginTop: 12, marginBottom: 16 }}>
+                <View style={styles.orDividerContainer}>
+                  <View style={styles.orDividerLine} />
+                  <Text style={styles.orDividerText}>OR</Text>
+                  <View style={styles.orDividerLine} />
+                </View>
+
+                <Text style={styles.selectDrawHeader}>
+                  {t("select_draw_prompt")}
+                </Text>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.drawCardsScroll}
+                >
+                  {publishedDraws.slice(0, 10).map((draw: DrawResult, idx: number) => {
+                    const isSelected = selectedDateFilter === draw.draw_date;
+                    return (
+                      <TouchableOpacity
+                        key={draw.draw_date + (draw.lottery_code || idx)}
+                        style={[
+                          styles.drawTicketCard,
+                          isSelected && styles.drawTicketCardActive,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          triggerLightHaptic();
+                          setSelectedDateFilter(draw.draw_date);
+                          setErrorMessage(null);
+                        }}
+                      >
+                        <View style={styles.drawTicketLeft}>
+                          <Text
+                            style={[
+                              styles.drawTicketName,
+                              isSelected && styles.drawTicketNameActive,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {draw.draw_name || draw.lottery_code}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.drawTicketDate,
+                              isSelected && styles.drawTicketDateActive,
+                            ]}
+                          >
+                            {formatDisplayDate(draw.draw_date)}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={[
+                            styles.drawTicketDashedDivider,
+                            isSelected && styles.drawTicketDashedDividerActive,
+                          ]}
+                        />
+
+                        <View style={styles.drawTicketBadge}>
+                          <Text style={styles.drawTicketBadgeText}>
+                            {draw.lottery_code || "DRAW"}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             <View style={styles.btnRow}>
               <TouchableOpacity
                 style={[
                   styles.primaryBtn,
-                  (!query.trim() || isSearching) && { backgroundColor: "#94A3B8" },
+                  (!query.trim() || !selectedDateFilter || isSearching) && { backgroundColor: "#94A3B8" },
                 ]}
                 onPress={() => handleSingleSearch()}
-                disabled={!query.trim() || isSearching}
+                disabled={!query.trim() || !selectedDateFilter || isSearching}
               >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
@@ -612,7 +762,13 @@ export default function SearchScreen({ navigation }: any) {
               placeholder={t("paste_multiple_placeholder")}
               placeholderTextColor={COLORS.textLight}
               value={batchInput}
-              onChangeText={setBatchInput}
+              onChangeText={(text) => {
+                setBatchInput(text);
+                if (!text.trim()) {
+                  setBatchResults(null);
+                  setErrorMessage(null);
+                }
+              }}
               multiline
               numberOfLines={4}
               autoCapitalize="characters"
@@ -623,6 +779,7 @@ export default function SearchScreen({ navigation }: any) {
               }}
             />
 
+            {/* Date Filter Selection */}
             <Text style={styles.label}>{t("draw_date_filter")}</Text>
             <View style={styles.customDateRow}>
               <TouchableOpacity
@@ -646,7 +803,13 @@ export default function SearchScreen({ navigation }: any) {
                   {selectedDateFilter ? selectedDateFilter : t("all_draws")}
                 </Text>
                 {selectedDateFilter && (
-                  <TouchableOpacity onPress={() => setSelectedDateFilter(null)}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedDateFilter(null);
+                      setSingleResults(null);
+                      setBatchResults(null);
+                    }}
+                  >
                     <Text
                       style={{
                         fontSize: 11,
@@ -661,14 +824,87 @@ export default function SearchScreen({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
+            {/* OR Divider & Previous Draws List */}
+            {publishedDraws && publishedDraws.length > 0 && (
+              <View style={{ marginTop: 12, marginBottom: 16 }}>
+                <View style={styles.orDividerContainer}>
+                  <View style={styles.orDividerLine} />
+                  <Text style={styles.orDividerText}>OR</Text>
+                  <View style={styles.orDividerLine} />
+                </View>
+
+                <Text style={styles.selectDrawHeader}>
+                  {t("select_draw_prompt")}
+                </Text>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.drawCardsScroll}
+                >
+                  {publishedDraws.slice(0, 10).map((draw: DrawResult, idx: number) => {
+                    const isSelected = selectedDateFilter === draw.draw_date;
+                    return (
+                      <TouchableOpacity
+                        key={draw.draw_date + (draw.lottery_code || idx)}
+                        style={[
+                          styles.drawTicketCard,
+                          isSelected && styles.drawTicketCardActive,
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          triggerLightHaptic();
+                          setSelectedDateFilter(draw.draw_date);
+                          setErrorMessage(null);
+                        }}
+                      >
+                        <View style={styles.drawTicketLeft}>
+                          <Text
+                            style={[
+                              styles.drawTicketName,
+                              isSelected && styles.drawTicketNameActive,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {draw.draw_name || draw.lottery_code}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.drawTicketDate,
+                              isSelected && styles.drawTicketDateActive,
+                            ]}
+                          >
+                            {formatDisplayDate(draw.draw_date)}
+                          </Text>
+                        </View>
+
+                        <View
+                          style={[
+                            styles.drawTicketDashedDivider,
+                            isSelected && styles.drawTicketDashedDividerActive,
+                          ]}
+                        />
+
+                        <View style={styles.drawTicketBadge}>
+                          <Text style={styles.drawTicketBadgeText}>
+                            {draw.lottery_code || "DRAW"}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             <View style={styles.btnRow}>
               <TouchableOpacity
                 style={[
                   styles.primaryBtn,
-                  (!batchInput.trim() || isSearching) && { backgroundColor: "#94A3B8" },
+                  (!batchInput.trim() || !selectedDateFilter || isSearching) && { backgroundColor: "#94A3B8" },
                 ]}
                 onPress={handleBatchSearch}
-                disabled={!batchInput.trim() || isSearching}
+                disabled={!batchInput.trim() || !selectedDateFilter || isSearching}
               >
                 {isSearching ? (
                   <ActivityIndicator color={COLORS.white} />
@@ -686,10 +922,10 @@ export default function SearchScreen({ navigation }: any) {
         )}
 
         {/* Single Search Results */}
-        {mode === "single" && singleResults !== null && (
+        {mode === "single" && singleResults !== null && (searchedQuery || query).trim() !== "" && (
           <View style={styles.resultsSection}>
             <Text style={styles.resultsHeader}>
-              {t("search_results_for")} "{query}"
+              {t("search_results_for")} "{searchedQuery || query}"
             </Text>
 
             {singleResults.length > 0 ? (
@@ -755,6 +991,7 @@ export default function SearchScreen({ navigation }: any) {
                 <XCircle
                   size={32}
                   color={
+                    !isSelectedDrawPublished &&
                     selectedDateFilter &&
                     selectedDateFilter >=
                       new Date().toLocaleDateString("en-CA", {
@@ -765,14 +1002,16 @@ export default function SearchScreen({ navigation }: any) {
                   }
                 />
                 <Text style={styles.noMatchTitle}>
-                  {selectedDateFilter ===
-                  new Date().toLocaleDateString("en-CA", {
-                    timeZone: "Asia/Kolkata",
-                  })
+                  {!isSelectedDrawPublished &&
+                  selectedDateFilter ===
+                    new Date().toLocaleDateString("en-CA", {
+                      timeZone: "Asia/Kolkata",
+                    })
                     ? language === "ml"
                       ? "ഇന്നത്തെ ഫലം തയ്യാറാകുന്നു"
                       : "Today's Draw in Progress"
-                    : selectedDateFilter &&
+                    : !isSelectedDrawPublished &&
+                      selectedDateFilter &&
                       selectedDateFilter >
                         new Date().toLocaleDateString("en-CA", {
                           timeZone: "Asia/Kolkata",
@@ -783,14 +1022,16 @@ export default function SearchScreen({ navigation }: any) {
                     : t("no_prize_found")}
                 </Text>
                 <Text style={styles.noMatchSub}>
-                  {selectedDateFilter ===
-                  new Date().toLocaleDateString("en-CA", {
-                    timeZone: "Asia/Kolkata",
-                  })
+                  {!isSelectedDrawPublished &&
+                  selectedDateFilter ===
+                    new Date().toLocaleDateString("en-CA", {
+                      timeZone: "Asia/Kolkata",
+                    })
                     ? language === "ml"
                       ? "ഇന്നത്തെ ഫലം ഉച്ചയ്ക്ക് 3:10 ന് പ്രസിദ്ധീകരിക്കും. അല്പം കഴിഞ്ഞ് വീണ്ടും പരിശോധിക്കുക."
                       : "Results for today's draw publish at 3:10 PM. Please check back once the draw concludes."
-                    : selectedDateFilter &&
+                    : !isSelectedDrawPublished &&
+                      selectedDateFilter &&
                       selectedDateFilter >
                         new Date().toLocaleDateString("en-CA", {
                           timeZone: "Asia/Kolkata",
@@ -798,12 +1039,52 @@ export default function SearchScreen({ navigation }: any) {
                     ? language === "ml"
                       ? `${selectedDateFilter} തീയതിയിലെ നറുക്കെടുപ്പ് നടന്നിട്ടില്ല.`
                       : `The draw scheduled for ${selectedDateFilter} has not taken place yet.`
-                    : query.replace(/\D/g, "").length >= 4 && query.replace(/\D/g, "").length < 6
+                    : (searchedQuery || query).replace(/\D/g, "").length >= 4 &&
+                      (searchedQuery || query).replace(/\D/g, "").length < 6
                     ? language === "ml"
-                      ? `ടിക്കറ്റ് "${query}" 4 മുതൽ 9 വരെയുള്ള സമ്മാനങ്ങളിൽ ഇല്ല. 1, 2, 3 സമ്മാനങ്ങളും സമാശ്വാസ സമ്മാനവും പരിശോധിക്കാൻ മുഴുവൻ 6 അക്ക ടിക്കറ്റ് നമ്പർ നൽകുക.`
-                      : `4-digit query "${query}" did not match 4th to 9th Prize tiers. Note: 1st, 2nd, 3rd, and Consolation prizes strictly require entering your full 6-digit ticket number with series.`
-                    : `"${query}" ${t("no_prize_desc")}`}
+                      ? `ടിക്കറ്റ് "${searchedQuery || query}" 4 മുതൽ 9 വരെയുള്ള സമ്മാനങ്ങളിൽ ഇല്ല. 1, 2, 3 സമ്മാനങ്ങളും സമാശ്വാസ സമ്മാനവും പരിശോധിക്കാൻ മുഴുവൻ 6 അക്ക ടിക്കറ്റ് നമ്പർ നൽകുക.`
+                      : `4-digit query "${searchedQuery || query}" did not match 4th to 9th Prize tiers. Note: 1st, 2nd, 3rd, and Consolation prizes strictly require entering your full 6-digit ticket number with series.`
+                    : `"${searchedQuery || query}" ${t("no_prize_desc")}`}
                 </Text>
+
+                {/* Action Buttons: View Result & Just Miss */}
+                <View style={styles.noMatchActionRow}>
+                  <TouchableOpacity
+                    style={styles.noMatchViewResultBtn}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerLightHaptic();
+                      const targetDraw =
+                        selectedDraw || publishedDraws[0] || allDraws[0];
+                      if (targetDraw) {
+                        navigation.navigate("DrawBreakdown", {
+                          code: targetDraw.lottery_code,
+                          date: targetDraw.draw_date,
+                          highlight: searchedQuery || query,
+                        });
+                      }
+                    }}
+                  >
+                    <FileText size={15} color={COLORS.primary} />
+                    <Text style={styles.noMatchViewResultText}>
+                      {language === "ml" ? "ഫലം കാണുക" : "View Result"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.noMatchJustMissBtn}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerLightHaptic();
+                      setIsJustMissOpen(true);
+                    }}
+                  >
+                    <Target size={15} color="#FFFFFF" />
+                    <Text style={styles.noMatchJustMissText}>
+                      {language === "ml" ? "ജസ്റ്റ് മിസ്സ്" : "Just Miss"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -913,6 +1194,26 @@ export default function SearchScreen({ navigation }: any) {
       <AiVoiceAssistantModal
         visible={isAiAssistantOpen}
         onClose={() => setIsAiAssistantOpen(false)}
+      />
+
+      {/* Just Miss Analysis Modal */}
+      <JustMissModal
+        visible={isJustMissOpen}
+        onClose={() => setIsJustMissOpen(false)}
+        searchedTicket={searchedQuery || query}
+        draw={allDraws.find((d) => d.draw_date === selectedDateFilter) || allDraws[0]}
+        onViewResult={() => {
+          const targetDraw =
+            allDraws.find((d) => d.draw_date === selectedDateFilter) ||
+            allDraws[0];
+          if (targetDraw) {
+            navigation.navigate("DrawBreakdown", {
+              code: targetDraw.lottery_code,
+              date: targetDraw.draw_date,
+              highlight: searchedQuery || query,
+            });
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -1291,5 +1592,143 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: "#78350F",
     fontWeight: "600",
+  },
+  customDateInputMandatory: {
+    borderColor: "#CBD5E1",
+    borderStyle: "solid",
+  },
+  orDividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 12,
+  },
+  orDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E2E8F0",
+  },
+  orDividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#94A3B8",
+    letterSpacing: 1,
+  },
+  selectDrawHeader: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.textDark,
+    marginBottom: 10,
+  },
+  drawCardsScroll: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  drawTicketCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E0F2FE",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+  },
+  drawTicketCardActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primaryHover,
+  },
+  drawTicketLeft: {
+    marginRight: 10,
+  },
+  drawTicketName: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 4,
+    textTransform: "capitalize",
+  },
+  drawTicketNameActive: {
+    color: "#FFFFFF",
+  },
+  drawTicketDate: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  drawTicketDateActive: {
+    color: "#FFFFFF",
+  },
+  drawTicketDashedDivider: {
+    width: 1,
+    height: 32,
+    borderLeftWidth: 1.5,
+    borderStyle: "dashed",
+    borderLeftColor: "#7DD3FC",
+    marginRight: 10,
+  },
+  drawTicketDashedDividerActive: {
+    borderLeftColor: "rgba(255, 255, 255, 0.6)",
+  },
+  drawTicketBadge: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  drawTicketBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  noMatchActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 14,
+    width: "100%",
+  },
+  noMatchViewResultBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primaryLight,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    paddingVertical: 11,
+    borderRadius: 10,
+    gap: 6,
+  },
+  noMatchViewResultText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.primary,
+  },
+  noMatchJustMissBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    paddingVertical: 11,
+    borderRadius: 10,
+    gap: 6,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  noMatchJustMissText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 });

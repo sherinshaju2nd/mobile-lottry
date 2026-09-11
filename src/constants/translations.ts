@@ -13,7 +13,8 @@ export const translations = {
     malayalam_sub: "Malayalam Language",
     continue: "Confirm & Continue",
     continue_ml: "തുടരുക (Continue)",
-    language_note: "You can change your language preference anytime from the top bar.",
+    language_note:
+      "You can change your language preference anytime from the top bar.",
 
     // Navigation Tabs
     tab_home: "Home",
@@ -79,7 +80,8 @@ export const translations = {
     bumper_draw_scheduled: "Special Bumper Draw Scheduled Today at 2:00 PM",
     draw_scheduled_today: "Draw Scheduled Today at 3:00 PM",
     draw_today_will_publish: "Winning results will be published automatically.",
-    bumper_today_will_publish: "Bumper draw results will be published live at 2:00 PM.",
+    bumper_today_will_publish:
+      "Bumper draw results will be published live at 2:00 PM.",
     official_notice: "Official Notice",
     draw_postponed_today: "DRAW POSTPONED TODAY",
     draw_holiday_today: "DRAW HOLIDAY TODAY",
@@ -168,12 +170,15 @@ export const translations = {
     view_archives_results: "View Archives & Results",
 
     // Checker / Search Screen
-    checker_title: "Ticket Result Checker",
+    checker_title: "Search",
     checker_subtitle:
       "Verify single tickets or batch bundles against Kerala state lottery results.",
     single_search: "Single Ticket Search",
     batch_search: "Bundle / Batch Search",
-    draw_date_filter: "Draw Date Filter (Optional)",
+    draw_date_filter: "Draw Date (Mandatory)",
+    select_draw_date_placeholder: "Select Draw Date *",
+    select_draw_prompt: "Select Draw",
+    please_select_date_error: "Please select a draw date to search.",
     all_draws: "All Draws (Full DB)",
     pick_date: "Pick Date",
     check_ticket_btn: "Check Winning Ticket",
@@ -187,8 +192,10 @@ export const translations = {
     match_found_badge: "MATCH FOUND",
     no_win_badge: "No Win",
     tap_to_view_details: "Tap to view full prize breakdown →",
-    enter_min_4_digits: "Please enter at least 4 digits to search (e.g. 6935, BT 236935).",
-    each_ticket_min_4: "Each ticket must have at least 4 digits (e.g. 6935, BT 236935).",
+    enter_min_4_digits:
+      "Please enter at least 4 digits to search (e.g. 6935, BT 236935).",
+    each_ticket_min_4:
+      "Each ticket must have at least 4 digits (e.g. 6935, BT 236935).",
 
     // Archives Screen
     archives_title: "Lottery Results Archive",
@@ -216,7 +223,8 @@ export const translations = {
     scan_ticket_title: "Barcode Ticket Reader",
     align_barcode: "Align ticket barcode inside frame",
     select_draw_date: "Select Draw Date",
-    select_draw_date_desc: "Select the draw date for ticket to fetch accurate results.",
+    select_draw_date_desc:
+      "Select the draw date for ticket to fetch accurate results.",
     pick_draw_date_label: "Pick Draw Date:",
     select_from_calendar: "Select from calendar...",
     fetch_result_btn: "Fetch Result",
@@ -231,9 +239,11 @@ export const translations = {
     reminders_title: "Ticket Reminders",
     reminders_subtitle: "Get notified 5 mins before your ticket's draw time",
     notifications_disabled: "Notifications Disabled",
-    notifications_disabled_desc: "Turn on notifications to receive 3:00 PM draw alerts.",
+    notifications_disabled_desc:
+      "Turn on notifications to receive 3:00 PM draw alerts.",
     no_reminders_yet: "No Reminders Yet",
-    no_reminders_desc: "Tap the + button to add your lottery ticket and get notified before the draw.",
+    no_reminders_desc:
+      "Tap the + button to add your lottery ticket and get notified before the draw.",
     add_first_reminder: "Add First Reminder",
     add_reminder_title: "Add Draw Reminder",
     edit_reminder_title: "Edit Draw Reminder",
@@ -262,7 +272,8 @@ export const translations = {
     ai_input_placeholder: "Tap mic to speak or type query...",
     ai_analyzing: "Analyzing query with Gemini AI...",
     ai_clear_chat: "Chat cleared. How can I assist you?",
-    ai_voice_error: "Could not understand voice clearly. Please speak closer to the mic and retry.",
+    ai_voice_error:
+      "Could not understand voice clearly. Please speak closer to the mic and retry.",
 
     // AI Social Digest Modal
     ai_social_title: "AI Daily Status Generator",
@@ -297,7 +308,8 @@ export const translations = {
     contact_subtitle: "Helpdesk, Feedback & Inquiries",
     contact_hero_badge: "HELPDESK & SUPPORT",
     contact_hero_title: "We're Here to Help You",
-    contact_hero_desc: "Have a question about lottery results, barcode scanning, or app feedback? Reach out to our team directly.",
+    contact_hero_desc:
+      "Have a question about lottery results, barcode scanning, or app feedback? Reach out to our team directly.",
     direct_contact_heading: "Direct Contact Channels",
     whatsapp_support: "WhatsApp Support",
     fastest_badge: "Fastest",
@@ -324,7 +336,8 @@ export const translations = {
     malayalam_sub: "മലയാള ഭാഷ",
     continue: "സ്ഥിരീകരിച്ച് തുടരുക",
     continue_ml: "തുടരുക (Continue)",
-    language_note: "മുകളിലെ ബാറിൽ നിന്ന് എപ്പോൾ വേണമെങ്കിലും നിങ്ങൾക്ക് ഭാഷ മാറ്റാം.",
+    language_note:
+      "മുകളിലെ ബാറിൽ നിന്ന് എപ്പോൾ വേണമെങ്കിലും നിങ്ങൾക്ക് ഭാഷ മാറ്റാം.",
 
     // Navigation Tabs
     tab_home: "ഹോം",
@@ -383,15 +396,18 @@ export const translations = {
     results_pending_desc:
       "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഉച്ചയ്ക്ക് 2:55 - 3:00 മണിക്ക് തത്സമയം പ്രസിദ്ധീകരിക്കും.",
     live_draw_in_progress: "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു",
-    draw_happening_now: "ഇന്നത്തെ നറുക്കെടുപ്പ് ഇപ്പോൾ നടക്കുന്നു (ഉച്ചയ്ക്ക് 3:00 മണി)",
+    draw_happening_now:
+      "ഇന്നത്തെ നറുക്കെടുപ്പ് ഇപ്പോൾ നടക്കുന്നു (ഉച്ചയ്ക്ക് 3:00 മണി)",
     live_draw_desc:
       "തത്സമയ നറുക്കെടുപ്പ് ഇപ്പോൾ നടന്നു കൊണ്ടിരിക്കുന്നു. ഫലം ഉടൻ ലൈവായി ലഭ്യമാകും.",
     result_coming_soon: "ഫലം ഉടൻ ലഭ്യമാകും",
     bumper_today_badge: "👑 കേരള ബംപർ ലോട്ടറി ഇന്ന്",
-    bumper_draw_scheduled: "പ്രത്യേക ബംപർ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 2:00 മണിക്ക്",
+    bumper_draw_scheduled:
+      "പ്രത്യേക ബംപർ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 2:00 മണിക്ക്",
     draw_scheduled_today: "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്",
     draw_today_will_publish: "നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.",
-    bumper_today_will_publish: "ബംപർ നറുക്കെടുപ്പ് ഫലം തത്സമയം ഉച്ചയ്ക്ക് 2:00 മണിക്ക് ലഭ്യമാകും.",
+    bumper_today_will_publish:
+      "ബംപർ നറുക്കെടുപ്പ് ഫലം തത്സമയം ഉച്ചയ്ക്ക് 2:00 മണിക്ക് ലഭ്യമാകും.",
     official_notice: "ഔദ്യോഗിക അറിയിപ്പ്",
     draw_postponed_today: "ഇന്നത്തെ നറുക്കെടുപ്പ് മാറ്റിവെച്ചു",
     draw_holiday_today: "ഇന്നത്തെ നറുക്കെടുപ്പ് അവധിയാണ്",
@@ -484,7 +500,10 @@ export const translations = {
     checker_subtitle: "കേരള ലോട്ടറി ഫലങ്ങളുമായി ടിക്കറ്റുകൾ പരിശോധിക്കുക.",
     single_search: "സിംഗിൾ ടിക്കറ്റ്",
     batch_search: "ബാച്ച് / ബണ്ടിൽ",
-    draw_date_filter: "നറുക്കെടുപ്പ് തീയതി (ഓപ്ഷണൽ)",
+    draw_date_filter: "നറുക്കെടുപ്പ് തീയതി (നിർബന്ധം)",
+    select_draw_date_placeholder: "തീയതി തിരഞ്ഞെടുക്കുക *",
+    select_draw_prompt: "നറുക്കെടുപ്പ് തിരഞ്ഞെടുക്കുക",
+    please_select_date_error: "ദയവായി ഒരു നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.",
     all_draws: "എല്ലാ ഫലങ്ങളും (Full DB)",
     pick_date: "തീയതി തിരഞ്ഞെടുക്കുക",
     check_ticket_btn: "പരിശോധിക്കുക",
@@ -499,13 +518,16 @@ export const translations = {
     match_found_badge: "മാച്ച് ലഭിച്ചു",
     no_win_badge: "സമ്മാനമില്ല",
     tap_to_view_details: "മുഴുവൻ വിവരങ്ങൾ കാണാൻ തട്ടുക →",
-    enter_min_4_digits: "തിരയാൻ കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935).",
-    each_ticket_min_4: "ഓരോ ടിക്കറ്റ് നമ്പറിലും കുറഞ്ഞത് 4 അക്കങ്ങൾ ഉണ്ടായിരിക്കണം.",
+    enter_min_4_digits:
+      "തിരയാൻ കുറഞ്ഞത് 4 അക്കങ്ങൾ നൽകുക (ഉദാ: 6935, BT 236935).",
+    each_ticket_min_4:
+      "ഓരോ ടിക്കറ്റ് നമ്പറിലും കുറഞ്ഞത് 4 അക്കങ്ങൾ ഉണ്ടായിരിക്കണം.",
 
     // Archives Screen
     archives_title: "പഴയ ഫലങ്ങളുടെ ആർക്കൈവ്",
     archives_subtitle: "മുൻകാല നറുക്കെടുപ്പ് ഫലങ്ങളുടെ ഡാറ്റാബേസ്",
-    search_draws_placeholder: "തീയതിയോ ടിക്കറ്റോ നൽകി തിരയുക (ഉദാ: 2026-08-10)...",
+    search_draws_placeholder:
+      "തീയതിയോ ടിക്കറ്റോ നൽകി തിരയുക (ഉദാ: 2026-08-10)...",
     filter_by_lottery: "ലോട്ടറി തിരഞ്ഞെടുക്കുക",
     all_lotteries: "എല്ലാ ലോട്ടറികളും",
     draw_day_prefix: "നറുക്കെടുപ്പ് ദിനം:",
@@ -528,24 +550,29 @@ export const translations = {
     scan_ticket_title: "ലോട്ടറി ബാർകോഡ് സ്‌കാൻ ചെയ്യുക",
     align_barcode: "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക",
     select_draw_date: "നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക",
-    select_draw_date_desc: "ശരിയായ ഫലം ലഭിക്കുന്നതിന് ടിക്കറ്റിന്റെ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.",
+    select_draw_date_desc:
+      "ശരിയായ ഫലം ലഭിക്കുന്നതിന് ടിക്കറ്റിന്റെ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.",
     pick_draw_date_label: "തീയതി തിരഞ്ഞെടുക്കുക:",
     select_from_calendar: "കലണ്ടറിൽ നിന്ന് തിരഞ്ഞെടുക്കുക...",
     fetch_result_btn: "ഫലം കാണുക",
     recent_published_dates: "പ്രസിദ്ധീകരിച്ച അടുത്ത തീയതികൾ:",
     check_all_draw_history: "മുഴുവൻ പഴയ ഫലങ്ങളിലും തിരയുക",
-    search_across_all_records: "പ്രസിദ്ധീകരിച്ച എല്ലാ റെക്കോർഡുകളിലും തിരയുന്നു",
+    search_across_all_records:
+      "പ്രസിദ്ധീകരിച്ച എല്ലാ റെക്കോർഡുകളിലും തിരയുന്നു",
     scanned_ticket: "സ്‌കാൻ ചെയ്ത ടിക്കറ്റ്",
     rescan_btn: "മറ്റൊരു ടിക്കറ്റ് സ്‌കാൻ ചെയ്യുക",
     fetching_results_loading: "ഫലങ്ങൾ ശേഖരിക്കുന്നു...",
 
     // Reminders Screen & Modal
     reminders_title: "ടിക്കറ്റ് റിമൈൻഡറുകൾ",
-    reminders_subtitle: "നറുക്കെടുപ്പിന് 5 മിനിറ്റ് മുൻപ് നോട്ടിഫിക്കേഷൻ ലഭിക്കും",
+    reminders_subtitle:
+      "നറുക്കെടുപ്പിന് 5 മിനിറ്റ് മുൻപ് നോട്ടിഫിക്കേഷൻ ലഭിക്കും",
     notifications_disabled: "നോട്ടിഫിക്കേഷൻ ഓഫാണ്",
-    notifications_disabled_desc: "3:00 മണിക്ക് അലേർട്ട് ലഭിക്കാൻ നോട്ടിഫിക്കേഷൻ ഓൺ ചെയ്യുക.",
+    notifications_disabled_desc:
+      "3:00 മണിക്ക് അലേർട്ട് ലഭിക്കാൻ നോട്ടിഫിക്കേഷൻ ഓൺ ചെയ്യുക.",
     no_reminders_yet: "റിമൈൻഡറുകൾ ഒന്നും ചേർത്തിട്ടില്ല",
-    no_reminders_desc: "+ ബട്ടൺ അമർത്തി നിങ്ങളുടെ ടിക്കറ്റ് ചേർക്കൂ, നറുക്കെടുപ്പിന് മുൻപ് അലേർട്ട് നേടൂ.",
+    no_reminders_desc:
+      "+ ബട്ടൺ അമർത്തി നിങ്ങളുടെ ടിക്കറ്റ് ചേർക്കൂ, നറുക്കെടുപ്പിന് മുൻപ് അലേർട്ട് നേടൂ.",
     add_first_reminder: "ആദ്യ റിമൈൻഡർ ചേർക്കുക",
     add_reminder_title: "പുതിയ റിമൈൻഡർ ചേർക്കുക",
     edit_reminder_title: "റിമൈൻഡറിൽ മാറ്റം വരുത്തുക",
@@ -571,10 +598,13 @@ export const translations = {
       "📑 ലോട്ടറി ടാക്സ് (TDS 30%) നിയമങ്ങൾ",
       "⏰ നറുക്കെടുപ്പ് സമയം (ഉച്ചയ്ക്ക് 3:00 മണി)",
     ],
-    ai_input_placeholder: "ചോദിക്കാൻ മൈക്ക് അമർത്തുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക...",
+    ai_input_placeholder:
+      "ചോദിക്കാൻ മൈക്ക് അമർത്തുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക...",
     ai_analyzing: "AI വിശകലനം ചെയ്യുന്നു...",
-    ai_clear_chat: "ചാറ്റ് ക്ലിയർ ചെയ്തു. എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാനാകും?",
-    ai_voice_error: "ക്ഷമിക്കണം, ശബ്ദം വ്യക്തമായി കേൾക്കാൻ സാധിച്ചില്ല. ദയവായി അല്പം ഉറക്കെ വീണ്ടും ചോദിക്കുക.",
+    ai_clear_chat:
+      "ചാറ്റ് ക്ലിയർ ചെയ്തു. എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാനാകും?",
+    ai_voice_error:
+      "ക്ഷമിക്കണം, ശബ്ദം വ്യക്തമായി കേൾക്കാൻ സാധിച്ചില്ല. ദയവായി അല്പം ഉറക്കെ വീണ്ടും ചോദിക്കുക.",
 
     // AI Social Digest Modal
     ai_social_title: "AI ഡെയ്‌ലി സ്റ്റാറ്റസ്",
@@ -596,7 +626,8 @@ export const translations = {
     age_desc: "ഈ സേവനം 18 വയസ്സോ അതിൽ കൂടുതലോ പ്രായമുള്ളവർക്ക് മാത്രമുള്ളതാണ്.",
     terms_title: "സേവന നിബന്ധനകൾ",
     privacy_policy_title: "സ്വകാര്യതാ നയം",
-    age_confirm_checkbox: "എനിക്ക് 18 വയസ്സോ അതിൽ കൂടുതലോ പ്രായമുണ്ടെന്ന് ഞാൻ സ്ഥിരീകരിക്കുന്നു.",
+    age_confirm_checkbox:
+      "എനിക്ക് 18 വയസ്സോ അതിൽ കൂടുതലോ പ്രായമുണ്ടെന്ന് ഞാൻ സ്ഥിരീകരിക്കുന്നു.",
     accept_and_agree: "സമ്മതിക്കുന്നു & തുടരുക",
     disclaimer_header: "ഔദ്യോഗിക അറിയിപ്പും നിരാകരണവും (Disclaimer)",
     disclaimer_body:
@@ -609,7 +640,8 @@ export const translations = {
     contact_subtitle: "സഹായവും അന്വേഷണങ്ങളും",
     contact_hero_badge: "സഹായ കേന്ദ്രം",
     contact_hero_title: "നിങ്ങളുടെ സംശയങ്ങൾക്കും നിർദ്ദേശങ്ങൾക്കും സ്വാഗതം",
-    contact_hero_desc: "ആപ്പുമായി ബന്ധപ്പെട്ട സാങ്കേതിക സഹായങ്ങൾക്കോ ഫീഡ്‌ബാക്കിനോ താഴെ നൽകിയിരിക്കുന്ന മാധ്യമങ്ങൾ വഴി ഞങ്ങളെ നേരിട്ട് ബന്ധപ്പെടാം.",
+    contact_hero_desc:
+      "ആപ്പുമായി ബന്ധപ്പെട്ട സാങ്കേതിക സഹായങ്ങൾക്കോ ഫീഡ്‌ബാക്കിനോ താഴെ നൽകിയിരിക്കുന്ന മാധ്യമങ്ങൾ വഴി ഞങ്ങളെ നേരിട്ട് ബന്ധപ്പെടാം.",
     direct_contact_heading: "നേരിട്ട് ബന്ധപ്പെടാനുള്ള വഴികൾ:",
     whatsapp_support: "WhatsApp Support",
     fastest_badge: "തത്സമയം",
@@ -617,11 +649,11 @@ export const translations = {
     phone_helpline: "ഫോൺ ഹെൽപ്പ്‌ലൈൻ",
     call_btn: "വിളിക്കുക",
     support_hours: "പ്രവർത്തന സമയം",
-    support_hours_value: "തിങ്കൾ – ശനി: രാവിലെ 9:00 AM മുതൽ വൈകുന്നേരം 7:00 PM വരെ",
+    support_hours_value:
+      "തിങ്കൾ – ശനി: രാവിലെ 9:00 AM മുതൽ വൈകുന്നേരം 7:00 PM വരെ",
     official_website: "ഔദ്യോഗിക വെബ്സൈറ്റ്",
     helpful_resources: "മറ്റു വിവരങ്ങൾ & സഹായ ഗൈഡുകൾ:",
     prize_claim_guide: "സമ്മാനം ക്ലെയിം ചെയ്യുന്ന വിധം",
     faq: "പതിവ് ചോദ്യങ്ങൾ (FAQ)",
   },
 };
-
