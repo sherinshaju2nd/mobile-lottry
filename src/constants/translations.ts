@@ -20,6 +20,7 @@ export const translations = {
     tab_lotteries: "Lotteries",
     tab_scan: "Scan",
     tab_checker: "Checker",
+    tab_analytics: "Analytics",
     tab_archives: "Archives",
     tab_date: "Date",
 
@@ -330,6 +331,7 @@ export const translations = {
     tab_lotteries: "ലോട്ടറികൾ",
     tab_scan: "സ്‌കാൻ",
     tab_checker: "ചെക്കർ",
+    tab_analytics: "വിശകലനം",
     tab_archives: "ആർക്കൈവുകൾ",
     tab_date: "തീയതി",
 

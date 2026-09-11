@@ -572,11 +572,11 @@ export default function HomeScreen({ navigation }: any) {
                 }}
                 onPress={() => {
                   triggerLightHaptic();
-                  navigation.navigate("Analytics");
+                  navigation.navigate("Search");
                 }}
-                accessibilityLabel="Lottery Analytics & Trends"
+                accessibilityLabel="Lottery Ticket Checker"
               >
-                <BarChart3 size={15} color={COLORS.primary} />
+                <Search size={15} color={COLORS.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1057,37 +1057,28 @@ export default function HomeScreen({ navigation }: any) {
                   </View>
                 )}
 
-                <View style={{ flexDirection: "row", gap: 8, marginTop: 4, width: "100%" }}>
+                <View style={styles.actionBtnRow}>
                   <TouchableOpacity
-                    style={[styles.heroDownloadPdfBtn, { flex: 1 }]}
+                    style={styles.heroDownloadPdfBtn}
                     activeOpacity={0.8}
                     onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`)}
                   >
-                    <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Download size={15} color="#FFFFFF" />
                     <Text style={styles.heroDownloadPdfBtnText}>
                       {t("download_pdf")}
                     </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "#25D366",
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      borderRadius: 12,
-                      gap: 5,
-                    }}
+                    style={styles.heroShareBtn}
                     activeOpacity={0.8}
                     onPress={() => {
                       triggerLightHaptic();
                       shareDrawResultToWhatsApp(todayDraw, language);
                     }}
                   >
-                    <Share2 size={14} color="#FFFFFF" />
-                    <Text style={{ color: "#FFFFFF", fontSize: 11.5, fontWeight: "900" }}>
+                    <Share2 size={15} color="#FFFFFF" />
+                    <Text style={styles.heroShareBtnText}>
                       {language === "ml" ? "ഷെയർ" : "Share"}
                     </Text>
                   </TouchableOpacity>
@@ -1636,16 +1627,32 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               )}
 
-                <TouchableOpacity
-                  style={styles.heroDownloadPdfBtn}
-                  activeOpacity={0.8}
-                  onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
-                >
-                  <Download size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.heroDownloadPdfBtnText}>
-                    {t("download_pdf")}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.actionBtnRow}>
+                  <TouchableOpacity
+                    style={styles.heroDownloadPdfBtn}
+                    activeOpacity={0.8}
+                    onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
+                  >
+                    <Download size={15} color="#FFFFFF" />
+                    <Text style={styles.heroDownloadPdfBtnText}>
+                      {t("download_pdf")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.heroShareBtn}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerLightHaptic();
+                      shareDrawResultToWhatsApp(previousDraw, language);
+                    }}
+                  >
+                    <Share2 size={15} color="#FFFFFF" />
+                    <Text style={styles.heroShareBtnText}>
+                      {language === "ml" ? "ഷെയർ" : "Share"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
             </View>
 
             {/* Complete Full Prize Breakdown for Yesterday / Previous Draw */}
@@ -2663,26 +2670,53 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     marginHorizontal: 12,
   },
+  actionBtnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+    width: "100%",
+  },
   heroDownloadPdfBtn: {
+    flex: 1,
+    height: 42,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 10,
-    marginTop: 14,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     elevation: 2,
-    alignSelf: "stretch",
+    gap: 6,
   },
   heroDownloadPdfBtnText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "700",
+  },
+  heroShareBtn: {
+    height: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#25D366",
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    shadowColor: "#25D366",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+    gap: 5,
+  },
+  heroShareBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   floatingAiBtn: {
     position: "absolute",

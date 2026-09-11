@@ -29,6 +29,7 @@ import {
   XCircle,
   X,
   Clock,
+  ChevronLeft,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import * as Clipboard from "expo-clipboard";
@@ -298,6 +299,23 @@ export default function SearchScreen({ navigation }: any) {
           automaticallyAdjustKeyboardInsets={true}
         >
         <View style={styles.header}>
+          {navigation?.canGoBack && navigation.canGoBack() && (
+            <TouchableOpacity
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: "#F1F5F9",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 10,
+              }}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}
+            >
+              <ChevronLeft size={22} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
           <Text
             style={[
               styles.headerTitle,

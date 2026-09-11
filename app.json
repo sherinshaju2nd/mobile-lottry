@@ -3,15 +3,10 @@
     "name": "Kerala Lottery Results Today",
     "slug": "kerala-lottery-results",
     "scheme": "keralalottery",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B3C5D"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -43,7 +38,7 @@
     },
     "android": {
       "package": "com.keralalotteryresultstoday.app",
-      "versionCode": 5,
+      "versionCode": 7,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -70,10 +65,18 @@
     "plugins": [
       "./plugins/withLargeScreenSupport",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0B3C5D"
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.0.21",
+            "kotlinVersion": "2.1.20",
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
             "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-dontwarn com.facebook.react.turbomodule.**\n-keepattributes *Annotation*\n-keepattributes Signature\n-keepattributes EnclosingMethod\n-dontwarn sun.misc.**\n-dontwarn javax.annotation.**\n-keep class com.facebook.react.** { *; }"

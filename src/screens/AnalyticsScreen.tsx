@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ChevronLeft,
+  ChevronUp,
+  ChevronDown,
+  ChevronRight,
   Flame,
   Snowflake,
   MapPin,
@@ -25,6 +28,7 @@ import {
   Search,
   X,
   Dices,
+  Zap,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
@@ -35,6 +39,132 @@ import ShimmerSkeleton from "../components/ShimmerSkeleton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+const QUICK_PICKS = [
+  { num: "5593", bg: "#EEF2FF", text: "#2563EB", border: "#C7D2FE" },
+  { num: "5866", bg: "#FEE2E2", text: "#DC2626", border: "#FECACA" },
+  { num: "2749", bg: "#DCFCE7", text: "#16A34A", border: "#BBF7D0" },
+  { num: "9924", bg: "#F3E8FF", text: "#9333EA", border: "#E9D5FF" },
+  { num: "8712", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
+  { num: "8860", bg: "#CCFBF1", text: "#0D9488", border: "#99F6E4" },
+  { num: "0096", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
+  { num: "1234", bg: "#EFF6FF", text: "#0284C7", border: "#BAE6FD" },
+];
+
+const ITEM_HEIGHT = 46;
+const DIGITS_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const SNAP_OFFSETS = DIGITS_LIST.map((d) => d * ITEM_HEIGHT);
+const WHEEL_ITEMS = [-1, ...DIGITS_LIST, 10];
+
+function SingleDigitWheel({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (newVal: number) => void;
+}) {
+  const scrollRef = useRef<ScrollView>(null);
+  const lastIndexRef = useRef(value);
+
+  // Sync scroll position when value changes externally (e.g. Quick Picks)
+  useEffect(() => {
+    if (lastIndexRef.current !== value) {
+      lastIndexRef.current = value;
+      scrollRef.current?.scrollTo({
+        y: value * ITEM_HEIGHT,
+        animated: true,
+      });
+    }
+  }, [value]);
+
+  // Initial scroll position
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: value * ITEM_HEIGHT,
+        animated: false,
+      });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleScroll = (e: any) => {
+    const offsetY = e.nativeEvent.contentOffset.y;
+    const index = Math.max(0, Math.min(9, Math.round(offsetY / ITEM_HEIGHT)));
+    if (index !== lastIndexRef.current) {
+      lastIndexRef.current = index;
+      triggerLightHaptic();
+      onChange(index);
+    }
+  };
+
+  const handleScrollEnd = (e: any) => {
+    const offsetY = e.nativeEvent.contentOffset.y;
+    const index = Math.max(0, Math.min(9, Math.round(offsetY / ITEM_HEIGHT)));
+    if (index !== lastIndexRef.current) {
+      lastIndexRef.current = index;
+      triggerLightHaptic();
+      onChange(index);
+    }
+  };
+
+  return (
+    <View style={styles.wheelCol}>
+      {/* Center active highlight lens */}
+      <View style={styles.wheelActiveLens} pointerEvents="none" />
+
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        snapToOffsets={SNAP_OFFSETS}
+        snapToInterval={ITEM_HEIGHT}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        nestedScrollEnabled={true}
+        bounces={false}
+        overScrollMode="never"
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+      >
+        {WHEEL_ITEMS.map((d, idx) => {
+          if (d === -1 || d === 10) {
+            return <View key={`spacer-${idx}`} style={styles.wheelSpacer} />;
+          }
+          const isSelected = d === value;
+          return (
+            <TouchableOpacity
+              key={d}
+              activeOpacity={0.8}
+              style={styles.wheelItem}
+              onPress={() => {
+                triggerLightHaptic();
+                lastIndexRef.current = d;
+                onChange(d);
+                scrollRef.current?.scrollTo({
+                  y: d * ITEM_HEIGHT,
+                  animated: true,
+                });
+              }}
+            >
+              <Text
+                style={[
+                  styles.wheelItemText,
+                  isSelected
+                    ? styles.wheelItemTextActive
+                    : styles.wheelItemTextInactive,
+                ]}
+              >
+                {d}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
 // Kerala State Lottery - Analytics & Frequency Statistics
 export default function AnalyticsScreen({ navigation }: any) {
   const { language } = useLanguage();
@@ -44,8 +174,38 @@ export default function AnalyticsScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [horizon, setHorizon] = useState<"30" | "90" | "all">("30");
-  const [activeTab, setActiveTab] = useState<"numbers" | "districts">("numbers");
-  const [searchNum, setSearchNum] = useState("");
+  const [activeTab, setActiveTab] = useState<"numbers" | "districts">(
+    "numbers",
+  );
+  const [digits, setDigits] = useState<[number, number, number, number]>([0, 0, 9, 6]);
+  const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
+
+  const handleDigitChange = (colIndex: number, newVal: number) => {
+    setDigits((prev) => {
+      const next = [...prev] as [number, number, number, number];
+      next[colIndex] = newVal;
+      return next;
+    });
+  };
+
+  const handleSelectQuickPick = (numStr: string) => {
+    triggerLightHaptic();
+    const clean = numStr.trim().replace(/\D/g, "");
+    const padded = clean.padStart(4, "0").slice(-4);
+    const dArr: [number, number, number, number] = [
+      parseInt(padded[0], 10) || 0,
+      parseInt(padded[1], 10) || 0,
+      parseInt(padded[2], 10) || 0,
+      parseInt(padded[3], 10) || 0,
+    ];
+    setDigits(dArr);
+    setSubmittedQuery(clean);
+  };
+
+  const handleCheckHistory = () => {
+    triggerLightHaptic();
+    setSubmittedQuery(digits.join(""));
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -80,7 +240,16 @@ export default function AnalyticsScreen({ navigation }: any) {
     const ending4Map: Record<string, number> = {};
     const ending2Map: Record<string, number> = {};
     const singleDigitMap: Record<number, number> = {
-      0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0
+      0: 0,
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+      7: 0,
+      8: 0,
+      9: 0,
     };
 
     let totalPrizesCounted = 0;
@@ -102,7 +271,17 @@ export default function AnalyticsScreen({ navigation }: any) {
 
       // Other Prizes
       if (draw.prizes) {
-        const tiers = ["consolation", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"] as const;
+        const tiers = [
+          "consolation",
+          "2nd",
+          "3rd",
+          "4th",
+          "5th",
+          "6th",
+          "7th",
+          "8th",
+          "9th",
+        ] as const;
         tiers.forEach((t) => {
           const nums = draw.prizes![t];
           if (Array.isArray(nums)) {
@@ -145,7 +324,10 @@ export default function AnalyticsScreen({ navigation }: any) {
 
   // Compute District Heatmap Leaderboard
   const districtStats = useMemo(() => {
-    const distCounts: Record<string, { count: number; totalWonStr: string; lotteries: string[] }> = {};
+    const distCounts: Record<
+      string,
+      { count: number; totalWonStr: string; lotteries: string[] }
+    > = {};
     KERALA_DISTRICTS.forEach((d) => {
       distCounts[d] = { count: 0, totalWonStr: "", lotteries: [] };
     });
@@ -159,7 +341,9 @@ export default function AnalyticsScreen({ navigation }: any) {
         for (const dist of KERALA_DISTRICTS) {
           if (loc.includes(dist.toLowerCase())) {
             distCounts[dist].count += 1;
-            distCounts[dist].lotteries.push(draw.draw_name || draw.lottery_code);
+            distCounts[dist].lotteries.push(
+              draw.draw_name || draw.lottery_code,
+            );
             break;
           }
         }
@@ -175,9 +359,10 @@ export default function AnalyticsScreen({ navigation }: any) {
     return { ranked, maxCount, totalJackpotDraws };
   }, [filteredDraws]);
 
-  // Interactive custom number lookup
+  // Interactive custom number lookup (evaluated on Check History or Quick Pick)
   const searchResult = useMemo(() => {
-    const query = searchNum.trim().replace(/\D/g, "");
+    if (!submittedQuery || submittedQuery.length < 2) return null;
+    const query = submittedQuery.trim().replace(/\D/g, "");
     if (!query || query.length < 2) return null;
 
     let totalMatches = 0;
@@ -207,7 +392,17 @@ export default function AnalyticsScreen({ navigation }: any) {
 
       // Other Prizes
       if (draw.prizes) {
-        const tiers = ["consolation", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"] as const;
+        const tiers = [
+          "consolation",
+          "2nd",
+          "3rd",
+          "4th",
+          "5th",
+          "6th",
+          "7th",
+          "8th",
+          "9th",
+        ] as const;
         tiers.forEach((t) => {
           const nums = draw.prizes![t];
           if (Array.isArray(nums)) {
@@ -215,7 +410,10 @@ export default function AnalyticsScreen({ navigation }: any) {
               const d = String(num).replace(/\D/g, "");
               if (d.endsWith(query) || d === query) {
                 totalMatches++;
-                const tierName = t === "consolation" ? "Consolation" : `${t.toUpperCase()} Prize`;
+                const tierName =
+                  t === "consolation"
+                    ? "Consolation"
+                    : `${t.toUpperCase()} Prize`;
                 tierBreakdown[tierName] = (tierBreakdown[tierName] || 0) + 1;
                 matchedDraws.push({
                   date: draw.draw_date,
@@ -230,7 +428,10 @@ export default function AnalyticsScreen({ navigation }: any) {
       }
     });
 
-    const hitRatePct = filteredDraws.length > 0 ? Math.min(100, Math.round((totalMatches / filteredDraws.length) * 100)) : 0;
+    const hitRatePct =
+      filteredDraws.length > 0
+        ? Math.min(100, Math.round((totalMatches / filteredDraws.length) * 100))
+        : 0;
 
     return {
       query,
@@ -239,21 +440,26 @@ export default function AnalyticsScreen({ navigation }: any) {
       hitRatePct,
       matchedDraws: matchedDraws.slice(0, 8),
     };
-  }, [searchNum, filteredDraws]);
+  }, [submittedQuery, filteredDraws]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.8}
-        >
-          <ChevronLeft size={24} color={COLORS.primary} />
-        </TouchableOpacity>
+        {navigation?.canGoBack && navigation.canGoBack() ? (
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+          >
+            <ChevronLeft size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.headerTitleCol}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -268,10 +474,7 @@ export default function AnalyticsScreen({ navigation }: any) {
             </Text>
           </View>
           <Text
-            style={[
-              styles.headerSub,
-              isMl && { fontSize: 10, lineHeight: 14 },
-            ]}
+            style={[styles.headerSub, isMl && { fontSize: 10, lineHeight: 14 }]}
           >
             {isMl
               ? `${filteredDraws.length} നറുക്കെടുപ്പുകളുടെ വിശകലനം`
@@ -316,7 +519,10 @@ export default function AnalyticsScreen({ navigation }: any) {
       {/* Main Tab Switcher (Numbers vs Districts) */}
       <View style={styles.tabSwitcher}>
         <TouchableOpacity
-          style={[styles.tabBtn, activeTab === "numbers" && styles.tabBtnActive]}
+          style={[
+            styles.tabBtn,
+            activeTab === "numbers" && styles.tabBtnActive,
+          ]}
           onPress={() => {
             triggerLightHaptic();
             setActiveTab("numbers");
@@ -362,7 +568,7 @@ export default function AnalyticsScreen({ navigation }: any) {
             ]}
             numberOfLines={1}
           >
-            {isMl ? "ജില്ലാ വിജയികൾ" : "District Heatmap"}
+            {isMl ? "ഭാഗ്യ സ്ഥലങ്ങൾ" : "Lucky Locations"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -398,7 +604,7 @@ export default function AnalyticsScreen({ navigation }: any) {
                       isMl && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "🔍 ഇൻസ്റ്റന്റ് നമ്പർ പരിശോധന" : "🔍 Instant Number Explorer"}
+                    {isMl ? "🔍 ലക്കി പിക്ക്" : "🔍 4 Digit history"}
                   </Text>
                   <Text
                     style={[
@@ -413,72 +619,91 @@ export default function AnalyticsScreen({ navigation }: any) {
                 </View>
               </View>
 
-              {/* Quick Pick Suggestions */}
-              <View style={{ marginBottom: 10 }}>
-                <Text style={[styles.quickPickLabel, isMl && { fontSize: 9.5 }]}>
-                  {isMl ? "⚡ പെട്ടെന്ന് പരിശോധിക്കാൻ:" : "⚡ QUICK SUGGESTIONS:"}
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 6, paddingTop: 4, paddingBottom: 2 }}
-                >
-                  {["5593", "5866", "27", "99", "87", "8860"].map((sug) => {
-                    const isSelected = searchNum === sug;
-                    return (
-                      <TouchableOpacity
-                        key={sug}
-                        style={[
-                          styles.suggestChip,
-                          isSelected && styles.suggestChipActive,
-                        ]}
-                        onPress={() => {
-                          triggerLightHaptic();
-                          setSearchNum(sug);
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <Text
-                          style={[
-                            styles.suggestChipText,
-                            isSelected && styles.suggestChipTextActive,
-                          ]}
-                        >
-                          {sug}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+              {/* 4 Digit Scrollable Roller Wheels */}
+              <View style={styles.wheelsRow}>
+                {digits.map((digitVal, colIdx) => (
+                  <SingleDigitWheel
+                    key={colIdx}
+                    value={digitVal}
+                    onChange={(newVal) => handleDigitChange(colIdx, newVal)}
+                  />
+                ))}
               </View>
 
-              {/* Search Text Input Bar */}
-              <View style={styles.searchInputWrap}>
-                <Search size={16} color="#3B82F6" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={isMl ? "നമ്പർ അടിക്കുക (ഉദാ: 5593, 27)" : "Type 2, 3, or 4 digits..."}
-                  placeholderTextColor="#94A3B8"
-                  value={searchNum}
-                  onChangeText={setSearchNum}
-                  keyboardType="numeric"
-                  maxLength={4}
-                />
-                {searchNum.length > 0 && (
-                  <TouchableOpacity
-                    onPress={() => setSearchNum("")}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <X size={16} color="#94A3B8" />
-                  </TouchableOpacity>
-                )}
+              {/* Check History Action Button with Brand Color */}
+              <TouchableOpacity
+                style={styles.checkHistoryBtn}
+                activeOpacity={0.85}
+                onPress={handleCheckHistory}
+              >
+                <View style={styles.checkHistoryBtnContent}>
+                  <Search size={18} color="#FFFFFF" />
+                  <Text style={styles.checkHistoryBtnText}>
+                    {isMl ? "ചരിത്രം പരിശോധിക്കുക" : "Check History"}
+                  </Text>
+                </View>
+                <View style={styles.checkHistoryArrowCircle}>
+                  <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Quick Picks Header */}
+              <View style={styles.quickPicksHeaderRow}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                  <Zap size={14} color="#F59E0B" fill="#F59E0B" />
+                  <Text style={styles.quickPicksTitle}>
+                    {isMl ? "ദ്രുത തിരഞ്ഞെടുപ്പ്" : "Quick Picks"}
+                  </Text>
+                </View>
+                <Text style={styles.quickPicksSub}>
+                  {isMl ? "ഉടൻ പരിശോധിക്കാൻ നമ്പർ തൊടുക" : "Tap a number to check instantly"}
+                </Text>
               </View>
+
+              {/* Quick Picks Scroll */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.quickPicksScrollContent}
+              >
+                {QUICK_PICKS.map((item) => {
+                  const isSelected = submittedQuery === item.num;
+                  return (
+                    <TouchableOpacity
+                      key={item.num}
+                      style={[
+                        styles.quickPickPill,
+                        { backgroundColor: item.bg, borderColor: item.border },
+                        isSelected && styles.quickPickPillActive,
+                      ]}
+                      onPress={() => handleSelectQuickPick(item.num)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.quickPickPillText,
+                          { color: item.text },
+                          isSelected && { fontWeight: "900" },
+                        ]}
+                      >
+                        {item.num}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
               {searchResult ? (
                 <View style={{ marginTop: 12, gap: 10 }}>
                   {/* Hero Stat Box */}
                   <View style={styles.searchHeroBox}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
                       <View>
                         <Text style={styles.searchHeroDigitsTag}>
                           {searchResult.query.length}-DIGIT COMBINATION
@@ -488,43 +713,63 @@ export default function AnalyticsScreen({ navigation }: any) {
                         </Text>
                       </View>
                       <View style={{ alignItems: "flex-end" }}>
-                        <View style={[styles.searchHitsBadge, searchResult.totalMatches === 0 && { backgroundColor: "#94A3B8" }]}>
+                        <View
+                          style={[
+                            styles.searchHitsBadge,
+                            searchResult.totalMatches === 0 && {
+                              backgroundColor: "#94A3B8",
+                            },
+                          ]}
+                        >
                           <Text style={styles.searchHitsBadgeText}>
-                            {searchResult.totalMatches} {isMl ? "തവണ വിജയിച്ചു" : "Times Drawn"}
+                            {searchResult.totalMatches}{" "}
+                            {isMl ? "തവണ വിജയിച്ചു" : "Times Drawn"}
                           </Text>
                         </View>
                         {searchResult.totalMatches > 0 && (
                           <Text style={styles.searchHitRateText}>
-                            {searchResult.hitRatePct}% {isMl ? "ഡ്രോകളിൽ" : "Draw Hit Rate"}
+                            {searchResult.hitRatePct}%{" "}
+                            {isMl ? "ഡ്രോകളിൽ" : "Draw Hit Rate"}
                           </Text>
                         )}
                       </View>
                     </View>
 
                     {/* Tier Breakdown Chips */}
-                    {searchResult.totalMatches > 0 && Object.keys(searchResult.tierBreakdown).length > 0 && (
-                      <View style={styles.tierBreakdownRow}>
-                        {Object.entries(searchResult.tierBreakdown).map(([tier, count]) => (
-                          <View key={tier} style={styles.tierPill}>
-                            <Text style={styles.tierPillText}>
-                              {tier}: {count}x
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
+                    {searchResult.totalMatches > 0 &&
+                      Object.keys(searchResult.tierBreakdown).length > 0 && (
+                        <View style={styles.tierBreakdownRow}>
+                          {Object.entries(searchResult.tierBreakdown).map(
+                            ([tier, count]) => (
+                              <View key={tier} style={styles.tierPill}>
+                                <Text style={styles.tierPillText}>
+                                  {tier}: {count}x
+                                </Text>
+                              </View>
+                            ),
+                          )}
+                        </View>
+                      )}
                   </View>
 
                   {/* Matching Draws List */}
                   {searchResult.matchedDraws.length > 0 ? (
                     <View style={{ gap: 6 }}>
-                      <Text style={[styles.recentDrawsLabel, isMl && { fontSize: 10 }]}>
+                      <Text
+                        style={[
+                          styles.recentDrawsLabel,
+                          isMl && { fontSize: 10 },
+                        ]}
+                      >
                         {isMl ? "സമീപകാല വിജയങ്ങൾ:" : "RECENT MATCHING DRAWS:"}
                       </Text>
                       {searchResult.matchedDraws.map((m, idx) => (
                         <View key={idx} style={styles.drawMatchRow}>
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.drawMatchName} numberOfLines={1}>
+                            <Text
+                              style={styles.drawMatchName}
+                              numberOfLines={1}
+                            >
                               {m.name}
                             </Text>
                             <Text style={styles.drawMatchDate}>
@@ -541,7 +786,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                     </View>
                   ) : (
                     <View style={styles.noMatchBox}>
-                      <Text style={[styles.noMatchText, isMl && { fontSize: 11 }]}>
+                      <Text
+                        style={[styles.noMatchText, isMl && { fontSize: 11 }]}
+                      >
                         {isMl
                           ? `കഴിഞ്ഞ ${filteredDraws.length} നറുക്കെടുപ്പുകളിൽ ഈ നമ്പർ വന്നിട്ടില്ല.`
                           : `No winning matches found for '${searchResult.query}' in selected draws.`}
@@ -552,7 +799,9 @@ export default function AnalyticsScreen({ navigation }: any) {
               ) : (
                 <View style={styles.searchIdleBox}>
                   <Sparkles size={18} color="#2563EB" />
-                  <Text style={[styles.searchIdleText, isMl && { fontSize: 10.5 }]}>
+                  <Text
+                    style={[styles.searchIdleText, isMl && { fontSize: 10.5 }]}
+                  >
                     {isMl
                       ? "ഒരു 2, 3 അല്ലെങ്കിൽ 4 അക്ക നമ്പർ നൽകുകയോ മുകളിലെ സൂചനകളിൽ തൊടുകയോ ചെയ്യുക."
                       : "Enter any 2, 3, or 4 digits or tap a quick suggestion above to see full prize history."}
@@ -574,7 +823,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                       isMl && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "🔥 കൂടുതൽ വന്ന 4-അക്കങ്ങൾ" : "🔥 Hot 4-Digit Endings"}
+                    {isMl
+                      ? "🔥 ആവർത്തിച്ച 4-അക്കങ്ങൾ"
+                      : "🔥 Repeated 4-Digit Numbers"}
                   </Text>
                   <Text
                     style={[
@@ -627,7 +878,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                       isMl && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "⚡ ജനപ്രിയ 2-അക്ക അവസാനങ്ങൾ" : "⚡ Hot 2-Digit Pairs"}
+                    {isMl
+                      ? "⚡ ആവർത്തിച്ച 2-അക്കങ്ങൾ"
+                      : "⚡ Repeated 2-Digit Numbers"}
                   </Text>
                   <Text
                     style={[
@@ -672,7 +925,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                       isMl && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "❄️ കുറഞ്ഞ തവണ വന്ന നമ്പറുകൾ" : "❄️ Cold / Overdue Pairs"}
+                    {isMl
+                      ? "❄️ ആവർത്തിക്കാത്ത നമ്പറുകൾ"
+                      : "❄️ Non-Repeated Numbers"}
                   </Text>
                   <Text
                     style={[
@@ -712,7 +967,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                   isMl && { fontSize: 13.5, lineHeight: 18 },
                 ]}
               >
-                {isMl ? "📊 അവസാന അക്ക വിതരണം (0 - 9)" : "📊 Last Digit Distribution (0 - 9)"}
+                {isMl
+                  ? "📊 അവസാന അക്ക വിതരണം (0 - 9)"
+                  : "📊 Last Digit Distribution (0 - 9)"}
               </Text>
               <Text
                 style={[
@@ -726,24 +983,32 @@ export default function AnalyticsScreen({ navigation }: any) {
               </Text>
 
               <View style={styles.digitDistributionRow}>
-                {Object.entries(numberStats.singleDigitMap).map(([digit, count]) => {
-                  const maxD = Math.max(...Object.values(numberStats.singleDigitMap), 1);
-                  const heightPct = Math.max(15, Math.round((count / maxD) * 100));
-                  return (
-                    <View key={digit} style={styles.digitCol}>
-                      <Text style={styles.digitCountLabel}>{count}</Text>
-                      <View style={styles.digitColBarTrack}>
-                        <View
-                          style={[
-                            styles.digitColBarFill,
-                            { height: `${heightPct}%` },
-                          ]}
-                        />
+                {Object.entries(numberStats.singleDigitMap).map(
+                  ([digit, count]) => {
+                    const maxD = Math.max(
+                      ...Object.values(numberStats.singleDigitMap),
+                      1,
+                    );
+                    const heightPct = Math.max(
+                      15,
+                      Math.round((count / maxD) * 100),
+                    );
+                    return (
+                      <View key={digit} style={styles.digitCol}>
+                        <Text style={styles.digitCountLabel}>{count}</Text>
+                        <View style={styles.digitColBarTrack}>
+                          <View
+                            style={[
+                              styles.digitColBarFill,
+                              { height: `${heightPct}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.digitNumberLabel}>{digit}</Text>
                       </View>
-                      <Text style={styles.digitNumberLabel}>{digit}</Text>
-                    </View>
-                  );
-                })}
+                    );
+                  },
+                )}
               </View>
             </View>
           </>
@@ -762,7 +1027,7 @@ export default function AnalyticsScreen({ navigation }: any) {
                       isMl && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "🏆 1-ാം സമ്മാനം കൂടുതൽ വിറ്റ ജില്ലകൾ" : "🏆 1st Prize Winners by District"}
+                    {isMl ? "🏆 ഭാഗ്യ സ്ഥലങ്ങൾ" : "🏆 Lucky Locations"}
                   </Text>
                   <Text
                     style={[
@@ -779,7 +1044,9 @@ export default function AnalyticsScreen({ navigation }: any) {
 
               <View style={styles.districtList}>
                 {districtStats.ranked.map((dist, idx) => {
-                  const pct = Math.round((dist.count / districtStats.maxCount) * 100);
+                  const pct = Math.round(
+                    (dist.count / districtStats.maxCount) * 100,
+                  );
                   const isTop3 = idx < 3 && dist.count > 0;
                   return (
                     <View
@@ -803,10 +1070,7 @@ export default function AnalyticsScreen({ navigation }: any) {
                       <View style={styles.distInfoCol}>
                         <View style={styles.distNameRow}>
                           <Text
-                            style={[
-                              styles.distName,
-                              isMl && { fontSize: 12 },
-                            ]}
+                            style={[styles.distName, isMl && { fontSize: 12 }]}
                           >
                             {dist.name}
                           </Text>
@@ -816,7 +1080,12 @@ export default function AnalyticsScreen({ navigation }: any) {
                               isMl && { fontSize: 10.5 },
                             ]}
                           >
-                            {dist.count} {isMl ? "വിജയികൾ" : dist.count === 1 ? "win" : "wins"}
+                            {dist.count}{" "}
+                            {isMl
+                              ? "വിജയികൾ"
+                              : dist.count === 1
+                                ? "win"
+                                : "wins"}
                           </Text>
                         </View>
 
@@ -842,10 +1111,7 @@ export default function AnalyticsScreen({ navigation }: any) {
         <View style={styles.infoBanner}>
           <Info size={16} color="#64748B" />
           <Text
-            style={[
-              styles.infoText,
-              isMl && { fontSize: 10, lineHeight: 15 },
-            ]}
+            style={[styles.infoText, isMl && { fontSize: 10, lineHeight: 15 }]}
           >
             {isMl
               ? "സ്ഥിതിവിവരക്കണക്കുകൾ മുൻകാല ഡാറ്റ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ലോട്ടറി നറുക്കെടുപ്പ് പൂർണ്ണമായും ഗവൺമെന്റ് മെഷീൻ റാൻഡം പ്രക്രിയയാണ്."
@@ -1233,51 +1499,136 @@ const styles = StyleSheet.create({
     color: "#64748B",
     lineHeight: 16,
   },
-  quickPickLabel: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#64748B",
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  suggestChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  suggestChipActive: {
-    backgroundColor: "#0F172A",
-    borderColor: "#0F172A",
-  },
-  suggestChipText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#334155",
-  },
-  suggestChipTextActive: {
-    color: "#FFFFFF",
-  },
-  searchInputWrap: {
+  wheelsRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    marginVertical: 14,
     gap: 8,
   },
-  searchInput: {
+  wheelCol: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: "800",
+    height: 138,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(59, 130, 246, 0.25)",
+    overflow: "hidden",
+    position: "relative",
+    shadowColor: "#3B82F6",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  wheelActiveLens: {
+    position: "absolute",
+    top: 46,
+    left: 4,
+    right: 4,
+    height: 46,
+    backgroundColor: "rgba(239, 246, 255, 0.9)",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(59, 130, 246, 0.25)",
+    zIndex: 0,
+  },
+  wheelSpacer: {
+    height: 46,
+  },
+  wheelItem: {
+    height: 46,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wheelItemText: {
+    textAlign: "center",
+  },
+  wheelItemTextActive: {
+    fontSize: 30,
+    fontWeight: "900",
     color: "#0F172A",
-    padding: 0,
-    letterSpacing: 1,
+  },
+  wheelItemTextInactive: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#94A3B8",
+    opacity: 0.35,
+  },
+  checkHistoryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.primary,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
+    borderRadius: 25,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+    position: "relative",
+    marginBottom: 16,
+  },
+  checkHistoryBtnContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  checkHistoryBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  checkHistoryArrowCircle: {
+    position: "absolute",
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickPicksHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  quickPicksTitle: {
+    fontSize: 12.5,
+    fontWeight: "900",
+    color: "#0F172A",
+  },
+  quickPicksSub: {
+    fontSize: 10.5,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  quickPicksScrollContent: {
+    flexDirection: "row",
+    gap: 8,
+    paddingVertical: 3,
+  },
+  quickPickPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickPickPillActive: {
+    borderWidth: 2,
+    transform: [{ scale: 1.04 }],
+  },
+  quickPickPillText: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
   searchHeroBox: {
     backgroundColor: "#EFF6FF",

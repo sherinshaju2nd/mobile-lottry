@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Home, Ticket, Search as SearchIcon, Calendar as CalendarIcon, Camera } from "lucide-react-native";
+import { Home, Ticket, Search as SearchIcon, Calendar as CalendarIcon, Camera, BarChart3 } from "lucide-react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { Asset } from "expo-asset";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -312,7 +312,7 @@ function BottomTabNavigator({ navigation }: any) {
               let IconComp: any = Home;
               if (route.name === "HomeTab") IconComp = Home;
               else if (route.name === "LotteriesTab") IconComp = Ticket;
-              else if (route.name === "SearchTab") IconComp = SearchIcon;
+              else if (route.name === "AnalyticsTab") IconComp = BarChart3;
               else if (route.name === "DateTab") IconComp = CalendarIcon;
 
               return (
@@ -348,9 +348,9 @@ function BottomTabNavigator({ navigation }: any) {
           }}
         />
         <Tab.Screen
-          name="SearchTab"
-          component={SearchScreen}
-          options={{ tabBarLabel: t("tab_checker") }}
+          name="AnalyticsTab"
+          component={AnalyticsScreen}
+          options={{ tabBarLabel: t("tab_analytics") }}
         />
         <Tab.Screen
           name="DateTab"
@@ -554,6 +554,8 @@ function AppContent() {
           <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
           <Stack.Screen name="Reminders" component={RemindersScreen} />
           <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="Checker" component={SearchScreen} />
           <Stack.Screen name="Contact" component={ContactScreen} />
         </Stack.Navigator>
       </NavigationContainer>
