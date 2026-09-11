@@ -21,6 +21,7 @@ import {
   Clock3,
   ChevronLeft,
   BellOff,
+  Trophy,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -148,11 +149,28 @@ export default function RemindersScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: LotteryReminder }) => {
     const upcoming = isUpcoming(item);
+    const hasWon = item.winningStatus?.won;
+    const isChecked = item.winningStatus?.checked;
+
     return (
-      <View style={[styles.card, !upcoming && styles.cardPast]}>
+      <View
+        style={[
+          styles.card,
+          !upcoming && styles.cardPast,
+          hasWon && styles.cardWon,
+        ]}
+      >
         <View style={styles.cardLeft}>
-          <View style={[styles.iconCircle, !upcoming && styles.iconCirclePast]}>
-            {upcoming ? (
+          <View
+            style={[
+              styles.iconCircle,
+              !upcoming && styles.iconCirclePast,
+              hasWon && styles.iconCircleWon,
+            ]}
+          >
+            {hasWon ? (
+              <Trophy size={18} color="#D97706" />
+            ) : upcoming ? (
               <Bell size={18} color={COLORS.primary} />
             ) : (
               <BellOff size={18} color="#9CA3AF" />
@@ -164,9 +182,17 @@ export default function RemindersScreen({ navigation }: any) {
             <Text style={styles.lotteryName} numberOfLines={1}>
               {item.lotteryName}
             </Text>
-            {upcoming ? (
+            {hasWon ? (
+              <View style={styles.badgeWon}>
+                <Text style={styles.badgeWonText}>🎉 {item.winningStatus?.prizeTier || "WINNER"}</Text>
+              </View>
+            ) : upcoming ? (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{t("status_upcoming")}</Text>
+              </View>
+            ) : isChecked ? (
+              <View style={styles.badgeChecked}>
+                <Text style={styles.badgeCheckedText}>{isMl ? "ഫലം പരിശോധിച്ചു" : "Checked"}</Text>
               </View>
             ) : (
               <View style={styles.badgePast}>
@@ -174,6 +200,14 @@ export default function RemindersScreen({ navigation }: any) {
               </View>
             )}
           </View>
+
+          {hasWon && item.winningStatus?.amount && (
+            <View style={styles.winAmountBox}>
+              <Text style={styles.winAmountText}>
+                {isMl ? "സമ്മാനത്തുക" : "Prize Amount"}: {item.winningStatus.amount}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.metaRow}>
             <Ticket size={13} color={COLORS.textMuted} />
@@ -187,8 +221,25 @@ export default function RemindersScreen({ navigation }: any) {
             <Clock3 size={13} color={COLORS.textMuted} />
             <Text style={styles.metaText}>
               {isMl ? `നറുക്കെടുപ്പ് ${formatTime(item.drawTime)}` : `Draw at ${formatTime(item.drawTime)}`}
+              {item.reminderLeadMinutes ? ` (${item.reminderLeadMinutes}m alert)` : ""}
             </Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.verifyTicketBtn}
+            onPress={() => {
+              navigation.navigate("DrawBreakdown", {
+                lotteryCode: item.lotteryName,
+                highlightTicket: item.ticketNumber,
+                query: item.ticketNumber,
+              });
+            }}
+          >
+            <Ticket size={12} color={COLORS.primary} />
+            <Text style={styles.verifyTicketBtnText}>
+              {isMl ? "ഫലം പരിശോധിക്കുക" : "Verify Ticket"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.cardActions}>
@@ -477,6 +528,69 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     color: "#6B7280",
+  },
+  cardWon: {
+    borderColor: "#F59E0B",
+    borderWidth: 1.5,
+    backgroundColor: "#FFFDF5",
+  },
+  iconCircleWon: {
+    backgroundColor: "#FEF3C7",
+  },
+  badgeWon: {
+    backgroundColor: "#FEF3C7",
+    borderWidth: 1,
+    borderColor: "#FCD34D",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  badgeWonText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#B45309",
+  },
+  badgeChecked: {
+    backgroundColor: "#EFF6FF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 20,
+  },
+  badgeCheckedText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#2563EB",
+  },
+  winAmountBox: {
+    backgroundColor: "#FEF3C7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginVertical: 2,
+    alignSelf: "flex-start",
+  },
+  winAmountText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#92400E",
+  },
+  verifyTicketBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 4,
+    alignSelf: "flex-start",
+  },
+  verifyTicketBtnText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: COLORS.primary,
   },
   metaRow: {
     flexDirection: "row",

@@ -1,5 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export interface LotteryWinningStatus {
+  checked: boolean;
+  won: boolean;
+  prizeTier?: string;
+  matchedNumber?: string;
+  amount?: string;
+  checkedAt: string;
+}
+
 export interface LotteryReminder {
   id: string;
   ticketNumber: string;
@@ -8,6 +17,8 @@ export interface LotteryReminder {
   lotteryName: string;
   notificationId?: string; // expo-notifications scheduled ID
   createdAt: string;
+  reminderLeadMinutes?: number; // 5, 15, 30, 60
+  winningStatus?: LotteryWinningStatus;
 }
 
 const STORAGE_KEY = "lottery_reminders_v1";
@@ -43,12 +54,16 @@ export function generateId(): string {
   return `reminder_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// Parse draw date+time into a JS Date object (5 min before)
-export function getNotificationDate(drawDate: string, drawTime: string): Date {
+// Parse draw date+time into a JS Date object with configurable lead minutes (default 5 min before)
+export function getNotificationDate(
+  drawDate: string,
+  drawTime: string,
+  leadMinutes: number = 5
+): Date {
   const [year, month, day] = drawDate.split("-").map(Number);
   const [hour, minute] = drawTime.split(":").map(Number);
   const drawDateObj = new Date(year, month - 1, day, hour, minute, 0);
-  // 5 minutes before
-  drawDateObj.setMinutes(drawDateObj.getMinutes() - 5);
+  // Subtract configurable lead minutes
+  drawDateObj.setMinutes(drawDateObj.getMinutes() - Math.max(1, leadMinutes));
   return drawDateObj;
 }

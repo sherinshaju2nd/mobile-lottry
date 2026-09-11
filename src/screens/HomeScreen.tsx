@@ -54,6 +54,8 @@ import {
 import {
   sendInstantWinnerNotification,
   sendFullResultPublishedNotification,
+  checkSavedTicketsAndSendWinAlert,
+  sendDistrictWinnerNotification,
 } from "../utils/notificationScheduler";
 import {
   getFavoriteLotteries,
@@ -300,6 +302,14 @@ export default function HomeScreen({ navigation }: any) {
                 newRow.first.location,
                 newRow.prizes?.amounts?.["1st"]
               );
+              sendDistrictWinnerNotification(
+                newRow.lottery_code,
+                newRow.draw_name,
+                newRow.draw_date,
+                newRow.first.location,
+                newRow.first.ticket,
+                newRow.prizes?.amounts?.["1st"]
+              );
             }
             if (hasAnyDrawResult(newRow)) {
               sendFullResultPublishedNotification(
@@ -307,6 +317,8 @@ export default function HomeScreen({ navigation }: any) {
                 newRow.draw_name,
                 newRow.draw_date
               );
+              // Auto-match saved tickets against all prizes & notify on win
+              checkSavedTicketsAndSendWinAlert(newRow);
             }
           }
           loadData();

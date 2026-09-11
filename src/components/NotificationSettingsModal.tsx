@@ -24,6 +24,11 @@ import {
   AlertTriangle,
   RotateCcw,
   ChevronRight,
+  MapPin,
+  Gift,
+  Sun,
+  Send,
+  CheckCircle2,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
@@ -31,13 +36,15 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   getNotificationSettings,
   saveNotificationSettings,
+  KERALA_DISTRICTS,
 } from "../utils/notificationSettingsStorage";
 import {
   getNotificationPermissionStatus,
   openNotificationSettings,
   requestNotificationPermission,
+  sendTestNotification,
 } from "../utils/notificationScheduler";
-import { triggerLightHaptic } from "../utils/haptics";
+import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 import { useLanguage } from "../context/LanguageContext";
 
 interface NotificationSettingsModalProps {
@@ -56,6 +63,8 @@ export default function NotificationSettingsModal({
     DEFAULT_NOTIFICATION_SETTINGS
   );
   const [hasOsPermission, setHasOsPermission] = useState<boolean>(true);
+  const [showDistrictPicker, setShowDistrictPicker] = useState<boolean>(false);
+  const [testSent, setTestSent] = useState<boolean>(false);
 
   useEffect(() => {
     if (visible) {
@@ -79,6 +88,38 @@ export default function NotificationSettingsModal({
     if (key === "masterEnabled" && updated.masterEnabled && !hasOsPermission) {
       const granted = await requestNotificationPermission();
       setHasOsPermission(granted || Platform.OS === "web");
+    }
+  };
+
+  const handleSetLeadTime = async (mins: number) => {
+    triggerLightHaptic();
+    const updated: NotificationSettings = {
+      ...settings,
+      reminderLeadTimeMinutes: mins,
+    };
+    setSettings(updated);
+    await saveNotificationSettings(updated);
+  };
+
+  const handleSelectDistrict = async (dist: string) => {
+    triggerLightHaptic();
+    const updated: NotificationSettings = {
+      ...settings,
+      userDistrict: dist,
+      districtAlertsEnabled: true,
+    };
+    setSettings(updated);
+    await saveNotificationSettings(updated);
+    setShowDistrictPicker(false);
+  };
+
+  const handleSendTest = async () => {
+    triggerLightHaptic();
+    const success = await sendTestNotification();
+    if (success) {
+      triggerSuccessHaptic();
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 3500);
     }
   };
 
@@ -341,7 +382,7 @@ export default function NotificationSettingsModal({
               </View>
 
               {/* My Saved Ticket Reminders */}
-              <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
+              <View style={styles.toggleRow}>
                 <View style={styles.toggleIconCol}>
                   <Ticket size={16} color="#0D9488" />
                 </View>
@@ -362,6 +403,139 @@ export default function NotificationSettingsModal({
                   trackColor={{ false: "#E2E8F0", true: "#86EFAC" }}
                   thumbColor={settings.ticketReminders ? "#16A34A" : "#F8FAFC"}
                 />
+              </View>
+
+              {/* Auto-Win Prize Match Alerts */}
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleIconCol}>
+                  <Trophy size={16} color="#EAB308" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.toggleTitle}>
+                    {isMl ? "വിജയിച്ചാൽ തത്സമയ അലേർട്ട് (Auto-Win)" : "Auto-Win Prize Match Alerts"}
+                  </Text>
+                  <Text style={styles.toggleDesc}>
+                    {isMl
+                      ? "സേവ് ചെയ്ത ടിക്കറ്റ് ഏതെങ്കിലും സമ്മാനം നേടിയാൽ വിജയാഘോഷ അലേർട്ട്"
+                      : "Instant celebration alert if your saved ticket matches any winning prize"}
+                  </Text>
+                </View>
+                <Switch
+                  disabled={!settings.masterEnabled}
+                  value={settings.autoWinAlerts}
+                  onValueChange={() => handleToggle("autoWinAlerts")}
+                  trackColor={{ false: "#E2E8F0", true: "#86EFAC" }}
+                  thumbColor={settings.autoWinAlerts ? "#16A34A" : "#F8FAFC"}
+                />
+              </View>
+
+              {/* Default Reminder Lead Time Chips */}
+              {settings.ticketReminders && (
+                <View style={styles.leadTimeSection}>
+                  <Text style={styles.subSectionTitle}>
+                    {isMl ? "ഡിഫോൾട്ട് ഓർമ്മപ്പെടുത്തൽ സമയം" : "DEFAULT REMINDER LEAD TIME"}
+                  </Text>
+                  <View style={styles.leadChipsContainer}>
+                    {[
+                      { mins: 5, label: "5 mins" },
+                      { mins: 15, label: "15 mins" },
+                      { mins: 30, label: "30 mins" },
+                      { mins: 60, label: "1 hour" },
+                    ].map((chip) => {
+                      const isActive = (settings.reminderLeadTimeMinutes || 5) === chip.mins;
+                      return (
+                        <TouchableOpacity
+                          key={chip.mins}
+                          disabled={!settings.masterEnabled}
+                          style={[
+                            styles.leadChip,
+                            isActive && styles.leadChipActive,
+                          ]}
+                          onPress={() => handleSetLeadTime(chip.mins)}
+                        >
+                          <Clock
+                            size={12}
+                            color={isActive ? "#FFFFFF" : "#64748B"}
+                          />
+                          <Text
+                            style={[
+                              styles.leadChipText,
+                              isActive && styles.leadChipTextActive,
+                            ]}
+                          >
+                            {chip.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Morning Ticket Purchase Reminder (10:00 AM) */}
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleIconCol}>
+                  <Sun size={16} color="#F59E0B" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.toggleTitle}>
+                    {isMl ? "രാവിലെ 10:00 AM ഓർമ്മപ്പെടുത്തൽ" : "10:00 AM Draw Reminder"}
+                  </Text>
+                  <Text style={styles.toggleDesc}>
+                    {isMl
+                      ? "ഇന്നത്തെ നറുക്കെടുപ്പിനെക്കുറിച്ച് രാവിലെ അറിയിപ്പ്"
+                      : "Morning alert about today's scheduled lottery and jackpot"}
+                  </Text>
+                </View>
+                <Switch
+                  disabled={!settings.masterEnabled}
+                  value={settings.morningPurchaseReminder}
+                  onValueChange={() => handleToggle("morningPurchaseReminder")}
+                  trackColor={{ false: "#E2E8F0", true: "#86EFAC" }}
+                  thumbColor={settings.morningPurchaseReminder ? "#16A34A" : "#F8FAFC"}
+                />
+              </View>
+
+              {/* District Winner Alerts */}
+              <View style={[styles.toggleRow, { borderBottomWidth: 0, flexDirection: "column", alignItems: "stretch" }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <View style={styles.toggleIconCol}>
+                    <MapPin size={16} color="#DC2626" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.toggleTitle}>
+                      {isMl ? "സ്വന്തം ജില്ലയിലെ വിജയി അലേർട്ട്" : "My District 1st Prize Alert"}
+                    </Text>
+                    <Text style={styles.toggleDesc}>
+                      {isMl
+                        ? "നിങ്ങളുടെ ജില്ലയിൽ 1-ാം സമ്മാനം വിറ്റാൽ ഉടനടി അറിയുക"
+                        : "Alert if 1st prize is won in your home district"}
+                    </Text>
+                  </View>
+                  <Switch
+                    disabled={!settings.masterEnabled}
+                    value={settings.districtAlertsEnabled}
+                    onValueChange={() => handleToggle("districtAlertsEnabled")}
+                    trackColor={{ false: "#E2E8F0", true: "#86EFAC" }}
+                    thumbColor={settings.districtAlertsEnabled ? "#16A34A" : "#F8FAFC"}
+                  />
+                </View>
+
+                {settings.districtAlertsEnabled && (
+                  <TouchableOpacity
+                    style={styles.districtSelectBtn}
+                    onPress={() => setShowDistrictPicker(true)}
+                    activeOpacity={0.8}
+                  >
+                    <MapPin size={14} color={COLORS.primary} />
+                    <Text style={styles.districtSelectText}>
+                      {settings.userDistrict
+                        ? `${isMl ? "തിരഞ്ഞെടുത്ത ജില്ല" : "Selected District"}: ${settings.userDistrict}`
+                        : (isMl ? "ജില്ല തിരഞ്ഞെടുക്കുക..." : "Choose your home district...")}
+                    </Text>
+                    <ChevronRight size={14} color="#94A3B8" />
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -421,6 +595,32 @@ export default function NotificationSettingsModal({
               </View>
             </View>
 
+            {/* Test Notification Action Button */}
+            <TouchableOpacity
+              style={[
+                styles.testNotifBtn,
+                testSent && styles.testNotifBtnSuccess,
+              ]}
+              onPress={handleSendTest}
+              activeOpacity={0.8}
+            >
+              {testSent ? (
+                <>
+                  <CheckCircle2 size={16} color="#16A34A" />
+                  <Text style={styles.testNotifBtnTextSuccess}>
+                    {isMl ? "നോട്ടിഫിക്കേഷൻ അയച്ചു! 🔔" : "Test Notification Sent! 🔔"}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Send size={15} color={COLORS.primary} />
+                  <Text style={styles.testNotifBtnText}>
+                    {isMl ? "ടെസ്റ്റ് നോട്ടിഫിക്കേഷൻ അയക്കുക" : "Send Test Notification"}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
             {/* Reset Defaults Action Button */}
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
               <RotateCcw size={14} color={COLORS.textMuted} />
@@ -432,6 +632,61 @@ export default function NotificationSettingsModal({
             <View style={{ height: 24 }} />
           </ScrollView>
         </View>
+
+        {/* District Picker Sub-Modal */}
+        <Modal
+          visible={showDistrictPicker}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setShowDistrictPicker(false)}
+        >
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerBox}>
+              <View style={styles.pickerHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <MapPin size={18} color="#DC2626" />
+                  <Text style={styles.pickerTitle}>
+                    {isMl ? "ജില്ല തിരഞ്ഞെടുക്കുക" : "Select Your Home District"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setShowDistrictPicker(false)}
+                  style={styles.closeBtn}
+                >
+                  <X size={18} color={COLORS.textDark} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+                {KERALA_DISTRICTS.map((dist) => {
+                  const isSelected = settings.userDistrict === dist;
+                  return (
+                    <TouchableOpacity
+                      key={dist}
+                      style={[
+                        styles.districtItem,
+                        isSelected && styles.districtItemSelected,
+                      ]}
+                      onPress={() => handleSelectDistrict(dist)}
+                    >
+                      <Text
+                        style={[
+                          styles.districtItemText,
+                          isSelected && styles.districtItemTextSelected,
+                        ]}
+                      >
+                        {dist}
+                      </Text>
+                      {isSelected && (
+                        <CheckCircle2 size={16} color={COLORS.primary} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -597,6 +852,95 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginTop: 1,
   },
+  leadTimeSection: {
+    backgroundColor: "#F8FAFC",
+    padding: 10,
+    borderRadius: 12,
+    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  subSectionTitle: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#64748B",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  leadChipsContainer: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  leadChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#FFFFFF",
+  },
+  leadChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  leadChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  leadChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+  districtSelectBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    marginTop: 8,
+  },
+  districtSelectText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1E40AF",
+    marginHorizontal: 8,
+  },
+  testNotifBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1.5,
+    borderColor: "#93C5FD",
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 4,
+  },
+  testNotifBtnSuccess: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#86EFAC",
+  },
+  testNotifBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.primary,
+  },
+  testNotifBtnTextSuccess: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#16A34A",
+  },
   resetButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -609,5 +953,55 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: COLORS.textMuted,
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  pickerBox: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    width: "100%",
+    maxWidth: 360,
+    padding: 16,
+    maxHeight: 460,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    marginBottom: 8,
+  },
+  pickerTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  districtItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  districtItemSelected: {
+    backgroundColor: "#EFF6FF",
+  },
+  districtItemText: {
+    fontSize: 13.5,
+    fontWeight: "600",
+    color: "#1E293B",
+  },
+  districtItemTextSelected: {
+    color: COLORS.primary,
+    fontWeight: "800",
   },
 });

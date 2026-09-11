@@ -144,6 +144,7 @@ export default function AddReminderModal({
 
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [leadMinutes, setLeadMinutes] = useState<number>(5);
 
   useEffect(() => {
     if (visible) {
@@ -172,11 +173,13 @@ export default function AddReminderModal({
       setDrawDate(targetDate);
       setCalYear(targetDate.getFullYear());
       setCalMonth(targetDate.getMonth());
+      setLeadMinutes(editReminder.reminderLeadMinutes || 5);
     } else if (!editReminder && visible) {
       setTicketNumber("");
       setSelectedLottery(null);
       setTicketError(null);
       setLotteryError(null);
+      setLeadMinutes(5);
       const d = new Date();
       d.setDate(d.getDate() + 1);
       setDrawDate(d);
@@ -292,9 +295,11 @@ export default function AddReminderModal({
         drawDate: formatDate(drawDate),
         drawTime: drawTime24,
         createdAt: editReminder?.createdAt ?? new Date().toISOString(),
+        reminderLeadMinutes: leadMinutes,
+        winningStatus: editReminder?.winningStatus,
       };
       const permState = await getNotificationPermissionStatus();
-      const notifId = await scheduleReminderNotification(reminder);
+      const notifId = await scheduleReminderNotification(reminder, leadMinutes);
       reminder.notificationId = notifId ?? undefined;
       await saveReminder(reminder);
       onSaved();
@@ -304,8 +309,8 @@ export default function AddReminderModal({
         Alert.alert(
           isMl ? "റിമൈൻഡർ സേവ് ചെയ്തു" : "Reminder Saved",
           isMl
-            ? "നിങ്ങളുടെ റിമൈൻഡർ സേവ് ചെയ്തു! നറുക്കെടുപ്പിന് 5 മിനിറ്റ് മുൻപ് അലേർട്ട് ലഭിക്കാൻ സെറ്റിംഗ്സിൽ നോട്ടിഫിക്കേഷൻ ഓൺ ചെയ്യുക."
-            : "Your reminder was saved! To receive push alerts 5 minutes before the draw, please enable notifications in Settings.",
+            ? `നിങ്ങളുടെ റിമൈൻഡർ സേവ് ചെയ്തു! നറുക്കെടുപ്പിന് ${leadMinutes} മിനിറ്റ് മുൻപ് അലേർട്ട് ലഭിക്കാൻ സെറ്റിംഗ്സിൽ നോട്ടിഫിക്കേഷൻ ഓൺ ചെയ്യുക.`
+            : `Your reminder was saved! To receive push alerts ${leadMinutes} minutes before the draw, please enable notifications in Settings.`,
           [
             { text: isMl ? "ഇപ്പോൾ വേണ്ട" : "Not Now", style: "cancel" },
             {
@@ -450,11 +455,49 @@ export default function AddReminderModal({
                     <ChevronDown size={18} color={COLORS.primary} />
                   </TouchableOpacity>
 
+                  <Text style={[styles.label, { marginTop: 12 }]}>
+                    {isMl ? "ഓർമ്മപ്പെടുത്തൽ സമയം" : "Reminder Alert Timing"}
+                  </Text>
+                  <View style={styles.leadTimeChipsRow}>
+                    {[
+                      { mins: 5, label: isMl ? "5 മിനിറ്റ്" : "5 mins" },
+                      { mins: 15, label: isMl ? "15 മിനിറ്റ്" : "15 mins" },
+                      { mins: 30, label: isMl ? "30 മിനിറ്റ്" : "30 mins" },
+                      { mins: 60, label: isMl ? "1 മണിക്കൂർ" : "1 hour" },
+                    ].map((chip) => {
+                      const isSelected = leadMinutes === chip.mins;
+                      return (
+                        <TouchableOpacity
+                          key={chip.mins}
+                          style={[
+                            styles.leadTimeChip,
+                            isSelected && styles.leadTimeChipActive,
+                          ]}
+                          onPress={() => setLeadMinutes(chip.mins)}
+                          activeOpacity={0.7}
+                        >
+                          <Clock
+                            size={13}
+                            color={isSelected ? COLORS.white : COLORS.textMuted}
+                          />
+                          <Text
+                            style={[
+                              styles.leadTimeChipText,
+                              isSelected && styles.leadTimeChipTextActive,
+                            ]}
+                          >
+                            {chip.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
                   <View style={styles.notifInfo}>
                     <Text style={styles.notifInfoText}>
                       🔔 {isMl
-                        ? "നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 5 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്."
-                        : "You'll receive a high-priority push notification 5 minutes before the draw begins."}
+                        ? `നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് ${leadMinutes >= 60 ? "1 മണിക്കൂർ" : `${leadMinutes} മിനിറ്റ്`} മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.`
+                        : `You'll receive a high-priority push notification ${leadMinutes >= 60 ? "1 hour" : `${leadMinutes} minutes`} before the draw begins.`}
                     </Text>
                   </View>
 
@@ -976,5 +1019,36 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: "700",
     color: "#374151",
+  },
+  leadTimeChipsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 6,
+  },
+  leadTimeChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 9,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+  },
+  leadTimeChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  leadTimeChipText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  leadTimeChipTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "800",
   },
 });
