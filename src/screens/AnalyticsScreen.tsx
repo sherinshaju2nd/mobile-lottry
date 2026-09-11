@@ -8,6 +8,7 @@ import {
   RefreshControl,
   StatusBar,
   Dimensions,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -21,6 +22,9 @@ import {
   Sparkles,
   Info,
   Calendar,
+  Search,
+  X,
+  Dices,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
@@ -31,6 +35,7 @@ import ShimmerSkeleton from "../components/ShimmerSkeleton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+// Kerala State Lottery - Analytics & Frequency Statistics
 export default function AnalyticsScreen({ navigation }: any) {
   const { language } = useLanguage();
   const isMl = language === "ml";
@@ -40,6 +45,7 @@ export default function AnalyticsScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [horizon, setHorizon] = useState<"30" | "90" | "all">("30");
   const [activeTab, setActiveTab] = useState<"numbers" | "districts">("numbers");
+  const [searchNum, setSearchNum] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -168,6 +174,72 @@ export default function AnalyticsScreen({ navigation }: any) {
 
     return { ranked, maxCount, totalJackpotDraws };
   }, [filteredDraws]);
+
+  // Interactive custom number lookup
+  const searchResult = useMemo(() => {
+    const query = searchNum.trim().replace(/\D/g, "");
+    if (!query || query.length < 2) return null;
+
+    let totalMatches = 0;
+    const tierBreakdown: Record<string, number> = {};
+    const matchedDraws: Array<{
+      date: string;
+      name: string;
+      tier: string;
+      fullTicket: string;
+    }> = [];
+
+    filteredDraws.forEach((draw) => {
+      // 1st Prize
+      if (draw.first?.ticket && draw.first.ticket !== "N/A") {
+        const d = draw.first.ticket.replace(/\D/g, "");
+        if (d.endsWith(query) || d === query) {
+          totalMatches++;
+          tierBreakdown["1st Prize"] = (tierBreakdown["1st Prize"] || 0) + 1;
+          matchedDraws.push({
+            date: draw.draw_date,
+            name: draw.draw_name || draw.lottery_code,
+            tier: "1st Prize",
+            fullTicket: draw.first.ticket,
+          });
+        }
+      }
+
+      // Other Prizes
+      if (draw.prizes) {
+        const tiers = ["consolation", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th"] as const;
+        tiers.forEach((t) => {
+          const nums = draw.prizes![t];
+          if (Array.isArray(nums)) {
+            nums.forEach((num) => {
+              const d = String(num).replace(/\D/g, "");
+              if (d.endsWith(query) || d === query) {
+                totalMatches++;
+                const tierName = t === "consolation" ? "Consolation" : `${t.toUpperCase()} Prize`;
+                tierBreakdown[tierName] = (tierBreakdown[tierName] || 0) + 1;
+                matchedDraws.push({
+                  date: draw.draw_date,
+                  name: draw.draw_name || draw.lottery_code,
+                  tier: tierName,
+                  fullTicket: String(num),
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+
+    const hitRatePct = filteredDraws.length > 0 ? Math.min(100, Math.round((totalMatches / filteredDraws.length) * 100)) : 0;
+
+    return {
+      query,
+      totalMatches,
+      tierBreakdown,
+      hitRatePct,
+      matchedDraws: matchedDraws.slice(0, 8),
+    };
+  }, [searchNum, filteredDraws]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
@@ -313,6 +385,182 @@ export default function AnalyticsScreen({ navigation }: any) {
           </View>
         ) : activeTab === "numbers" ? (
           <>
+            {/* Instant Number Explorer Card */}
+            <View style={styles.sectionCard}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.iconBoxBlue}>
+                  <Search size={18} color="#2563EB" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[
+                      styles.cardTitle,
+                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                    ]}
+                  >
+                    {isMl ? "🔍 ഇൻസ്റ്റന്റ് നമ്പർ പരിശോധന" : "🔍 Instant Number Explorer"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardSub,
+                      isMl && { fontSize: 10, lineHeight: 14 },
+                    ]}
+                  >
+                    {isMl
+                      ? "2, 3, 4 അക്കങ്ങളുടെ മുൻകാല വിജയ ചരിത്രം പരിശോധിക്കുക"
+                      : "Check frequency, hit rate & prize tiers for any digits"}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Quick Pick Suggestions */}
+              <View style={{ marginBottom: 10 }}>
+                <Text style={[styles.quickPickLabel, isMl && { fontSize: 9.5 }]}>
+                  {isMl ? "⚡ പെട്ടെന്ന് പരിശോധിക്കാൻ:" : "⚡ QUICK SUGGESTIONS:"}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 6, paddingTop: 4, paddingBottom: 2 }}
+                >
+                  {["5593", "5866", "27", "99", "87", "8860"].map((sug) => {
+                    const isSelected = searchNum === sug;
+                    return (
+                      <TouchableOpacity
+                        key={sug}
+                        style={[
+                          styles.suggestChip,
+                          isSelected && styles.suggestChipActive,
+                        ]}
+                        onPress={() => {
+                          triggerLightHaptic();
+                          setSearchNum(sug);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={[
+                            styles.suggestChipText,
+                            isSelected && styles.suggestChipTextActive,
+                          ]}
+                        >
+                          {sug}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* Search Text Input Bar */}
+              <View style={styles.searchInputWrap}>
+                <Search size={16} color="#3B82F6" />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={isMl ? "നമ്പർ അടിക്കുക (ഉദാ: 5593, 27)" : "Type 2, 3, or 4 digits..."}
+                  placeholderTextColor="#94A3B8"
+                  value={searchNum}
+                  onChangeText={setSearchNum}
+                  keyboardType="numeric"
+                  maxLength={4}
+                />
+                {searchNum.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() => setSearchNum("")}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <X size={16} color="#94A3B8" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {searchResult ? (
+                <View style={{ marginTop: 12, gap: 10 }}>
+                  {/* Hero Stat Box */}
+                  <View style={styles.searchHeroBox}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <View>
+                        <Text style={styles.searchHeroDigitsTag}>
+                          {searchResult.query.length}-DIGIT COMBINATION
+                        </Text>
+                        <Text style={styles.searchHeroDigits}>
+                          {searchResult.query}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: "flex-end" }}>
+                        <View style={[styles.searchHitsBadge, searchResult.totalMatches === 0 && { backgroundColor: "#94A3B8" }]}>
+                          <Text style={styles.searchHitsBadgeText}>
+                            {searchResult.totalMatches} {isMl ? "തവണ വിജയിച്ചു" : "Times Drawn"}
+                          </Text>
+                        </View>
+                        {searchResult.totalMatches > 0 && (
+                          <Text style={styles.searchHitRateText}>
+                            {searchResult.hitRatePct}% {isMl ? "ഡ്രോകളിൽ" : "Draw Hit Rate"}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Tier Breakdown Chips */}
+                    {searchResult.totalMatches > 0 && Object.keys(searchResult.tierBreakdown).length > 0 && (
+                      <View style={styles.tierBreakdownRow}>
+                        {Object.entries(searchResult.tierBreakdown).map(([tier, count]) => (
+                          <View key={tier} style={styles.tierPill}>
+                            <Text style={styles.tierPillText}>
+                              {tier}: {count}x
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Matching Draws List */}
+                  {searchResult.matchedDraws.length > 0 ? (
+                    <View style={{ gap: 6 }}>
+                      <Text style={[styles.recentDrawsLabel, isMl && { fontSize: 10 }]}>
+                        {isMl ? "സമീപകാല വിജയങ്ങൾ:" : "RECENT MATCHING DRAWS:"}
+                      </Text>
+                      {searchResult.matchedDraws.map((m, idx) => (
+                        <View key={idx} style={styles.drawMatchRow}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.drawMatchName} numberOfLines={1}>
+                              {m.name}
+                            </Text>
+                            <Text style={styles.drawMatchDate}>
+                              {m.date} • {m.tier}
+                            </Text>
+                          </View>
+                          <View style={styles.drawMatchTicketBadge}>
+                            <Text style={styles.drawMatchTicketText}>
+                              {m.fullTicket}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={styles.noMatchBox}>
+                      <Text style={[styles.noMatchText, isMl && { fontSize: 11 }]}>
+                        {isMl
+                          ? `കഴിഞ്ഞ ${filteredDraws.length} നറുക്കെടുപ്പുകളിൽ ഈ നമ്പർ വന്നിട്ടില്ല.`
+                          : `No winning matches found for '${searchResult.query}' in selected draws.`}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={styles.searchIdleBox}>
+                  <Sparkles size={18} color="#2563EB" />
+                  <Text style={[styles.searchIdleText, isMl && { fontSize: 10.5 }]}>
+                    {isMl
+                      ? "ഒരു 2, 3 അല്ലെങ്കിൽ 4 അക്ക നമ്പർ നൽകുകയോ മുകളിലെ സൂചനകളിൽ തൊടുകയോ ചെയ്യുക."
+                      : "Enter any 2, 3, or 4 digits or tap a quick suggestion above to see full prize history."}
+                  </Text>
+                </View>
+              )}
+            </View>
+
             {/* Hot 4-Digit Endings */}
             <View style={styles.sectionCard}>
               <View style={styles.cardHeaderRow}>
@@ -984,5 +1232,182 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#64748B",
     lineHeight: 16,
+  },
+  quickPickLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#64748B",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  suggestChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  suggestChipActive: {
+    backgroundColor: "#0F172A",
+    borderColor: "#0F172A",
+  },
+  suggestChipText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#334155",
+  },
+  suggestChipTextActive: {
+    color: "#FFFFFF",
+  },
+  searchInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F172A",
+    padding: 0,
+    letterSpacing: 1,
+  },
+  searchHeroBox: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 14,
+    padding: 12,
+  },
+  searchHeroDigitsTag: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#2563EB",
+    letterSpacing: 0.5,
+  },
+  searchHeroDigits: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#0F172A",
+    letterSpacing: 1.5,
+    marginTop: 2,
+  },
+  searchHitsBadge: {
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  searchHitsBadgeText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  searchHitRateText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#1E40AF",
+    marginTop: 3,
+  },
+  tierBreakdownRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(37, 99, 235, 0.15)",
+  },
+  tierPill: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#93C5FD",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  tierPillText: {
+    fontSize: 9.5,
+    fontWeight: "800",
+    color: "#1E40AF",
+  },
+  recentDrawsLabel: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    color: "#64748B",
+    marginTop: 4,
+  },
+  drawMatchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    padding: 10,
+  },
+  drawMatchName: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  drawMatchDate: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#64748B",
+    marginTop: 2,
+  },
+  drawMatchTicketBadge: {
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  drawMatchTicketText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0369A1",
+    letterSpacing: 0.5,
+  },
+  noMatchBox: {
+    backgroundColor: "#F8FAFC",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    alignItems: "center",
+  },
+  noMatchText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: "#64748B",
+    textAlign: "center",
+  },
+  searchIdleBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#86EFAC",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 6,
+  },
+  searchIdleText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#166534",
+    lineHeight: 15,
   },
 });
