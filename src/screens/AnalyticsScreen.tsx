@@ -29,6 +29,7 @@ import {
   X,
   Dices,
   Zap,
+  Activity,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
@@ -442,6 +443,68 @@ export default function AnalyticsScreen({ navigation }: any) {
     };
   }, [submittedQuery, filteredDraws]);
 
+  // Live Odd/Even & High/Low Pattern Balance Indicator
+  const digitBalance = useMemo(() => {
+    let odd = 0;
+    let even = 0;
+    let low = 0; // 0-4
+    let high = 0; // 5-9
+    let sum = 0;
+
+    digits.forEach((d) => {
+      if (d % 2 === 0) even++;
+      else odd++;
+      if (d >= 5) high++;
+      else low++;
+      sum += d;
+    });
+
+    let balanceScore = 50;
+    if (odd === 2 && even === 2) balanceScore += 24;
+    else if (odd === 3 || odd === 1) balanceScore += 14;
+    else balanceScore += 4;
+
+    if (high === 2 && low === 2) balanceScore += 24;
+    else if (high === 3 || high === 1) balanceScore += 14;
+    else balanceScore += 4;
+
+    if (sum >= 12 && sum <= 24) balanceScore = Math.min(99, balanceScore + 2);
+
+    let statusTextEn = "Highly Balanced";
+    let statusTextMl = "മികച്ച സന്തുലിതാവസ്ഥ";
+    let statusColor = "#16A34A";
+    let bgTint = "#F0FDF4";
+    let borderTint = "#BBF7D0";
+
+    if (balanceScore < 70) {
+      statusTextEn = "Skewed Pattern";
+      statusTextMl = "ഒരു ഭാഗത്തേക്ക് ചരിഞ്ഞത്";
+      statusColor = "#D97706";
+      bgTint = "#FFFBEB";
+      borderTint = "#FDE68A";
+    } else if (balanceScore < 85) {
+      statusTextEn = "Moderately Balanced";
+      statusTextMl = "സാധാരണ സന്തുലിതാവസ്ഥ";
+      statusColor = "#2563EB";
+      bgTint = "#EFF6FF";
+      borderTint = "#BFDBFE";
+    }
+
+    return {
+      odd,
+      even,
+      low,
+      high,
+      sum,
+      balanceScore,
+      statusTextEn,
+      statusTextMl,
+      statusColor,
+      bgTint,
+      borderTint,
+    };
+  }, [digits]);
+
   return (
     <SafeAreaView
       style={styles.safeArea}
@@ -628,6 +691,76 @@ export default function AnalyticsScreen({ navigation }: any) {
                     onChange={(newVal) => handleDigitChange(colIdx, newVal)}
                   />
                 ))}
+              </View>
+
+              {/* Live Pattern & Balance Indicator */}
+              <View
+                style={[
+                  styles.balanceCard,
+                  {
+                    backgroundColor: digitBalance.bgTint,
+                    borderColor: digitBalance.borderTint,
+                  },
+                ]}
+              >
+                <View style={styles.balanceHeaderRow}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Activity size={15} color={digitBalance.statusColor} />
+                    <Text
+                      style={[
+                        styles.balanceScoreText,
+                        { color: digitBalance.statusColor },
+                      ]}
+                    >
+                      {digitBalance.balanceScore}%{" "}
+                      {isMl
+                        ? digitBalance.statusTextMl
+                        : digitBalance.statusTextEn}
+                    </Text>
+                  </View>
+                  <View style={styles.balancePill}>
+                    <Text style={styles.balancePillText}>
+                      {isMl
+                        ? `തുക: ${digitBalance.sum}`
+                        : `Sum: ${digitBalance.sum}`}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Progress Bar */}
+                <View style={styles.balanceProgressTrack}>
+                  <View
+                    style={[
+                      styles.balanceProgressFill,
+                      {
+                        width: `${digitBalance.balanceScore}%`,
+                        backgroundColor: digitBalance.statusColor,
+                      },
+                    ]}
+                  />
+                </View>
+
+                {/* Live Metric Pills */}
+                <View style={styles.balanceTagsRow}>
+                  <View style={styles.balanceTag}>
+                    <Text style={styles.balanceTagLabel}>
+                      {digitBalance.odd} {isMl ? "ഒറ്റ" : "Odd"} :{" "}
+                      {digitBalance.even} {isMl ? "ഇരട്ട" : "Even"}
+                    </Text>
+                  </View>
+                  <View style={styles.balanceTag}>
+                    <Text style={styles.balanceTagLabel}>
+                      {digitBalance.high} {isMl ? "ഉയർന്നത് (5-9)" : "High (5-9)"} :{" "}
+                      {digitBalance.low} {isMl ? "കുറഞ്ഞത് (0-4)" : "Low (0-4)"}
+                    </Text>
+                  </View>
+                </View>
               </View>
 
               {/* Check History Action Button with Brand Color */}
@@ -1289,6 +1422,62 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#64748B",
     marginTop: 1,
+  },
+  balanceCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
+  },
+  balanceHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  balanceScoreText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  balancePill: {
+    backgroundColor: "rgba(255,255,255,0.85)",
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  balancePillText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  balanceProgressTrack: {
+    height: 5,
+    backgroundColor: "rgba(0,0,0,0.06)",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  balanceProgressFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  balanceTagsRow: {
+    flexDirection: "row",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  balanceTag: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  balanceTagLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#334155",
   },
   grid2Col: {
     flexDirection: "row",
