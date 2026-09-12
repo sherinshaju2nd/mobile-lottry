@@ -98,12 +98,51 @@ export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; b
       .order("id", { ascending: true });
 
     if (!error && data && data.length > 0) {
+      // Query recent draw results to get real live 1st prize amounts from DB
+      const { data: drawData } = await supabase
+        .from("draw_results")
+        .select("lottery_code, prizes")
+        .order("draw_date", { ascending: false })
+        .limit(100);
+
+      const dbPrizeMap: Record<string, string> = {};
+      if (drawData && drawData.length > 0) {
+        drawData.forEach((row: any) => {
+          if (row.lottery_code && !dbPrizeMap[row.lottery_code]) {
+            try {
+              const prizesObj = typeof row.prizes === "string" ? JSON.parse(row.prizes) : row.prizes;
+              if (prizesObj?.amounts?.["1st"]) {
+                dbPrizeMap[row.lottery_code] = prizesObj.amounts["1st"];
+              }
+            } catch {}
+          }
+        });
+      }
+
       const weekly: LotteryMeta[] = [];
       const bumper: LotteryMeta[] = [];
       const monthOrder = ["XN", "SB", "VB", "MB", "TH", "PB"];
 
+      const DEFAULT_WEEKLY_PRIZES: Record<string, string> = {
+        BT: "₹1 Crore",
+        SS: "₹75 Lakhs",
+        DL: "₹1 Crore",
+        KN: "₹80 Lakhs",
+        SK: "₹70 Lakhs",
+        KR: "₹80 Lakhs",
+        SM: "₹70 Lakhs",
+      };
+
       data.forEach((d: any) => {
         const isBumper = d.is_bumper ?? d.day.toLowerCase().includes("bumper");
+        const defaultJackpot = isBumper
+          ? (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.jackpot || "₹10 Crore")
+          : (DEFAULT_WEEKLY_PRIZES[d.code] || "₹80 Lakhs");
+
+        const defaultTicketPrice = isBumper
+          ? (d.code === "TH" ? "₹500" : d.code === "XN" ? "₹400" : "₹300")
+          : "₹50";
+
         const item: LotteryMeta = {
           code: d.code,
           name: d.name,
@@ -111,10 +150,10 @@ export async function fetchLotteriesFromDb(): Promise<{ weekly: LotteryMeta[]; b
           day: d.day,
           drawTime: d.draw_time || (isBumper ? "2:00 PM" : "3:00 PM"),
           isBumper,
-          jackpot: d.jackpot || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.jackpot || "₹10 Crore"),
+          jackpot: d.jackpot || dbPrizeMap[d.code] || defaultJackpot,
           drawSeason: d.draw_season || (BUMPER_LOTTERIES.find((b) => b.code === d.code)?.drawSeason || d.day),
           draw_date: d.draw_date || undefined,
-          ticket_price: d.ticket_price || undefined,
+          ticket_price: d.ticket_price || defaultTicketPrice,
         };
         if (isBumper) {
           bumper.push(item);

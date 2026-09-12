@@ -5,17 +5,22 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   Platform,
   LayoutAnimation,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronRight, Sparkles, Calendar, Trophy } from "lucide-react-native";
+import {
+  ChevronRight,
+  Sparkles,
+  Calendar,
+  Trophy,
+  Ticket,
+  Clock,
+} from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import {
   WEEKLY_LOTTERIES,
   BUMPER_LOTTERIES,
-  ALL_LOTTERIES,
   LotteryMeta,
   getDayTranslated,
   getLotteryTranslatedName,
@@ -23,6 +28,44 @@ import {
 import { isIndic } from "../constants/translations";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+
+export function formatPrizeAmount(amount: string | undefined): string {
+  if (!amount) return "₹75 Lakhs";
+  const str = amount.trim();
+  if (str.toLowerCase().includes("crore") || str.toLowerCase().includes("lakh")) {
+    return str;
+  }
+  const clean = str.replace(/[^\d]/g, "");
+  const num = parseInt(clean, 10);
+  if (!isNaN(num)) {
+    if (num >= 10000000) {
+      const cr = num / 10000000;
+      return `₹${cr % 1 === 0 ? cr : cr.toFixed(2)} Crore`;
+    }
+    if (num >= 100000) {
+      const lk = num / 100000;
+      return `₹${lk % 1 === 0 ? lk : lk.toFixed(2)} Lakhs`;
+    }
+    return `₹${num.toLocaleString("en-IN")}`;
+  }
+  return str.startsWith("₹") ? str : `₹${str}`;
+}
+
+const LOTTERY_PRIZE_DEFAULTS: Record<string, { prize: string; price: string }> = {
+  BT: { prize: "₹1 Crore", price: "₹50" },
+  SS: { prize: "₹75 Lakhs", price: "₹50" },
+  DL: { prize: "₹1 Crore", price: "₹50" },
+  KN: { prize: "₹80 Lakhs", price: "₹50" },
+  SK: { prize: "₹70 Lakhs", price: "₹50" },
+  KR: { prize: "₹80 Lakhs", price: "₹50" },
+  SM: { prize: "₹70 Lakhs", price: "₹50" },
+  XN: { prize: "₹20 Crore", price: "₹400" },
+  SB: { prize: "₹10 Crore", price: "₹250" },
+  VB: { prize: "₹12 Crore", price: "₹300" },
+  MB: { prize: "₹10 Crore", price: "₹250" },
+  TH: { prize: "₹25 Crore", price: "₹500" },
+  PB: { prize: "₹12 Crore", price: "₹300" },
+};
 
 export default function LotteriesScreen({ navigation }: any) {
   const { t, language } = useLanguage();
@@ -34,7 +77,7 @@ export default function LotteriesScreen({ navigation }: any) {
   const handleTabChange = (tab: "weekly" | "bumper") => {
     if (tab === activeTab) return;
     LayoutAnimation.configureNext({
-      duration: 250,
+      duration: 220,
       create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
       update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
       delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
@@ -54,22 +97,27 @@ export default function LotteriesScreen({ navigation }: any) {
 
   const currentData = activeTab === "weekly" ? weeklyData : bumperData;
 
+  // Calculate today's day of week in Indian Standard Time (IST)
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const todayDayName = dayNames[nowIST.getDay()];
+  const todayISTDate = nowIST.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
   const renderSkeleton = () => (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 14 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <View
-          key={i}
-          style={[
-            styles.card,
-            { backgroundColor: COLORS.cardBg, borderColor: COLORS.border, minHeight: 110 },
-          ]}
-        >
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
-            <View style={{ width: 60, height: 22, backgroundColor: "#E2E8F0", borderRadius: 6 }} />
-            <View style={{ width: 70, height: 20, backgroundColor: "#E2E8F0", borderRadius: 6 }} />
+        <View key={i} style={styles.skeletonCard}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 14 }}>
+            <View style={{ width: 80, height: 26, backgroundColor: "#E2E8F0", borderRadius: 8 }} />
+            <View style={{ width: 90, height: 24, backgroundColor: "#E2E8F0", borderRadius: 8 }} />
           </View>
-          <View style={{ width: 140, height: 18, backgroundColor: "#E2E8F0", borderRadius: 6, marginBottom: 8 }} />
-          <View style={{ width: 90, height: 14, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+          <View style={{ width: 170, height: 22, backgroundColor: "#E2E8F0", borderRadius: 6, marginBottom: 10 }} />
+          <View style={{ width: 120, height: 16, backgroundColor: "#E2E8F0", borderRadius: 4, marginBottom: 14 }} />
+          <View style={{ height: 1, backgroundColor: "#F1F5F9", marginBottom: 12 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View style={{ width: 100, height: 16, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+            <View style={{ width: 80, height: 16, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+          </View>
         </View>
       ))}
     </View>
@@ -77,22 +125,29 @@ export default function LotteriesScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: LotteryMeta }) => {
     const isBumper = item.isBumper || activeTab === "bumper";
-    const todayIST = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    const isDrawToday = item.draw_date ? item.draw_date === todayIST : false;
-    const isAnnouncedUpcoming = isBumper && item.draw_date && !isDrawToday;
+    
+    // Draw status checks
+    const isWeeklyToday = !isBumper && item.day?.toLowerCase() === todayDayName.toLowerCase();
+    const isBumperToday = isBumper && item.draw_date ? item.draw_date === todayISTDate : false;
+    const isDrawToday = isWeeklyToday || isBumperToday;
+    const isAnnouncedUpcomingBumper = isBumper && item.draw_date && !isBumperToday;
+
+    // Fallback prize & ticket price
+    const defaultMeta = LOTTERY_PRIZE_DEFAULTS[item.code] || { prize: "₹80 Lakhs", price: "₹50" };
+    const jackpotPrize = formatPrizeAmount(item.jackpot || defaultMeta.prize);
+    const ticketPrice = item.ticket_price || defaultMeta.price;
+
+    const translatedName = getLotteryTranslatedName(item.code, language) || item.name;
+    const secondaryName = language === "en" ? item.nameMl : item.name;
 
     return (
       <TouchableOpacity
         style={[
           styles.card,
           isDrawToday && styles.cardToday,
-          isAnnouncedUpcoming && {
-            borderColor: "#F59E0B",
-            borderWidth: 1.5,
-            backgroundColor: "#FFFDF0",
-          },
+          isAnnouncedUpcomingBumper && styles.announcedCard,
         ]}
-        activeOpacity={0.7}
+        activeOpacity={0.75}
         onPress={() =>
           navigation.navigate("LotteryArchive", {
             code: item.code,
@@ -100,163 +155,139 @@ export default function LotteriesScreen({ navigation }: any) {
           })
         }
       >
+        {/* Top Badges Row */}
         <View style={styles.cardHeader}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <View
-              style={[
-                styles.codeBadge,
-                isAnnouncedUpcoming && { backgroundColor: "#FEF3C7" },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.codeText,
-                  isAnnouncedUpcoming && { color: "#92400E" },
-                ]}
-              >
-                {item.code}
-              </Text>
+          <View style={styles.badgeGroup}>
+            {/* Code Badge */}
+            <View style={styles.codeBadge}>
+              <Text style={styles.codeText}>{item.code}</Text>
             </View>
 
-            {isAnnouncedUpcoming ? (
-              <View
-                style={{
-                  backgroundColor: "#FEF3C7",
-                  paddingHorizontal: 8,
-                  paddingVertical: 3,
-                  borderRadius: 6,
-                  borderWidth: 1,
-                  borderColor: "#FCD34D",
-                }}
-              >
+            {/* Schedule Day / Season Tag */}
+            {isBumper ? (
+              <View style={styles.tagPill}>
+                <Sparkles size={12} color="#0B3C5D" />
                 <Text
-                  style={{
-                    fontSize: 10.5,
-                    fontWeight: "800",
-                    color: "#92400E",
-                  }}
+                  style={[
+                    styles.tagPillText,
+                    isIndic(language) && { fontSize: 11 },
+                  ]}
                 >
-                  {isDrawToday ? t("draws_today") : `${t("draw_date")}: ${item.draw_date}`}
+                  {item.drawSeason || item.day || "State Bumper"}
                 </Text>
               </View>
             ) : (
-              <Text
-                style={[
-                  styles.dayText,
-                  isIndic(language) && { fontSize: 11, paddingHorizontal: 8 },
-                ]}
-              >
-                {getDayTranslated(item.day, language)}
-              </Text>
+              <View style={[styles.tagPill, isDrawToday && styles.tagPillToday]}>
+                <Calendar size={12} color={isDrawToday ? "#059669" : "#0B3C5D"} />
+                <Text
+                  style={[
+                    styles.tagPillText,
+                    isDrawToday && styles.tagPillTextToday,
+                    isIndic(language) && { fontSize: 11 },
+                  ]}
+                >
+                  {getDayTranslated(item.day, language)}
+                </Text>
+              </View>
             )}
           </View>
-          <ChevronRight size={18} color={isAnnouncedUpcoming ? "#D97706" : COLORS.primary} />
+
+          {/* Right Status Pill */}
+          {isDrawToday ? (
+            <View style={styles.drawsTodayBadge}>
+              <View style={styles.pulseGreenDot} />
+              <Text style={styles.drawsTodayText}>
+                {t("draws_today")}
+              </Text>
+            </View>
+          ) : isAnnouncedUpcomingBumper ? (
+            <View style={styles.announcedDateBadge}>
+              <Text style={styles.announcedDateText}>
+                {item.draw_date}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.timePill}>
+              <Clock size={11} color="#64748B" />
+              <Text style={styles.timePillText}>
+                {item.drawTime || (isBumper ? "2:00 PM" : "3:00 PM")}
+              </Text>
+            </View>
+          )}
         </View>
 
-        <Text
-          style={[
-            styles.title,
-            isAnnouncedUpcoming && { color: "#78350F" },
-            isIndic(language) && { fontSize: 15, lineHeight: 22, fontWeight: "800" },
-          ]}
-        >
-          {getLotteryTranslatedName(item.code, language) || item.name}
-        </Text>
-
-        {isBumper && item.jackpot && (
-          <View
-            style={[
-              styles.jackpotRow,
-              isAnnouncedUpcoming && {
-                backgroundColor: "#FEF3C7",
-                borderColor: "#FCD34D",
-              },
-            ]}
-          >
-            <Trophy size={13} color={isAnnouncedUpcoming ? "#D97706" : COLORS.primary} />
-            <Text
-              style={[
-                styles.jackpotText,
-                isAnnouncedUpcoming && { color: "#92400E" },
-                isIndic(language) && { fontSize: 11 },
-              ]}
-            >
-              {t("first_prize")}:{" "}
-              <Text
-                style={{
-                  fontWeight: "900",
-                  color: isAnnouncedUpcoming ? "#78350F" : COLORS.primary,
-                }}
-              >
-                {item.jackpot}
-              </Text>
-            </Text>
-          </View>
-        )}
-
-        {isAnnouncedUpcoming ? (
-          <View
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: 8,
-              padding: 10,
-              borderWidth: 1,
-              borderColor: "#F59E0B",
-              marginTop: 4,
-              marginBottom: 4,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: "900",
-                color: "#B45309",
-                marginBottom: 2,
-                textTransform: "uppercase",
-              }}
-            >
-              {t("announced_draw_date")}
-            </Text>
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "900",
-                color: "#78350F",
-              }}
-            >
-              {item.draw_date} • {item.drawTime || "2:00 PM"}
-            </Text>
-            {item.ticket_price && (
-              <Text
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: "700",
-                  color: "#92400E",
-                  marginTop: 2,
-                }}
-              >
-                {t("ticket_price")}: {item.ticket_price}
-              </Text>
-            )}
-          </View>
-        ) : (
-          <Text style={[styles.subtitle, isIndic(language) && { fontSize: 11, lineHeight: 16 }]}>
-            {isBumper
-              ? `${t("draw_season")}: ${item.drawSeason || "2:00 PM"}`
-              : `${t("draw_time")}: ${item.drawTime || "3:00 PM"}`}
-          </Text>
-        )}
-
-        <View style={styles.footer}>
+        {/* Main Content: Title & Native Translation */}
+        <View style={styles.titleSection}>
           <Text
             style={[
-              styles.footerLink,
-              isAnnouncedUpcoming && { color: "#D97706" },
-              isIndic(language) && { fontSize: 11.5 },
+              styles.lotteryTitle,
+              isIndic(language) && { fontSize: 18, lineHeight: 26 },
             ]}
           >
-            {t("view_archive")} →
+            {translatedName}
           </Text>
+          {secondaryName && secondaryName !== translatedName && (
+            <Text style={styles.lotterySubName}>
+              {secondaryName}
+            </Text>
+          )}
+        </View>
+
+        {/* Prize & Price Stats Chips */}
+        <View style={styles.statsRow}>
+          {/* 1st Prize Badge */}
+          <View style={styles.prizeChip}>
+            <Trophy size={13} color="#0B3C5D" />
+            <Text style={styles.prizeChipLabel}>
+              1st Prize:{" "}
+              <Text style={styles.prizeChipValue}>
+                {jackpotPrize}
+              </Text>
+            </Text>
+          </View>
+
+          {/* Ticket Price Chip */}
+          <View style={styles.priceChip}>
+            <Ticket size={12} color="#475569" />
+            <Text style={styles.priceChipText}>
+              {ticketPrice}
+            </Text>
+          </View>
+        </View>
+
+        {/* Announced Date Highlight Card (if upcoming) */}
+        {isAnnouncedUpcomingBumper && (
+          <View style={styles.announcedDateCard}>
+            <Text style={styles.announcedDateCardLabel}>
+              {t("announced_draw_date")}
+            </Text>
+            <Text style={styles.announcedDateCardValue}>
+              {item.draw_date} • {item.drawTime || "2:00 PM"}
+            </Text>
+          </View>
+        )}
+
+        {/* Bottom Footer Action */}
+        <View style={styles.cardFooter}>
+          <Text style={styles.footerScheduleNote}>
+            {isBumper
+              ? `Annual Bumper • ${item.drawTime || "2:00 PM"}`
+              : `Weekly Draw • ${item.drawTime || "3:00 PM"}`}
+          </Text>
+
+          <View style={styles.actionBtn}>
+            <Text
+              style={[
+                styles.actionBtnText,
+                isIndic(language) && { fontSize: 12 },
+              ]}
+            >
+              {t("view_archive")}
+            </Text>
+            <View style={styles.actionArrowCircle}>
+              <ChevronRight size={14} color="#0B3C5D" />
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -265,11 +296,17 @@ export default function LotteriesScreen({ navigation }: any) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeText}>
+              🏛️ KERALA STATE LOTTERIES
+            </Text>
+          </View>
           <Text
             style={[
               styles.headerTitle,
-              isIndic(language) && { fontSize: 16.5, lineHeight: 24 },
+              isIndic(language) && { fontSize: 20, lineHeight: 28 },
             ]}
           >
             {t("lotteries_title")}
@@ -277,7 +314,7 @@ export default function LotteriesScreen({ navigation }: any) {
           <Text
             style={[
               styles.headerSubtitle,
-              isIndic(language) && { fontSize: 10.5, lineHeight: 15 },
+              isIndic(language) && { fontSize: 12, lineHeight: 18 },
             ]}
           >
             {t("lotteries_subtitle")}
@@ -291,13 +328,16 @@ export default function LotteriesScreen({ navigation }: any) {
             onPress={() => handleTabChange("weekly")}
             activeOpacity={0.85}
           >
-            <Calendar size={13} color={activeTab === "weekly" ? COLORS.white : COLORS.textDark} />
+            <Calendar
+              size={14}
+              color={activeTab === "weekly" ? "#FFFFFF" : "#475569"}
+            />
             <Text
               numberOfLines={1}
               style={[
                 styles.tabText,
                 activeTab === "weekly" && styles.activeTabText,
-                isIndic(language) && { fontSize: 11 },
+                isIndic(language) && { fontSize: 12 },
               ]}
             >
               {t("weekly_tab")} ({weeklyData.length})
@@ -309,13 +349,16 @@ export default function LotteriesScreen({ navigation }: any) {
             onPress={() => handleTabChange("bumper")}
             activeOpacity={0.85}
           >
-            <Sparkles size={13} color={activeTab === "bumper" ? COLORS.white : COLORS.textDark} />
+            <Sparkles
+              size={14}
+              color={activeTab === "bumper" ? "#FFFFFF" : "#475569"}
+            />
             <Text
               numberOfLines={1}
               style={[
                 styles.tabText,
                 activeTab === "bumper" && styles.activeTabText,
-                isIndic(language) && { fontSize: 11 },
+                isIndic(language) && { fontSize: 12 },
               ]}
             >
               {t("bumper_tab")} ({bumperData.length})
@@ -323,10 +366,9 @@ export default function LotteriesScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* List Content */}
         {isLoading ? (
-          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-            {renderSkeleton()}
-          </View>
+          <View style={{ paddingTop: 6 }}>{renderSkeleton()}</View>
         ) : (
           <FlatList
             data={currentData}
@@ -348,21 +390,41 @@ export default function LotteriesScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, padding: 16 },
+  safeArea: { flex: 1, backgroundColor: "#F8FAFC" },
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   header: { marginBottom: 14 },
+  headerBadge: {
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+    marginBottom: 6,
+  },
+  headerBadgeText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#475569",
+    letterSpacing: 0.5,
+  },
   headerTitle: {
     fontSize: 22,
     fontWeight: "900",
-    color: COLORS.textDark,
-    marginBottom: 4,
+    color: "#0F172A",
+    marginBottom: 3,
+    letterSpacing: -0.3,
   },
-  headerSubtitle: { fontSize: 13, color: COLORS.textMuted },
+  headerSubtitle: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#64748B",
+    lineHeight: 18,
+  },
   tabBar: {
     flexDirection: "row",
-    backgroundColor: COLORS.border,
+    backgroundColor: "#E2E8F0",
     borderRadius: 12,
-    padding: 4,
+    padding: 3.5,
     marginBottom: 14,
     gap: 4,
   },
@@ -376,47 +438,45 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
-  },
-  activeBumperTab: {
-    backgroundColor: "#D97706",
+    backgroundColor: "#0B3C5D",
+    shadowColor: "#0B3C5D",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabText: {
     fontSize: 12.5,
     fontWeight: "800",
-    color: COLORS.textDark,
+    color: "#475569",
   },
   activeTabText: {
-    color: COLORS.white,
+    color: "#FFFFFF",
   },
-  activeBumperTabText: {
-    color: COLORS.white,
+  listContainer: {
+    gap: 12,
+    paddingBottom: 28,
   },
-  listContainer: { gap: 12, paddingBottom: 24 },
   card: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
-    shadowColor: COLORS.primary,
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowRadius: 8,
     elevation: 2,
   },
   cardToday: {
-    borderColor: COLORS.primary,
+    borderColor: "#10B981",
     borderWidth: 1.5,
     backgroundColor: "#F0FDF4",
   },
-  bumperCard: {
-    borderColor: "#FCD34D",
-    backgroundColor: "#FFFDF7",
-    borderWidth: 2,
-    shadowColor: "#D97706",
-    shadowOpacity: 0.12,
-    elevation: 3,
+  announcedCard: {
+    borderColor: "#CBD5E1",
+    borderWidth: 1.5,
   },
   cardHeader: {
     flexDirection: "row",
@@ -424,61 +484,205 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  badgeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  badgeGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   codeBadge: {
     backgroundColor: "#0B3C5D",
     paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  codeChip: {
-    backgroundColor: "#0B3C5D",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 6,
+  codeText: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
-  bumperCodeChip: {
-    backgroundColor: "#92400E",
-  },
-  codeText: { fontSize: 12, fontWeight: "900", color: "#FFFFFF" },
-  dayText: {
-    fontSize: 12.5,
-    fontWeight: "800",
-    color: COLORS.primary,
+  tagPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     backgroundColor: "#EBF5FF",
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 8,
   },
-  title: {
+  tagPillToday: {
+    backgroundColor: "#D1FAE5",
+  },
+  tagPillText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#0B3C5D",
+  },
+  tagPillTextToday: {
+    color: "#065F46",
+  },
+  timePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  timePillText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#64748B",
+  },
+  drawsTodayBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+  },
+  pulseGreenDot: {
+    width: 6.5,
+    height: 6.5,
+    borderRadius: 3.5,
+    backgroundColor: "#16A34A",
+  },
+  drawsTodayText: {
+    fontSize: 10.5,
+    fontWeight: "900",
+    color: "#15803D",
+    letterSpacing: 0.3,
+  },
+  announcedDateBadge: {
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  announcedDateText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#475569",
+  },
+  titleSection: {
+    marginBottom: 10,
+  },
+  lotteryTitle: {
     fontSize: 18,
     fontWeight: "900",
     color: "#0F172A",
-    marginBottom: 4,
+    letterSpacing: -0.2,
   },
-  jackpotRow: {
+  lotterySubName: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748B",
+    marginTop: 1,
+  },
+  statsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+    marginBottom: 12,
+  },
+  prizeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     backgroundColor: "#EBF5FF",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
-    alignSelf: "flex-start",
-    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#BFDBFE",
   },
-  jackpotText: {
-    fontSize: 12,
+  prizeChipLabel: {
+    fontSize: 11.5,
     fontWeight: "700",
-    color: COLORS.primary,
+    color: "#0B3C5D",
   },
-  subtitle: { fontSize: 12.5, fontWeight: "600", color: "#64748B", marginBottom: 12 },
-  footer: {
+  prizeChipValue: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#0B3C5D",
+  },
+  priceChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  priceChipText: {
+    fontSize: 11.5,
+    fontWeight: "800",
+    color: "#334155",
+  },
+  announcedDateCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 8,
+    padding: 9,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 12,
+  },
+  announcedDateCardLabel: {
+    fontSize: 9.5,
+    fontWeight: "900",
+    color: "#475569",
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  announcedDateCardValue: {
+    fontSize: 12.5,
+    fontWeight: "900",
+    color: "#0F172A",
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
   },
-  footerLink: { fontSize: 13, fontWeight: "800", color: COLORS.primary },
+  footerScheduleNote: {
+    fontSize: 11.5,
+    fontWeight: "600",
+    color: "#94A3B8",
+  },
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  actionBtnText: {
+    fontSize: 12.5,
+    fontWeight: "800",
+    color: "#0B3C5D",
+  },
+  actionArrowCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#EBF5FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  skeletonCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
 });
