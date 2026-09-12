@@ -308,6 +308,10 @@ export const translations = {
     scanned_ticket: "Scanned Ticket",
     rescan_btn: "Scan Another Ticket",
     fetching_results_loading: "Fetching draw results for date...",
+    view_result_btn: "View Result",
+    just_miss_btn: "Just Miss",
+    change_date_btn: "Change Date",
+    or_divider_text: "OR",
 
     // Reminders Screen & Modal
     reminders_title: "Ticket Reminders",
@@ -692,6 +696,10 @@ export const translations = {
     scanned_ticket: "സ്‌കാൻ ചെയ്ത ടിക്കറ്റ്",
     rescan_btn: "മറ്റൊരു ടിക്കറ്റ് സ്‌കാൻ ചെയ്യുക",
     fetching_results_loading: "ഫലങ്ങൾ ശേഖരിക്കുന്നു...",
+    view_result_btn: "ഫലം കാണുക",
+    just_miss_btn: "ജസ്റ്റ് മിസ്സ്",
+    change_date_btn: "തീയതി മാറ്റുക",
+    or_divider_text: "അല്ലെങ്കിൽ",
 
     // Reminders Screen & Modal
     reminders_title: "ടിക്കറ്റ് റിമൈൻഡറുകൾ",
@@ -1071,6 +1079,10 @@ export const translations = {
     scanned_ticket: "स्कैन किया गया टिकट",
     rescan_btn: "दूसरा टिकट स्कैन करें",
     fetching_results_loading: "परिणाम प्राप्त किए जा रहे हैं...",
+    view_result_btn: "परिणाम देखें",
+    just_miss_btn: "जस्ट मिस",
+    change_date_btn: "तिथि बदलें",
+    or_divider_text: "या",
 
     // Reminders Screen & Modal
     reminders_title: "टिकट रिमाइंडर",
@@ -1456,6 +1468,10 @@ export const translations = {
     scanned_ticket: "ஸ்கேன் செய்யப்பட்ட டிக்கெட்",
     rescan_btn: "மற்றொரு டிக்கெட்டை ஸ்கேன் செய்",
     fetching_results_loading: "முடிவுகள் சேகரிக்கப்படுகின்றன...",
+    view_result_btn: "முடிவைக் காண்க",
+    just_miss_btn: "ஜஸ்ட் மிஸ்",
+    change_date_btn: "தேதியை மாற்றுக",
+    or_divider_text: "அல்லது",
 
     // Reminders Screen & Modal
     reminders_title: "டிக்கெட் நினைவூட்டல்",
@@ -1837,6 +1853,10 @@ export const translations = {
     scanned_ticket: "ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಟಿಕೆಟ್",
     rescan_btn: "ಇನ್ನೊಂದು ಟಿಕೆಟ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
     fetching_results_loading: "ಫಲಿತಾಂಶಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗುತ್ತಿದೆ...",
+    view_result_btn: "ಫಲಿತಾಂಶ ವೀಕ್ಷಿಸಿ",
+    just_miss_btn: "ಜಸ್ಟ್ ಮಿಸ್",
+    change_date_btn: "ದಿನಾಂಕ ಬದಲಾಯಿಸಿ",
+    or_divider_text: "ಅಥವಾ",
 
     // Reminders Screen & Modal
     reminders_title: "ಟಿಕೆಟ್ ಜ್ಞಾಪನೆಗಳು",
@@ -2217,6 +2237,10 @@ export const translations = {
     scanned_ticket: "స్కాన్ చేసిన టిక్కెట్",
     rescan_btn: "మరొక టిక్కెట్‌ను స్కాన్ చేయండి",
     fetching_results_loading: "ఫలితాలు సేకరించబడుతున్నాయి...",
+    view_result_btn: "ఫలితం చూడండి",
+    just_miss_btn: "జస్ట్ మిస్",
+    change_date_btn: "తేదీ మార్చండి",
+    or_divider_text: "లేదా",
 
     // Reminders Screen & Modal
     reminders_title: "టిక్కెట్ రిమైండర్‌లు",

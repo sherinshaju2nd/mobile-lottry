@@ -7,23 +7,28 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  TextInput,
 } from "react-native";
 import {
   Scan,
   X,
   Calendar,
   Sparkles,
-  Globe,
   ChevronRight,
   Trophy,
-  Frown,
   Camera,
+  XCircle,
+  FileText,
+  Target,
+  RefreshCw,
 } from "lucide-react-native";
+import { navigate } from "../utils/navigationRef";
 import { COLORS } from "../constants/colors";
 import { searchTicketNumber, SearchMatch, DrawResult } from "../api/lotteryApi";
 import ModernDatePickerModal from "./ModernDatePickerModal";
+import JustMissModal from "./JustMissModal";
 import { useLanguage } from "../context/LanguageContext";
+import { isIndic } from "../constants/translations";
+import { triggerLightHaptic } from "../utils/haptics";
 
 interface BarcodeResultModalProps {
   visible: boolean;
@@ -32,6 +37,15 @@ interface BarcodeResultModalProps {
   targetLotteryCode?: string | null;
   onClose: () => void;
   onRescan: () => void;
+}
+
+function formatDisplayDate(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
 }
 
 export default function BarcodeResultModal({
@@ -44,40 +58,40 @@ export default function BarcodeResultModal({
 }: BarcodeResultModalProps) {
   const { language, t } = useLanguage();
   const isMl = language === "ml";
-  const [selectedDate, setSelectedDate] = useState<string>("ALL");
+  const indic = isIndic(language);
 
-  const [customDateInput, setCustomDateInput] = useState<string>("");
+  const filteredDraws = targetLotteryCode
+    ? availableDraws.filter(
+        (d) => d.lottery_code.toUpperCase() === targetLotteryCode.toUpperCase()
+      )
+    : availableDraws;
+
+  const relevantDraws = filteredDraws.length > 0 ? filteredDraws : availableDraws;
+  const dateOptions = Array.from(new Set(relevantDraws.map((d) => d.draw_date)));
+
+  const defaultDate = dateOptions.length > 0 ? dateOptions[0] : "";
+  const [selectedDate, setSelectedDate] = useState<string>(defaultDate);
   const [isSearching, setIsSearching] = useState(false);
   const [allMatches, setAllMatches] = useState<SearchMatch[] | null>(null);
   const [matchedDrawDetails, setMatchedDrawDetails] = useState<DrawResult | null>(null);
   const [step, setStep] = useState<"select_date" | "result">("select_date");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-
-  const filteredDraws = targetLotteryCode
-    ? availableDraws.filter((d) => d.lottery_code.toUpperCase() === targetLotteryCode.toUpperCase())
-    : availableDraws;
-
-  const relevantDraws = filteredDraws.length > 0 ? filteredDraws : availableDraws;
-
-  const dateOptions = Array.from(new Set(relevantDraws.map((d) => d.draw_date)));
+  const [isJustMissOpen, setIsJustMissOpen] = useState(false);
 
   useEffect(() => {
     if (visible && scannedBarcode) {
-      if (dateOptions.length > 0) {
-        setSelectedDate(dateOptions[0]);
-        setCustomDateInput(dateOptions[0]);
-      } else {
-        setSelectedDate("ALL");
-        setCustomDateInput("");
-      }
+      const initialDate = dateOptions.length > 0 ? dateOptions[0] : "";
+      setSelectedDate(initialDate);
       setStep("select_date");
       setAllMatches(null);
       setMatchedDrawDetails(null);
+      setIsJustMissOpen(false);
     }
   }, [visible, scannedBarcode, targetLotteryCode]);
 
   const handleVerifyTicket = async (targetDate: string) => {
     if (!scannedBarcode) return;
+    triggerLightHaptic();
     setIsSearching(true);
     setSelectedDate(targetDate);
     setStep("result");
@@ -91,18 +105,19 @@ export default function BarcodeResultModal({
           (m) => m.lottery_code.toUpperCase() === targetLotteryCode.toUpperCase()
         );
       }
-      if (targetDate !== "ALL") {
+      if (targetDate && targetDate !== "ALL") {
         filtered = filtered.filter((m) => m.draw_date === targetDate);
       }
 
       setAllMatches(filtered);
 
       const drawDateToFind =
-        targetDate !== "ALL"
+        targetDate && targetDate !== "ALL"
           ? targetDate
           : filtered.length > 0
           ? filtered[0].draw_date
           : dateOptions[0];
+
       const foundDraw =
         relevantDraws.find((d) => d.draw_date === drawDateToFind) ||
         availableDraws.find((d) => d.draw_date === drawDateToFind) ||
@@ -116,7 +131,24 @@ export default function BarcodeResultModal({
     }
   };
 
+  const handleViewFullResult = () => {
+    triggerLightHaptic();
+    const targetDraw =
+      matchedDrawDetails || relevantDraws[0] || availableDraws[0];
+    if (targetDraw) {
+      onClose();
+      navigate("DrawBreakdown", {
+        code: targetDraw.lottery_code,
+        date: targetDraw.draw_date,
+        highlight: scannedBarcode,
+      });
+    }
+  };
+
   const isWinner = allMatches !== null && allMatches.length > 0;
+  const digitsOnly = (scannedBarcode || "").replace(/\D/g, "");
+  const is4DigitQuery = digitsOnly.length >= 4 && digitsOnly.length < 6;
+  const selectedDrawForDate = relevantDraws.find((d) => d.draw_date === selectedDate);
 
   if (!visible) return null;
 
@@ -129,54 +161,76 @@ export default function BarcodeResultModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          {/* Header */}
+          {/* Top Bar Header */}
           <View style={styles.header}>
             <View style={styles.barcodeChip}>
-              <Scan size={16} color={COLORS.primary} />
+              <Scan size={15} color={COLORS.primary} />
               <Text style={styles.barcodeChipText}>{scannedBarcode}</Text>
               {targetLotteryCode && (
                 <Text style={styles.lotteryCodeBadge}>[{targetLotteryCode}]</Text>
               )}
             </View>
-            <TouchableOpacity style={styles.closeIconBtn} onPress={onClose}>
-              <X size={22} color={COLORS.textDark} />
+            <TouchableOpacity
+              style={styles.closeIconBtn}
+              onPress={onClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <X size={20} color={COLORS.textDark} />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            style={styles.scrollBody}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {step === "select_date" ? (
-              /* Step 1: Draw Date Prompt with DatePicker */
+              /* STEP 1: Date Picker with Default Last Draw Date & Quick Draw Selector */
               <View style={styles.dateStepContainer}>
+                {/* Header info */}
                 <View style={styles.dateStepHeader}>
                   <View style={styles.calendarIconBg}>
-                    <Calendar size={24} color={COLORS.primary} />
+                    <Calendar size={26} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.dateStepTitle}>{t("select_draw_date")}</Text>
-                  <Text style={styles.dateStepSub}>
+                  <Text style={[styles.dateStepTitle, indic && { fontSize: 18 }]}>
+                    {t("select_draw_date")}
+                  </Text>
+                  <Text style={[styles.dateStepSub, indic && { fontSize: 13, lineHeight: 18 }]}>
                     {isMl
-                      ? `"${scannedBarcode}" ${targetLotteryCode ? `(${targetLotteryCode}) ` : ""}ടിക്കറ്റിന്റെ ശരിയായ ഫലം ലഭിക്കാൻ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.`
-                      : `Select the draw date for ticket "${scannedBarcode}"${targetLotteryCode ? ` (${targetLotteryCode})` : ""} to fetch accurate results.`}
+                      ? `"${scannedBarcode}" ടിക്കറ്റ് പരിശോധിക്കാൻ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.`
+                      : `Select the draw date for ticket "${scannedBarcode}" to fetch accurate results.`}
                   </Text>
                 </View>
 
-                {/* Custom Visual Date Picker Field */}
+                {/* 1. Top Date Picker Row (Default selected with last available draw date) */}
                 <View style={styles.customDateContainer}>
-                  <Text style={styles.chipSectionLabel}>{t("pick_draw_date_label")}</Text>
+                  <Text style={styles.sectionLabel}>{t("pick_draw_date_label")}</Text>
                   <View style={styles.datePickerInputRow}>
                     <TouchableOpacity
-                      style={[styles.dateInput, { flexDirection: "row", alignItems: "center", gap: 8 }]}
+                      style={styles.dateInputBox}
+                      activeOpacity={0.8}
                       onPress={() => setIsDatePickerOpen(true)}
                     >
                       <Calendar size={18} color={COLORS.primary} />
-                      <Text style={{ flex: 1, fontSize: 13, color: customDateInput ? COLORS.textDark : COLORS.textMuted, fontWeight: "600" }}>
-                        {customDateInput ? customDateInput : t("select_from_calendar")}
-                      </Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.dateInputText}>
+                          {selectedDate ? selectedDate : t("select_from_calendar")}
+                        </Text>
+                        {selectedDrawForDate && (
+                          <Text style={styles.dateInputSubText} numberOfLines={1}>
+                            {selectedDrawForDate.draw_name} ({selectedDrawForDate.lottery_code})
+                          </Text>
+                        )}
+                      </View>
+                      <ChevronRight size={16} color={COLORS.textMuted} />
                     </TouchableOpacity>
+
                     <TouchableOpacity
                       style={styles.fetchDateBtn}
+                      activeOpacity={0.8}
                       onPress={() => {
-                        if (customDateInput.trim()) {
-                          handleVerifyTicket(customDateInput.trim());
+                        if (selectedDate) {
+                          handleVerifyTicket(selectedDate);
                         } else {
                           setIsDatePickerOpen(true);
                         }
@@ -187,73 +241,99 @@ export default function BarcodeResultModal({
                   </View>
                 </View>
 
-                {/* Quick Date Selection Chips */}
-                <Text style={[styles.chipSectionLabel, { marginTop: 16 }]}>
-                  {t("recent_published_dates")}
-                </Text>
-                <View style={styles.chipsContainer}>
-                  {dateOptions.map((dateStr, idx) => {
-                    const drawForDate = relevantDraws.find((d) => d.draw_date === dateStr);
+                {/* 2. OR Divider */}
+                <View style={styles.orDividerContainer}>
+                  <View style={styles.orDividerLine} />
+                  <Text style={styles.orDividerText}>{t("or_divider_text")}</Text>
+                  <View style={styles.orDividerLine} />
+                </View>
+
+                {/* 3. Quick Draw Horizontal Selection Cards (Image 3 style) */}
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionLabel}>{t("select_draw_prompt")}</Text>
+                  <Text style={styles.sectionHint}>
+                    {isMl ? "ടാപ്പ് ചെയ്ത് പരിശോധിക്കുക" : "Tap to check instantly"}
+                  </Text>
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.drawCardsScroll}
+                >
+                  {relevantDraws.slice(0, 10).map((draw: DrawResult, idx: number) => {
+                    const isLatest = idx === 0;
+                    const isSelected = selectedDate === draw.draw_date;
                     return (
                       <TouchableOpacity
-                        key={dateStr}
+                        key={draw.draw_date + (draw.lottery_code || idx)}
                         style={[
-                          styles.dateChip,
-                          idx === 0 && styles.dateChipLatest,
+                          styles.drawTicketCard,
+                          isSelected && styles.drawTicketCardSelected,
                         ]}
+                        activeOpacity={0.8}
                         onPress={() => {
-                          setCustomDateInput(dateStr);
-                          handleVerifyTicket(dateStr);
+                          setSelectedDate(draw.draw_date);
+                          handleVerifyTicket(draw.draw_date);
                         }}
                       >
-                        {idx === 0 ? (
-                          <Sparkles size={14} color={COLORS.primary} />
-                        ) : (
-                          <Calendar size={14} color={COLORS.primary} />
-                        )}
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.dateChipText}>{dateStr}</Text>
-                          {drawForDate && (
-                            <Text style={styles.dateChipSubText}>{drawForDate.draw_name}</Text>
+                        {/* Top Row: Name + Inline LATEST Badge */}
+                        <View style={styles.drawCardTopRow}>
+                          <Text
+                            style={[
+                              styles.drawTicketName,
+                              isSelected && styles.drawTicketNameSelected,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {draw.draw_name || draw.lottery_code}
+                          </Text>
+                          {isLatest && (
+                            <View style={styles.inlineLatestBadge}>
+                              <Sparkles size={9} color="#16A34A" />
+                              <Text style={styles.inlineLatestBadgeText}>
+                                {isMl ? "ഏറ്റവും പുതിയത്" : "LATEST"}
+                              </Text>
+                            </View>
                           )}
                         </View>
-                        {idx === 0 && <Text style={styles.latestBadge}>{isMl ? "ഏറ്റവും പുതിയത്" : "LATEST"}</Text>}
+
+                        {/* Bottom Row: Date, Dotted Divider, Code Badge */}
+                        <View style={styles.drawCardBottomRow}>
+                          <Text
+                            style={[
+                              styles.drawTicketDate,
+                              isSelected && styles.drawTicketDateSelected,
+                            ]}
+                          >
+                            {formatDisplayDate(draw.draw_date)}
+                          </Text>
+
+                          <View style={styles.drawTicketDashedDivider} />
+
+                          <Text style={styles.drawCodeTag}>
+                            {draw.lottery_code || "KL"}
+                          </Text>
+                        </View>
                       </TouchableOpacity>
                     );
                   })}
-
-                  {/* All Draws Option */}
-                  <TouchableOpacity
-                    style={[styles.dateChip, styles.allDrawsChip]}
-                    onPress={() => handleVerifyTicket("ALL")}
-                  >
-                    <Globe size={16} color={COLORS.gold} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.dateChipText, { color: COLORS.gold }]}>
-                        {t("check_all_draw_history")}
-                      </Text>
-                      <Text style={styles.dateChipSubText}>
-                        {t("search_across_all_records")}
-                      </Text>
-                    </View>
-                    <ChevronRight size={16} color={COLORS.gold} />
-                  </TouchableOpacity>
-                </View>
+                </ScrollView>
               </View>
             ) : isSearching ? (
-              /* Loading State */
+              /* LOADING STATE */
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
                 <Text style={styles.loadingText}>{t("fetching_results_loading")}</Text>
                 <Text style={styles.loadingSub}>
-                  {t("ticket_number")}: {scannedBarcode} • {t("draw_date")}: {selectedDate}
+                  {t("ticket_number")}: {scannedBarcode} •{" "}
+                  {formatDisplayDate(selectedDate)}
                   {targetLotteryCode ? ` • ${targetLotteryCode}` : ""}
                 </Text>
               </View>
             ) : isWinner ? (
-              /* WINNING CELEBRATION RESULT */
+              /* WINNING RESULT */
               <View style={styles.resultContainer}>
-                {/* Winner Celebration Banner */}
                 <View style={styles.winBanner}>
                   <Text style={styles.celebrationEmoji}>🎉 🏆 ✨</Text>
                   <Text style={styles.winTitle}>
@@ -266,7 +346,6 @@ export default function BarcodeResultModal({
                   </Text>
                 </View>
 
-                {/* Prize Info Card */}
                 {allMatches?.map((match, i) => (
                   <View key={i} style={styles.prizeCard}>
                     <View style={styles.prizeHeaderRow}>
@@ -281,78 +360,144 @@ export default function BarcodeResultModal({
                     <View style={styles.divider} />
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>{isMl ? "മാച്ച് ആയ ടിക്കറ്റ്:" : "Ticket Matched:"}</Text>
+                      <Text style={styles.detailLabel}>
+                        {isMl ? "മാച്ച് ആയ ടിക്കറ്റ്:" : "Ticket Matched:"}
+                      </Text>
                       <Text style={styles.detailValueBold}>{match.ticket_matched}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>{isMl ? "ലോട്ടറി പേര്:" : "Draw Name:"}</Text>
+                      <Text style={styles.detailLabel}>
+                        {isMl ? "ലോട്ടറി പേര്:" : "Draw Name:"}
+                      </Text>
                       <Text style={styles.detailValue}>
                         {match.draw_name} ({match.draw_code})
                       </Text>
                     </View>
 
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>{isMl ? "നറുക്കെടുപ്പ് തീയതി:" : "Draw Date & Time:"}</Text>
+                      <Text style={styles.detailLabel}>
+                        {isMl ? "നറുക്കെടുപ്പ് തീയതി:" : "Draw Date:"}
+                      </Text>
                       <Text style={styles.detailValue}>
-                        {match.draw_date} • 3:00 PM IST
+                        {formatDisplayDate(match.draw_date)}
                       </Text>
                     </View>
                   </View>
                 ))}
 
-                {/* Draw 1st Prize Winner Extra Details if available */}
-                {matchedDrawDetails?.first?.ticket && (
-                  <View style={styles.drawContextCard}>
-                    <Text style={styles.drawContextTitle}>
-                      {isMl ? `സമ്പൂർണ്ണ ഫലം (${matchedDrawDetails.draw_name})` : `Full Draw Info (${matchedDrawDetails.draw_name})`}
+                {/* Winning Result Action Buttons */}
+                <View style={styles.resultActionButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.viewResultPrimaryBtn}
+                    activeOpacity={0.8}
+                    onPress={handleViewFullResult}
+                  >
+                    <FileText size={16} color="#FFFFFF" />
+                    <Text style={styles.viewResultPrimaryBtnText}>
+                      {t("view_result_btn")}
                     </Text>
-                    <Text style={styles.drawContextSub}>
-                      {t("first_prize")}:{" "}
-                      <Text style={{ fontWeight: "700", color: COLORS.primary }}>
-                        {matchedDrawDetails.first.ticket}
-                      </Text>
-                      {matchedDrawDetails.first.location &&
-                        ` (${matchedDrawDetails.first.location})`}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.changeDateSecondaryBtn}
+                    activeOpacity={0.8}
+                    onPress={() => setStep("select_date")}
+                  >
+                    <RefreshCw size={15} color={COLORS.primary} />
+                    <Text style={styles.changeDateSecondaryBtnText}>
+                      {t("change_date_btn")}
                     </Text>
-                  </View>
-                )}
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : (
-              /* NON-WINNING RESULT */
+              /* NO PRIZE MATCH RESULT (Matching Image 4 Style) */
               <View style={styles.resultContainer}>
-                <View style={styles.noWinBanner}>
-                  <Frown size={44} color="#6B7280" />
-                  <Text style={styles.noWinTitle}>{t("no_prize_found")}</Text>
-                  <Text style={styles.noWinSub}>
-                    {isMl
-                      ? `സ്‌കാൻ ചെയ്ത ടിക്കറ്റ് "${scannedBarcode}" ${selectedDate === "ALL" ? "പ്രസിദ്ധീകരിച്ച ഫലങ്ങളിൽ സമ്മാനം നേടിയിട്ടില്ല." : `${selectedDate} തീയതിയിലെ നറുക്കെടുപ്പിൽ സമ്മാനം നേടിയിട്ടില്ല.`}`
-                      : `Scanned Ticket "${scannedBarcode}" did not win any prize in ${selectedDate === "ALL" ? "any published draws" : `the draw for date ${selectedDate}`}.`}
+                <View style={styles.noWinCard}>
+                  {/* Circle X Icon (Matching Image 4) */}
+                  <View style={styles.noWinIconCircle}>
+                    <XCircle size={46} color="#64748B" />
+                  </View>
+
+                  <Text style={[styles.noWinTitle, indic && { fontSize: 18 }]}>
+                    {t("no_prize_found")}
+                  </Text>
+
+                  <Text style={[styles.noWinSub, indic && { fontSize: 13, lineHeight: 19 }]}>
+                    {is4DigitQuery
+                      ? isMl
+                        ? `4 അക്ക നമ്പർ "${scannedBarcode}" 4 മുതൽ 9 വരെയുള്ള സമ്മാനങ്ങളിൽ ഇല്ല. 1, 2, 3 സമ്മാനങ്ങളും സമാശ്വാസ സമ്മാനവും പരിശോധിക്കാൻ മുഴുവൻ 6 അക്ക ടിക്കറ്റ് നമ്പർ നൽകുക.`
+                        : `4-digit query "${scannedBarcode}" did not match 4th to 9th Prize tiers. Note: 1st, 2nd, 3rd, and Consolation prizes strictly require entering your full 6-digit ticket number with series.`
+                      : isMl
+                      ? `ടിക്കറ്റ് "${scannedBarcode}" ${formatDisplayDate(selectedDate)} തീയതിയിലെ ${matchedDrawDetails?.draw_name || "നറുക്കെടുപ്പിൽ"} സമ്മാനം നേടിയിട്ടില്ല.`
+                      : `Ticket "${scannedBarcode}" did not match any winning prize in ${matchedDrawDetails?.draw_name || "the draw"} (${formatDisplayDate(selectedDate)}).`}
                   </Text>
                 </View>
 
+                {/* Compact Draw Context Snapshot if available */}
                 {matchedDrawDetails && (
                   <View style={styles.drawContextCard}>
-                    <Text style={styles.drawContextTitle}>
-                      {isMl ? `${matchedDrawDetails.draw_date} നറുക്കെടുപ്പ് ചുരുക്കം` : `Draw Summary for ${matchedDrawDetails.draw_date}`}
-                    </Text>
-                    <Text style={styles.drawContextSub}>
-                      {matchedDrawDetails.draw_name} ({matchedDrawDetails.draw_code})
-                    </Text>
-                    <Text style={styles.drawContextSub}>
-                      {t("first_prize")} ({matchedDrawDetails.prizes?.amounts?.["1st"] || "₹70L"}):{" "}
-                      {matchedDrawDetails.first?.ticket || "N/A"}
-                    </Text>
+                    <View style={styles.drawContextTopRow}>
+                      <Text style={styles.drawContextTitle}>
+                        {matchedDrawDetails.draw_name} ({matchedDrawDetails.draw_code})
+                      </Text>
+                      <Text style={styles.drawContextDate}>
+                        {formatDisplayDate(matchedDrawDetails.draw_date)}
+                      </Text>
+                    </View>
+                    <View style={styles.drawContextWinnerRow}>
+                      <Trophy size={14} color="#D97706" />
+                      <Text style={styles.drawContextWinnerText}>
+                        {t("first_prize")}:{" "}
+                        <Text style={{ fontWeight: "800", color: COLORS.primary }}>
+                          {matchedDrawDetails.first?.ticket || "N/A"}
+                        </Text>
+                        {matchedDrawDetails.first?.location
+                          ? ` (${matchedDrawDetails.first.location})`
+                          : ""}
+                      </Text>
+                    </View>
                   </View>
                 )}
 
+                {/* Action Buttons Row: View Result & Just Miss (Image 4) */}
+                <View style={styles.noMatchActionRow}>
+                  <TouchableOpacity
+                    style={styles.noMatchViewResultBtn}
+                    activeOpacity={0.8}
+                    onPress={handleViewFullResult}
+                  >
+                    <FileText size={16} color={COLORS.primary} />
+                    <Text style={styles.noMatchViewResultText}>
+                      {t("view_result_btn")}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.noMatchJustMissBtn}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      triggerLightHaptic();
+                      setIsJustMissOpen(true);
+                    }}
+                  >
+                    <Target size={16} color="#FFFFFF" />
+                    <Text style={styles.noMatchJustMissText}>
+                      {t("just_miss_btn")}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Secondary Option: Change Date */}
                 <TouchableOpacity
-                  style={styles.changeDateBtn}
+                  style={styles.changeDateFullBtn}
+                  activeOpacity={0.8}
                   onPress={() => setStep("select_date")}
                 >
-                  <Calendar size={16} color={COLORS.primary} />
-                  <Text style={styles.changeDateBtnText}>
-                    {isMl ? "തീയതി മാറ്റുക / തിരഞ്ഞെടുക്കുക" : "Pick / Change Draw Date"}
+                  <RefreshCw size={14} color={COLORS.primary} />
+                  <Text style={styles.changeDateFullBtnText}>
+                    {t("change_date_btn")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -361,29 +506,50 @@ export default function BarcodeResultModal({
 
           {/* Bottom Action Footer */}
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.rescanBtn} onPress={onRescan}>
-              <Camera size={18} color={COLORS.primary} />
+            <TouchableOpacity
+              style={styles.rescanBtn}
+              activeOpacity={0.8}
+              onPress={onRescan}
+            >
+              <Camera size={17} color={COLORS.primary} />
               <Text style={styles.rescanBtnText}>{t("rescan_btn")}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
+            <TouchableOpacity
+              style={styles.doneBtn}
+              activeOpacity={0.8}
+              onPress={onClose}
+            >
               <Text style={styles.doneBtnText}>{t("close")}</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
+      {/* Calendar Picker Modal */}
       <ModernDatePickerModal
         visible={isDatePickerOpen}
-        selectedDate={customDateInput || null}
+        selectedDate={selectedDate || null}
         onClose={() => setIsDatePickerOpen(false)}
         onSelectDate={(dateStr) => {
+          setIsDatePickerOpen(false);
           if (dateStr) {
-            setCustomDateInput(dateStr);
+            setSelectedDate(dateStr);
             handleVerifyTicket(dateStr);
           }
         }}
       />
+
+      {/* Just Miss Analysis Modal */}
+      {isJustMissOpen && (
+        <JustMissModal
+          visible={isJustMissOpen}
+          onClose={() => setIsJustMissOpen(false)}
+          searchedTicket={scannedBarcode || ""}
+          draw={matchedDrawDetails || relevantDraws[0] || availableDraws[0]}
+          onViewResult={handleViewFullResult}
+        />
+      )}
     </Modal>
   );
 }
@@ -391,15 +557,20 @@ export default function BarcodeResultModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
     justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: "90%",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: "92%",
     minHeight: "55%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
   header: {
     flexDirection: "row",
@@ -409,36 +580,45 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: "#F1F5F9",
   },
   barcodeChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   barcodeChipText: {
     color: COLORS.primary,
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 14,
+    letterSpacing: 0.5,
   },
   lotteryCodeBadge: {
-    color: COLORS.gold,
+    color: "#D97706",
     fontWeight: "800",
     fontSize: 12,
   },
   closeIconBtn: {
     padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#F8FAFC",
   },
   scrollBody: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
+
+  /* Step 1 Styles */
   dateStepContainer: {},
   dateStepHeader: {
     alignItems: "center",
@@ -448,156 +628,264 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: COLORS.primaryLight,
-    justifyContent: "center",
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
   dateStepTitle: {
     fontSize: 19,
-    fontWeight: "700",
-    color: COLORS.textDark,
-    marginBottom: 4,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 6,
+    textAlign: "center",
   },
   dateStepSub: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: "#64748B",
     textAlign: "center",
     lineHeight: 18,
+    paddingHorizontal: 12,
   },
+
+  /* Top Custom Date Picker Box */
   customDateContainer: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.primary,
-    borderWidth: 1.5,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
   datePickerInputRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
     gap: 10,
-    marginTop: 6,
+    marginTop: 8,
   },
-  dateInput: {
+  dateInputBox: {
     flex: 1,
-    height: 42,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 13,
-    color: COLORS.textDark,
-    backgroundColor: COLORS.background,
-  },
-  fetchDateBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 14,
-    height: 42,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fetchDateBtnText: {
-    color: COLORS.white,
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  chipSectionLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: COLORS.textDark,
-    marginBottom: 8,
-  },
-  chipsContainer: {
-    gap: 10,
-  },
-  dateChip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    gap: 10,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
     borderRadius: 14,
+    paddingHorizontal: 12,
+    minHeight: 52,
+    justifyContent: "center",
   },
-  dateChipLatest: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#EBF5FF",
-  },
-  dateChipText: {
+  dateInputText: {
     fontSize: 14,
-    fontWeight: "700",
-    color: COLORS.textDark,
-  },
-  dateChipSubText: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  latestBadge: {
-    marginLeft: "auto",
-    backgroundColor: COLORS.primary,
-    color: COLORS.white,
-    fontSize: 10,
     fontWeight: "800",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    color: "#0F172A",
   },
-  allDrawsChip: {
-    borderColor: COLORS.gold,
-    backgroundColor: "#FEFCE8",
-    marginTop: 4,
+  dateInputSubText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: COLORS.primary,
+    marginTop: 1,
   },
-  loadingContainer: {
-    paddingVertical: 40,
+  fetchDateBtn: {
+    backgroundColor: "#0B3C5D",
+    paddingHorizontal: 18,
+    minHeight: 52,
+    borderRadius: 14,
     alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
+    shadowColor: "#0B3C5D",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  fetchDateBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+
+  /* OR Divider */
+  orDividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 14,
+  },
+  orDividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E2E8F0",
+  },
+  orDividerText: {
+    paddingHorizontal: 12,
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#94A3B8",
+    letterSpacing: 0.5,
+  },
+
+  /* Section Header */
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  sectionHint: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+
+  /* Horizontal Draw Cards */
+  drawCardsScroll: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  drawTicketCard: {
+    backgroundColor: "#F0F9FF",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#BAE6FD",
+    padding: 12,
+    minWidth: 165,
+  },
+  drawTicketCardSelected: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#16A34A",
+    borderWidth: 2,
+  },
+  drawCardTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    gap: 4,
+  },
+  drawTicketName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
+  drawTicketNameSelected: {
+    color: "#166534",
+    fontWeight: "800",
+  },
+  inlineLatestBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#DCFCE7",
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  inlineLatestBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#15803D",
+  },
+  drawCardBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  drawTicketDate: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: COLORS.primary,
+  },
+  drawTicketDateSelected: {
+    color: "#15803D",
+  },
+  drawTicketDashedDivider: {
+    width: 1,
+    height: 14,
+    borderWidth: 0.8,
+    borderColor: "#CBD5E1",
+    borderStyle: "dashed",
+    marginHorizontal: 8,
+  },
+  drawCodeTag: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#334155",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  /* Loading Container */
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
   },
   loadingText: {
+    marginTop: 14,
     fontSize: 15,
     fontWeight: "700",
-    color: COLORS.textDark,
-    marginTop: 14,
+    color: "#0F172A",
   },
   loadingSub: {
+    marginTop: 6,
     fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 4,
+    color: "#64748B",
+    textAlign: "center",
   },
-  resultContainer: {},
+
+  /* Result Container */
+  resultContainer: {
+    gap: 14,
+  },
+
+  /* Winner Styles */
   winBanner: {
-    backgroundColor: COLORS.primary,
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: "#FEF9C3",
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: "#FACC15",
+    padding: 16,
     alignItems: "center",
-    marginBottom: 16,
   },
   celebrationEmoji: {
     fontSize: 32,
     marginBottom: 6,
   },
   winTitle: {
-    color: COLORS.white,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "900",
-    textAlign: "center",
+    color: "#854D0E",
     letterSpacing: 0.5,
+    marginBottom: 4,
   },
   winSubtitle: {
-    color: "#EBF5FF",
-    fontSize: 13,
+    fontSize: 12,
+    color: "#A16207",
     textAlign: "center",
-    marginTop: 4,
   },
   prizeCard: {
-    backgroundColor: "#FEFCE8",
-    borderColor: COLORS.gold,
-    borderWidth: 1.5,
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     padding: 16,
-    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   prizeHeaderRow: {
     flexDirection: "row",
@@ -608,104 +896,203 @@ const styles = StyleSheet.create({
   prizeTierText: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#B45309",
+    color: "#0F172A",
   },
   prizeAmountText: {
     fontSize: 24,
     fontWeight: "900",
-    color: COLORS.textDark,
-    marginBottom: 10,
+    color: "#16A34A",
+    marginVertical: 4,
   },
   divider: {
     height: 1,
-    backgroundColor: "#FDE68A",
+    backgroundColor: "#F1F5F9",
     marginVertical: 10,
   },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 3,
+    marginVertical: 2,
   },
   detailLabel: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: "#64748B",
   },
   detailValue: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.textDark,
+    color: "#1E293B",
   },
   detailValueBold: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
     color: COLORS.primary,
   },
-  drawContextCard: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 6,
-    marginBottom: 12,
+  resultActionButtonsRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 10,
+    marginTop: 4,
   },
-  drawContextTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textDark,
-    marginBottom: 4,
-  },
-  drawContextSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    lineHeight: 16,
-  },
-  noWinBanner: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    padding: 24,
-    borderRadius: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  noWinTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.textDark,
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  noWinSub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  changeDateBtn: {
+  viewResultPrimaryBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    backgroundColor: COLORS.primaryLight,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 12,
+    gap: 6,
+    backgroundColor: COLORS.primary,
+    minHeight: 50,
+    borderRadius: 14,
   },
-  changeDateBtnText: {
-    color: COLORS.primary,
-    fontWeight: "700",
+  viewResultPrimaryBtnText: {
+    color: "#FFFFFF",
     fontSize: 13,
+    fontWeight: "700",
   },
+  changeDateSecondaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1.5,
+    borderColor: "#BAE6FD",
+    paddingHorizontal: 16,
+    minHeight: 50,
+    borderRadius: 14,
+  },
+  changeDateSecondaryBtnText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  /* No Win Styles (Matching Image 4) */
+  noWinCard: {
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  noWinIconCircle: {
+    marginBottom: 10,
+  },
+  noWinTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: "#0F172A",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  noWinSub: {
+    fontSize: 13,
+    color: "#475569",
+    textAlign: "center",
+    lineHeight: 19,
+    paddingHorizontal: 6,
+  },
+
+  /* Draw Context Card */
+  drawContextCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 12,
+  },
+  drawContextTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  drawContextTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  drawContextDate: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "600",
+  },
+  drawContextWinnerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  drawContextWinnerText: {
+    fontSize: 12,
+    color: "#334155",
+  },
+
+  /* Action Buttons (Image 4 Side by Side) */
+  noMatchActionRow: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    gap: 12,
+    marginTop: 4,
+  },
+  noMatchViewResultBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1.5,
+    borderColor: "#BAE6FD",
+    minHeight: 50,
+    borderRadius: 14,
+  },
+  noMatchViewResultText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  noMatchJustMissBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#0F172A",
+    minHeight: 50,
+    borderRadius: 14,
+  },
+  noMatchJustMissText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  changeDateFullBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    minHeight: 46,
+    borderRadius: 12,
+  },
+  changeDateFullBtnText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  /* Bottom Footer */
   footer: {
     flexDirection: "row",
-    gap: 10,
+    alignItems: "stretch",
+    gap: 12,
     paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingTop: 12,
+    paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    borderTopColor: "#F1F5F9",
+    backgroundColor: "#FFFFFF",
   },
   rescanBtn: {
     flex: 1,
@@ -713,10 +1100,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
+    borderColor: "#BAE6FD",
+    minHeight: 52,
+    borderRadius: 14,
   },
   rescanBtnText: {
     color: COLORS.primary,
@@ -724,15 +1112,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   doneBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    justifyContent: "center",
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0F172A",
+    minHeight: 52,
+    borderRadius: 14,
   },
   doneBtnText: {
-    color: COLORS.white,
+    color: "#FFFFFF",
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

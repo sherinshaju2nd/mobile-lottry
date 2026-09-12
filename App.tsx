@@ -456,6 +456,7 @@ const tabStyles = StyleSheet.create({
 });
 
 import InAppNotificationToast from "./src/components/InAppNotificationToast";
+import { navigationRef } from "./src/utils/navigationRef";
 
 function AppContent() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
@@ -464,7 +465,6 @@ function AppContent() {
     title: string;
     body: string;
   }>({ visible: false, title: "", body: "" });
-  const navigationRef = useRef<any>(null);
 
   useEffect(() => {
     let responseSub: any = null;
