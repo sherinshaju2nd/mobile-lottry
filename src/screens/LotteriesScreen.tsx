@@ -93,7 +93,12 @@ export default function LotteriesScreen({ navigation }: any) {
           },
         ]}
         activeOpacity={0.7}
-        onPress={() => navigation.navigate("LotteryArchive", { lotteryCode: item.code })}
+        onPress={() =>
+          navigation.navigate("LotteryArchive", {
+            code: item.code,
+            lotteryCode: item.code,
+          })
+        }
       >
         <View style={styles.cardHeader}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
