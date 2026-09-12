@@ -102,7 +102,9 @@ export default function AiSocialDigestModal({
   const handleGeneralShare = async () => {
     const text = getCurrentText();
     if (!text) return;
-    await Share.share({ message: text });
+    try {
+      await Share.share({ message: text });
+    } catch {}
   };
 
   return (

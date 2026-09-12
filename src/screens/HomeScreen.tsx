@@ -59,6 +59,10 @@ import {
   triggerLiveChimeHaptic,
 } from "../utils/haptics";
 import {
+  getSafeTodayISTDate,
+  getSafeTodayISTDayName,
+} from "../utils/formatters";
+import {
   sendInstantWinnerNotification,
   sendFullResultPublishedNotification,
   checkSavedTicketsAndSendWinAlert,
@@ -167,12 +171,14 @@ export default function HomeScreen({ navigation }: any) {
   const handleHeroTabChange = (newTab: number) => {
     if (newTab === heroTab) return;
     triggerLightHaptic();
-    LayoutAnimation.configureNext({
-      duration: 260,
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-    });
+    try {
+      LayoutAnimation.configureNext({
+        duration: 260,
+        create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+        update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
+        delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      });
+    } catch {}
     setHeroTab(newTab);
     setTicketInput("");
     setSearchResults(null);
@@ -226,9 +232,7 @@ export default function HomeScreen({ navigation }: any) {
         setIsLoading(false);
       }
 
-      const todayDate = new Date().toLocaleDateString("en-CA", {
-        timeZone: "Asia/Kolkata",
-      });
+      const todayDate = getSafeTodayISTDate();
 
       const [draws, lotteries, bumpers, postponement] = await Promise.all([
         fetchAllDraws(),
@@ -269,9 +273,7 @@ export default function HomeScreen({ navigation }: any) {
 
     const updateCountdown = () => {
       try {
-        const todayDate = new Date().toLocaleDateString("en-CA", {
-          timeZone: "Asia/Kolkata",
-        });
+        const todayDate = getSafeTodayISTDate();
         const isBumperDay = (bumperLotteriesRef.current || []).some((b: any) => b.draw_date === todayDate);
 
         const beforeDrawSwitch = getIsBeforeSwitchTime(isBumperDay);
@@ -300,9 +302,7 @@ export default function HomeScreen({ navigation }: any) {
         { event: "*", schema: "public", table: "draw_results" },
         (payload) => {
           const newRow = payload.new as any;
-          const currentToday = new Date().toLocaleDateString("en-CA", {
-            timeZone: "Asia/Kolkata",
-          });
+          const currentToday = getSafeTodayISTDate();
           if (newRow && newRow.draw_date === currentToday) {
             // Auto-switch to today's tab when results start streaming in
             setHeroTab(0);
@@ -405,14 +405,8 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   // Identify Today's Lottery metadata based on IST weekday
-  const todayISTDate = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Kolkata",
-  });
-
-  const istDayName = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    timeZone: "Asia/Kolkata",
-  });
+  const todayISTDate = getSafeTodayISTDate();
+  const istDayName = getSafeTodayISTDayName();
 
   const todayBumperLottery =
     bumperLotteries.find((b) => b.draw_date === todayISTDate) || null;
@@ -437,15 +431,8 @@ export default function HomeScreen({ navigation }: any) {
 
   const yesterdayISTDate = (() => {
     try {
-      const now = new Date();
-      const istDate = new Date(
-        now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
-      );
-      istDate.setDate(istDate.getDate() - 1);
-      const year = istDate.getFullYear();
-      const month = String(istDate.getMonth() + 1).padStart(2, "0");
-      const day = String(istDate.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
+      const d = new Date(Date.now() - 86400000);
+      return d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
     } catch {
       return "";
     }
@@ -505,7 +492,6 @@ export default function HomeScreen({ navigation }: any) {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
-          removeClippedSubviews={Platform.OS === "android"}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets={true}
@@ -889,11 +875,6 @@ export default function HomeScreen({ navigation }: any) {
                   onChangeText={(text) => setTicketInput(formatTicketSearchInput(text))}
                   keyboardType="default"
                   autoCapitalize="characters"
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({ y: 50, animated: true });
-                    }, 150);
-                  }}
                 />
 
                 <TouchableOpacity
@@ -1061,7 +1042,10 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={styles.heroDownloadPdfBtn}
                     activeOpacity={0.8}
-                    onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`)}
+                    onPress={() => {
+                      const pdfUrl = `https://www.keralalotteryresultstoday.in/api/pdf/${todayDraw.lottery_code}/${todayDraw.draw_date}`;
+                      Linking.openURL(pdfUrl).catch(() => {});
+                    }}
                   >
                     <Download size={15} color="#FFFFFF" />
                     <Text style={styles.heroDownloadPdfBtnText}>
@@ -1745,7 +1729,10 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={styles.heroDownloadPdfBtn}
                     activeOpacity={0.8}
-                    onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`)}
+                    onPress={() => {
+                      const pdfUrl = `https://www.keralalotteryresultstoday.in/api/pdf/${previousDraw.lottery_code}/${previousDraw.draw_date}`;
+                      Linking.openURL(pdfUrl).catch(() => {});
+                    }}
                   >
                     <Download size={15} color="#FFFFFF" />
                     <Text style={styles.heroDownloadPdfBtnText}>
@@ -2235,23 +2222,23 @@ export default function HomeScreen({ navigation }: any) {
         </View> */}
 
         <View style={styles.footer}>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim")}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim").catch(() => {})}>
             <Text style={styles.footerLink}>{language === "ml" ? "സമ്മാന ക്ലെയിം" : "Claim"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/guide")}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/guide").catch(() => {})}>
             <Text style={styles.footerLink}>{language === "ml" ? "ഗൈഡ്" : "Guide"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/faq")}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/faq").catch(() => {})}>
             <Text style={styles.footerLink}>{language === "ml" ? "പതിവ് ചോദ്യങ്ങൾ" : "FAQ"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions")}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions").catch(() => {})}>
             <Text style={styles.footerLink}>{language === "ml" ? "നിബന്ധനകൾ" : "Terms"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy")}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy").catch(() => {})}>
             <Text style={styles.footerLink}>{language === "ml" ? "സ്വകാര്യത" : "Privacy"}</Text>
           </TouchableOpacity>
           <Text style={styles.footerBullet}>•</Text>

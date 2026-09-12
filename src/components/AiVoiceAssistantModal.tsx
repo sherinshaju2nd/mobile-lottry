@@ -769,11 +769,6 @@ export default function AiVoiceAssistantModal({
                   underlineColorAndroid="transparent"
                   autoCapitalize="sentences"
                   autoCorrect={false}
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 150);
-                  }}
                 />
 
                 {inputText.trim().length > 0 ? (

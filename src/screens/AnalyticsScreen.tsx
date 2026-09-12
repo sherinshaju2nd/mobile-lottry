@@ -223,8 +223,25 @@ export default function AnalyticsScreen({ navigation }: any) {
   }, []);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        const data = await fetchAllDraws();
+        if (isMounted) setDraws(data || []);
+      } catch {
+        if (isMounted) setDraws([]);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    };
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -274,10 +291,9 @@ export default function AnalyticsScreen({ navigation }: any) {
         totalPrizesCounted++;
       }
 
-      // Other Prizes
+      // Other Prizes (2nd through 9th) — Note: Consolation is excluded as it shares identical 6 digits with 1st Prize
       if (draw.prizes) {
         const tiers = [
-          "consolation",
           "2nd",
           "3rd",
           "4th",
@@ -400,10 +416,9 @@ export default function AnalyticsScreen({ navigation }: any) {
         }
       }
 
-      // Other Prizes
+      // Other Prizes (2nd through 9th) — Consolation excluded since 1st prize is already evaluated
       if (draw.prizes) {
         const tiers = [
-          "consolation",
           "2nd",
           "3rd",
           "4th",
@@ -420,10 +435,7 @@ export default function AnalyticsScreen({ navigation }: any) {
               const d = String(num).replace(/\D/g, "");
               if (d.endsWith(query) || d === query) {
                 totalMatches++;
-                const tierName =
-                  tierKey === "consolation"
-                    ? t("tier_consolation")
-                    : t(`tier_${tierKey}` as any);
+                const tierName = t(`tier_${tierKey}` as any);
                 tierBreakdown[tierName] = (tierBreakdown[tierName] || 0) + 1;
                 matchedDraws.push({
                   date: draw.draw_date,

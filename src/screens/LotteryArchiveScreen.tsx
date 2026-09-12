@@ -44,6 +44,12 @@ import { useLanguage } from "../context/LanguageContext";
 import { isLotteryFavorite, toggleFavoriteLottery } from "../utils/favorites";
 import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 
+import {
+  getSafeTodayISTDate,
+  formatSafeDateDisplay,
+  formatPrizeAmountSafe,
+} from "../utils/formatters";
+
 export default function LotteryArchiveScreen({ route, navigation }: any) {
   const { t, language } = useLanguage();
   const rawCode =
@@ -67,9 +73,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       BUMPER_LOTTERIES.some((b) => b.code.toUpperCase() === codeUpper)
   );
 
-  const todayISTDate = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Kolkata",
-  });
+  const todayISTDate = getSafeTodayISTDate();
 
   const [history, setHistory] = useState<DrawResult[]>([]);
   const [filteredHistory, setFilteredHistory] = useState<DrawResult[]>([]);
@@ -100,8 +104,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
   };
 
   useEffect(() => {
+    let isMounted = true;
     async function loadHistory(isSilent = false) {
-      if (!isSilent) setIsLoading(true);
+      if (!isSilent && isMounted) setIsLoading(true);
       try {
         const [results, lotRes] = await Promise.all([
           fetchLotteryHistory(codeUpper),
@@ -111,18 +116,19 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             .eq("code", codeUpper)
             .maybeSingle(),
         ]);
-        setHistory(results);
-        setFilteredHistory(results);
+        if (!isMounted) return;
+        setHistory(results || []);
+        setFilteredHistory(results || []);
         if (lotRes.data) {
           setLotteryDbMeta(lotRes.data);
         }
       } catch {
-        if (!isSilent) {
+        if (!isSilent && isMounted) {
           setHistory([]);
           setFilteredHistory([]);
         }
       } finally {
-        if (!isSilent) setIsLoading(false);
+        if (!isSilent && isMounted) setIsLoading(false);
       }
     }
     loadHistory();
@@ -161,6 +167,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     const appStateSub = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
+      isMounted = false;
       channel.unsubscribe();
       appStateSub.remove();
     };
@@ -171,29 +178,18 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       setFilteredHistory(history);
     } else {
       const q = searchFilter.toLowerCase().trim();
-      const filtered = history.filter(
+      const filtered = (history || []).filter(
         (d) =>
-          d.draw_date.toLowerCase().includes(q) ||
-          d.draw_code?.toLowerCase().includes(q) ||
-          (d.first?.ticket ? d.first.ticket.toLowerCase().includes(q) : false) ||
-          (d.first?.location ? d.first.location.toLowerCase().includes(q) : false)
+          (d?.draw_date ? d.draw_date.toLowerCase().includes(q) : false) ||
+          (d?.draw_code ? d.draw_code.toLowerCase().includes(q) : false) ||
+          (d?.first?.ticket ? d.first.ticket.toLowerCase().includes(q) : false) ||
+          (d?.first?.location ? d.first.location.toLowerCase().includes(q) : false)
       );
       setFilteredHistory(filtered);
     }
   }, [searchFilter, history]);
 
-  const formatDateDisplay = (dateStr: string) => {
-    if (!dateStr) return "";
-    const [y, m, d] = dateStr.split("-").map(Number);
-    if (!y || !m || !d) return dateStr;
-    const dateObj = new Date(y, m - 1, d);
-    return dateObj.toLocaleDateString("en-IN", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  const formatDateDisplay = (dateStr: string) => formatSafeDateDisplay(dateStr);
 
   const displayName = getLotteryTranslatedName(codeUpper, language) || lotteryMeta.name;
   const jackpotText =
@@ -209,23 +205,25 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     (lotteryMeta as any)?.ticket_price ||
     (isBumper ? "₹500" : "₹50");
 
-  const renderItem = ({ item }: { item: DrawResult }) => {
-    const isCopied = copiedTicket === item.first?.ticket;
-    const firstAmount =
-      (item.prizes?.amounts as any)?.["1st"] || jackpotText;
+  const renderItem = useCallback(
+    ({ item }: { item: DrawResult }) => {
+      const isCopied = copiedTicket === item.first?.ticket;
+      const rawFirstAmount =
+        (item.prizes?.amounts as any)?.["1st"] || jackpotText;
+      const firstAmount = formatPrizeAmountSafe(rawFirstAmount);
 
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.88}
-        onPress={() => {
-          triggerLightHaptic();
-          navigation.navigate("DrawBreakdown", {
-            code: item.lottery_code,
-            date: item.draw_date,
-          });
-        }}
-      >
+      return (
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.88}
+          onPress={() => {
+            triggerLightHaptic();
+            navigation.navigate("DrawBreakdown", {
+              code: item.lottery_code || codeUpper,
+              date: item.draw_date,
+            });
+          }}
+        >
         {/* Card Header Row */}
         <View style={styles.cardHeader}>
           <View style={styles.datePill}>
@@ -309,7 +307,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
         </View>
       </TouchableOpacity>
     );
-  };
+  },
+  [copiedTicket, jackpotText, codeUpper, displayName, language, t]
+);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
@@ -459,13 +459,14 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
         ) : filteredHistory.length > 0 ? (
           <FlatList
             data={filteredHistory}
-            keyExtractor={(item: DrawResult) => `${item.lottery_code}-${item.draw_date}`}
+            keyExtractor={(item: DrawResult, index: number) =>
+              item?.id ? String(item.id) : `${item?.lottery_code || "draw"}-${item?.draw_date || index}-${index}`
+            }
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
-            removeClippedSubviews={Platform.OS === "android"}
             keyboardShouldPersistTaps="handled"
-            initialNumToRender={8}
+            initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={5}
           />

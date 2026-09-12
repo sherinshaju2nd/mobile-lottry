@@ -56,12 +56,14 @@ export default function ModernDatePickerModal({
 
   const [activeYear, setActiveYear] = useState<number>(() => {
     const parts = (tempSelectedDate || todayStr).split("-");
-    return parts.length === 3 ? parseInt(parts[0], 10) : new Date().getFullYear();
+    const y = parts.length === 3 ? parseInt(parts[0], 10) : new Date().getFullYear();
+    return isNaN(y) ? new Date().getFullYear() : y;
   });
 
   const [activeMonth, setActiveMonth] = useState<number>(() => {
     const parts = (tempSelectedDate || todayStr).split("-");
-    return parts.length === 3 ? parseInt(parts[1], 10) - 1 : new Date().getMonth();
+    const m = parts.length === 3 ? parseInt(parts[1], 10) - 1 : new Date().getMonth();
+    return isNaN(m) || m < 0 || m > 11 ? new Date().getMonth() : m;
   });
 
   useEffect(() => {
@@ -71,8 +73,10 @@ export default function ModernDatePickerModal({
 
       const parts = initial.split("-");
       if (parts.length === 3) {
-        setActiveYear(parseInt(parts[0], 10));
-        setActiveMonth(parseInt(parts[1], 10) - 1);
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        if (!isNaN(y)) setActiveYear(y);
+        if (!isNaN(m) && m >= 0 && m <= 11) setActiveMonth(m);
       }
     }
   }, [visible, selectedDate, todayStr]);

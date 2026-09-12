@@ -349,12 +349,10 @@ export default function RemindersScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={reminders}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item?.id || `reminder-${index}`}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={Platform.OS === "android"}
-
           scrollEventThrottle={16}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"

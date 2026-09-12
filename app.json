@@ -10,6 +10,11 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B3C5D"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.keralalotteryresultstoday.app",
@@ -44,6 +49,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
       },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0B3C5D"
+      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
@@ -69,7 +79,12 @@
         {
           "image": "./assets/splash.png",
           "resizeMode": "contain",
-          "backgroundColor": "#0B3C5D"
+          "backgroundColor": "#0B3C5D",
+          "android": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#0B3C5D"
+          }
         }
       ],
       [

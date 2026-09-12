@@ -34,20 +34,24 @@ export async function getAllReminders(): Promise<LotteryReminder[]> {
 }
 
 export async function saveReminder(reminder: LotteryReminder): Promise<void> {
-  const all = await getAllReminders();
-  const idx = all.findIndex((r) => r.id === reminder.id);
-  if (idx >= 0) {
-    all[idx] = reminder;
-  } else {
-    all.push(reminder);
-  }
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  try {
+    const all = await getAllReminders();
+    const idx = all.findIndex((r) => r.id === reminder.id);
+    if (idx >= 0) {
+      all[idx] = reminder;
+    } else {
+      all.push(reminder);
+    }
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  } catch {}
 }
 
 export async function deleteReminder(id: string): Promise<void> {
-  const all = await getAllReminders();
-  const filtered = all.filter((r) => r.id !== id);
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  try {
+    const all = await getAllReminders();
+    const filtered = all.filter((r) => r.id !== id);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch {}
 }
 
 export function generateId(): string {

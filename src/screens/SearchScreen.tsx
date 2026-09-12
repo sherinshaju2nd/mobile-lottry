@@ -9,10 +9,21 @@ import {
   ActivityIndicator,
   Platform,
   LayoutAnimation,
+  UIManager,
   AppState,
   AppStateStatus,
   KeyboardAvoidingView,
 } from "react-native";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  !(globalThis as any).nativeFabricUIManager
+) {
+  try {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  } catch {}
+}
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
 import {
@@ -192,12 +203,14 @@ export default function SearchScreen({ navigation }: any) {
   const handleModeChange = (newMode: "single" | "batch") => {
     if (newMode === mode) return;
     triggerLightHaptic();
-    LayoutAnimation.configureNext({
-      duration: 250,
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-    });
+    try {
+      LayoutAnimation.configureNext({
+        duration: 250,
+        create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+        update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
+        delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      });
+    } catch {}
     setMode(newMode);
     handleReset();
   };
@@ -330,7 +343,6 @@ export default function SearchScreen({ navigation }: any) {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
-          removeClippedSubviews={Platform.OS === "android"}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
@@ -471,11 +483,6 @@ export default function SearchScreen({ navigation }: any) {
                     }
                   }}
                   autoCapitalize="characters"
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                    }, 150);
-                  }}
                 />
                 {query.length > 0 && (
                   <TouchableOpacity
@@ -772,11 +779,6 @@ export default function SearchScreen({ navigation }: any) {
               multiline
               numberOfLines={4}
               autoCapitalize="characters"
-              onFocus={() => {
-                setTimeout(() => {
-                  scrollViewRef.current?.scrollTo({ y: 50, animated: true });
-                }, 150);
-              }}
             />
 
             {/* Date Filter Selection */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
-  LayoutAnimation,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -28,28 +27,13 @@ import {
 import { isIndic } from "../constants/translations";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import {
+  formatPrizeAmountSafe,
+  getSafeTodayISTDate,
+  getSafeTodayISTDayName,
+} from "../utils/formatters";
 
-export function formatPrizeAmount(amount: string | undefined): string {
-  if (!amount) return "₹75 Lakhs";
-  const str = amount.trim();
-  if (str.toLowerCase().includes("crore") || str.toLowerCase().includes("lakh")) {
-    return str;
-  }
-  const clean = str.replace(/[^\d]/g, "");
-  const num = parseInt(clean, 10);
-  if (!isNaN(num)) {
-    if (num >= 10000000) {
-      const cr = num / 10000000;
-      return `₹${cr % 1 === 0 ? cr : cr.toFixed(2)} Crore`;
-    }
-    if (num >= 100000) {
-      const lk = num / 100000;
-      return `₹${lk % 1 === 0 ? lk : lk.toFixed(2)} Lakhs`;
-    }
-    return `₹${num.toLocaleString("en-IN")}`;
-  }
-  return str.startsWith("₹") ? str : `₹${str}`;
-}
+export const formatPrizeAmount = formatPrizeAmountSafe;
 
 const LOTTERY_PRIZE_DEFAULTS: Record<string, { prize: string; price: string }> = {
   BT: { prize: "₹1 Crore", price: "₹50" },
@@ -76,32 +60,32 @@ export default function LotteriesScreen({ navigation }: any) {
 
   const handleTabChange = (tab: "weekly" | "bumper") => {
     if (tab === activeTab) return;
-    LayoutAnimation.configureNext({
-      duration: 220,
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-      update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-    });
     setActiveTab(tab);
   };
 
   useEffect(() => {
+    let isMounted = true;
     fetchLotteriesFromDb()
       .then((res) => {
-        if (res.weekly && res.weekly.length > 0) setWeeklyData(res.weekly);
-        if (res.bumper && res.bumper.length > 0) setBumperData(res.bumper);
+        if (!isMounted) return;
+        if (res && res.weekly && res.weekly.length > 0) setWeeklyData(res.weekly);
+        if (res && res.bumper && res.bumper.length > 0) setBumperData(res.bumper);
       })
       .catch((e) => console.warn("Failed loading lotteries from DB:", e))
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const currentData = activeTab === "weekly" ? weeklyData : bumperData;
 
-  // Calculate today's day of week in Indian Standard Time (IST)
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-  const todayDayName = dayNames[nowIST.getDay()];
-  const todayISTDate = nowIST.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  // Calculate today's day of week & date in Indian Standard Time (IST) safely
+  const todayISTDate = getSafeTodayISTDate();
+  const todayDayName = getSafeTodayISTDayName();
 
   const renderSkeleton = () => (
     <View style={{ gap: 14 }}>
@@ -124,13 +108,14 @@ export default function LotteriesScreen({ navigation }: any) {
   );
 
   const renderItem = ({ item }: { item: LotteryMeta }) => {
-    const isBumper = item.isBumper || activeTab === "bumper";
+    if (!item) return null;
+    const isBumper = Boolean(item.isBumper || activeTab === "bumper");
     
     // Draw status checks
-    const isWeeklyToday = !isBumper && item.day?.toLowerCase() === todayDayName.toLowerCase();
+    const isWeeklyToday = !isBumper && item.day ? item.day.toLowerCase() === todayDayName.toLowerCase() : false;
     const isBumperToday = isBumper && item.draw_date ? item.draw_date === todayISTDate : false;
     const isDrawToday = isWeeklyToday || isBumperToday;
-    const isAnnouncedUpcomingBumper = isBumper && item.draw_date && !isBumperToday;
+    const isAnnouncedUpcomingBumper = isBumper && Boolean(item.draw_date) && !isBumperToday;
 
     // Fallback prize & ticket price
     const defaultMeta = LOTTERY_PRIZE_DEFAULTS[item.code] || { prize: "₹80 Lakhs", price: "₹50" };
@@ -372,14 +357,13 @@ export default function LotteriesScreen({ navigation }: any) {
         ) : (
           <FlatList
             data={currentData}
-            keyExtractor={(item) => item.code}
+            keyExtractor={(item, index) => item?.code || `lottery-${index}`}
             renderItem={renderItem}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
-            removeClippedSubviews={Platform.OS === "android"}
             scrollEventThrottle={16}
             overScrollMode="never"
-            initialNumToRender={8}
+            initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={5}
           />

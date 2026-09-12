@@ -300,8 +300,8 @@ export const translations = {
     cancel_date_picker: "Cancel",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "Barcode Ticket Reader",
-    align_barcode: "Align ticket barcode inside frame",
+    scan_ticket_title: "Barcode Scanner",
+    align_barcode: "Align barcode inside frame",
     barcode_scanned: "Barcode Scanned!",
     flashlight_on: "Flashlight On",
     flashlight_off: "Flashlight Off",
@@ -329,9 +329,9 @@ export const translations = {
     just_miss_btn: "Just Miss",
     change_date_btn: "Change Date",
     or_divider_text: "OR",
-    ai_photo_scan_btn: "Can't scan barcode? Use AI Scan",
+    ai_photo_scan_btn: "AI Photo Scan",
     ai_analyzing_ticket: "AI Analyzing Ticket Photo...",
-    ai_scan_hint: "Takes full ticket photo to detect number automatically",
+    ai_scan_hint: "Takes photo to detect ticket number automatically",
 
     // Reminders Screen & Modal
     reminders_title: "Ticket Reminders",
@@ -744,8 +744,8 @@ export const translations = {
     cancel_date_picker: "റദ്ദാക്കുക",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "ലോട്ടറി ബാർകോഡ് സ്‌കാൻ ചെയ്യുക",
-    align_barcode: "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക",
+    scan_ticket_title: "ബാർകോഡ് സ്‌കാനർ",
+    align_barcode: "ബാർകോഡ് ഫ്രെയിമിൽ വെക്കുക",
     barcode_scanned: "ബാർകോഡ് സ്‌കാൻ ചെയ്തു!",
     flashlight_on: "ഫ്ലാഷ്‌ലൈറ്റ് ഓൺ",
     flashlight_off: "ഫ്ലാഷ്‌ലൈറ്റ് ഓഫ്",
@@ -775,9 +775,9 @@ export const translations = {
     just_miss_btn: "ജസ്റ്റ് മിസ്സ്",
     change_date_btn: "തീയതി മാറ്റുക",
     or_divider_text: "അല്ലെങ്കിൽ",
-    ai_photo_scan_btn: "ബാർകോഡ് സ്‌കാൻ ആകുന്നില്ലേ? AI സ്‌കാൻ ഉപയോഗിക്കുക",
+    ai_photo_scan_btn: "AI ഫോട്ടോ സ്‌കാൻ",
     ai_analyzing_ticket: "AI ടിക്കറ്റ് പരിശോധിക്കുന്നു...",
-    ai_scan_hint: "മുഴുവൻ ടിക്കറ്റിന്റെയും ഫോട്ടോ എടുത്ത് നമ്പർ കണ്ടെത്തുക",
+    ai_scan_hint: "ഫോട്ടോ എടുത്ത് നമ്പർ കണ്ടെത്തുക",
 
     // Reminders Screen & Modal
     reminders_title: "ടിക്കറ്റ് റിമൈൻഡറുകൾ",
@@ -1186,8 +1186,8 @@ export const translations = {
     cancel_date_picker: "रद्द करें",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "बारकोड टिकट स्कैनर",
-    align_barcode: "टिकट बारकोड को फ्रेम के अंदर रखें",
+    scan_ticket_title: "बारकोड स्कैनर",
+    align_barcode: "बारकोड को फ्रेम में रखें",
     barcode_scanned: "बारकोड स्कैन हो गया!",
     flashlight_on: "फ्लैशलाइट चालू",
     flashlight_off: "फ्लैशलाइट बंद",
@@ -1215,9 +1215,9 @@ export const translations = {
     just_miss_btn: "जस्ट मिस",
     change_date_btn: "तिथि बदलें",
     or_divider_text: "या",
-    ai_photo_scan_btn: "बारकोड स्कैन नहीं हो रहा? AI स्कैन करें",
+    ai_photo_scan_btn: "AI फोटो स्कैन",
     ai_analyzing_ticket: "AI टिकट फोटो का विश्लेषण कर रहा है...",
-    ai_scan_hint: "पूरे टिकट का फोटो लेकर AI से नंबर पहचानें",
+    ai_scan_hint: "फोटो से टिकट नंबर पहचानें",
 
     // Reminders Screen & Modal
     reminders_title: "टिकट रिमाइंडर",
@@ -1631,8 +1631,8 @@ export const translations = {
     cancel_date_picker: "ரத்து செய்",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "லாட்டரி பார்கோடு ஸ்கேனர்",
-    align_barcode: "டிக்கெட் பார்கோடை சட்டத்திற்குள் வைக்கவும்",
+    scan_ticket_title: "பார்கோடு ஸ்கேனர்",
+    align_barcode: "பார்கோடை சட்டத்தில் வைக்கவும்",
     barcode_scanned: "பார்கோடு ஸ்கேன் செய்யப்பட்டது!",
     flashlight_on: "ஃபிளாஷ்லைட் ஆன்",
     flashlight_off: "ஃபிளாஷ்லைட் ஆஃப்",
@@ -1661,9 +1661,9 @@ export const translations = {
     just_miss_btn: "ஜஸ்ட் மிஸ்",
     change_date_btn: "தேதியை மாற்றுக",
     or_divider_text: "அல்லது",
-    ai_photo_scan_btn: "பார்கோடு ஸ்கேன் ஆகவில்லையா? AI ஸ்கேன் செய்க",
+    ai_photo_scan_btn: "AI போட்டோ ஸ்கேன்",
     ai_analyzing_ticket: "AI டிக்கெட் புகைப்படத்தை ஆய்வு செய்கிறது...",
-    ai_scan_hint: "முழு டிக்கெட் புகைப்படத்தின் மூலம் எண்ணைக் கண்டறியவும்",
+    ai_scan_hint: "புகைப்படம் மூலம் எண் அறிய",
 
     // Reminders Screen & Modal
     reminders_title: "டிக்கெட் நினைவூட்டல்",
@@ -2076,8 +2076,8 @@ export const translations = {
     cancel_date_picker: "ರದ್ದುಮಾಡಿ",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "ಬಾರ್‌ಕೋಡ್ ಟಿಕೆಟ್ ಸ್ಕ್ಯಾನರ್",
-    align_barcode: "ಟಿಕೆಟ್ ಬಾರ್‌ಕೋಡ್ ಅನ್ನು ಚೌಕಟ್ಟಿನೊಳಗೆ ಇರಿಸಿ",
+    scan_ticket_title: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನರ್",
+    align_barcode: "ಬಾರ್‌ಕೋಡ್ ಚೌಕಟ್ಟಿನಲ್ಲಿ ಇರಿಸಿ",
     barcode_scanned: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗಿದೆ!",
     flashlight_on: "ಫ್ಲ್ಯಾಶ್‌ಲೈಟ್ ಆನ್",
     flashlight_off: "ಫ್ಲ್ಯಾಶ್‌ಲೈಟ್ ಆಫ್",
@@ -2106,9 +2106,9 @@ export const translations = {
     just_miss_btn: "ಜಸ್ಟ್ ಮಿಸ್",
     change_date_btn: "ದಿನಾಂಕ ಬದಲಾಯಿಸಿ",
     or_divider_text: "ಅಥವಾ",
-    ai_photo_scan_btn: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿಲ್ಲವೇ? AI ಸ್ಕ್ಯಾನ್ ಬಳಸಿ",
+    ai_photo_scan_btn: "AI ಫೋಟೋ ಸ್ಕ್ಯಾನ್",
     ai_analyzing_ticket: "AI ಟಿಕೆಟ್ ಫೋಟೋ ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
-    ai_scan_hint: "ಸಂಪೂರ್ಣ ಟಿಕೆಟ್ ಫೋಟೋ ತೆಗೆದು AI ಮೂಲಕ ಸಂಖ್ಯೆ ಗುರುತಿಸಿ",
+    ai_scan_hint: "ಫೋಟೋ ಮೂಲಕ ಸಂಖ್ಯೆ ಗುರುತಿಸಿ",
 
     // Reminders Screen & Modal
     reminders_title: "ಟಿಕೆಟ್ ಜ್ಞಾಪನೆಗಳು",
@@ -2519,8 +2519,8 @@ export const translations = {
     cancel_date_picker: "రద్దు చేయి",
 
     // Barcode Scanner & Result
-    scan_ticket_title: "బార్‌కోడ్ టిక్కెట్ స్కానర్",
-    align_barcode: "టిక్కెట్ బార్‌కోడ్‌ను ఫ్రేమ్ లోపల ఉంచండి",
+    scan_ticket_title: "బార్‌కోడ్ స్కానర్",
+    align_barcode: "బార్‌కోడ్‌ను ఫ్రేమ్‌లో ఉంచండి",
     barcode_scanned: "బార్‌కోడ్ స్కాన్ చేయబడింది!",
     flashlight_on: "ఫ్లాష్‌లైట్ ఆన్",
     flashlight_off: "ఫ్లాష్‌లైట్ ఆఫ్",
@@ -2549,9 +2549,9 @@ export const translations = {
     just_miss_btn: "జస్ట్ మిస్",
     change_date_btn: "తేదీ మార్చండి",
     or_divider_text: "లేదా",
-    ai_photo_scan_btn: "బార్‌కోడ్ స్కాన్ అవ్వడం లేదా? AI స్కాన్ ఉపయోగించండి",
+    ai_photo_scan_btn: "AI ఫోటో స్కాన్",
     ai_analyzing_ticket: "AI టిక్కెట్ ఫోటోను విశ్లేషిస్తోంది...",
-    ai_scan_hint: "పూర్తి టిక్కెట్ ఫోటో తీసి AI ద్వారా సంఖ్యను గుర్తించండి",
+    ai_scan_hint: "ఫోటో ద్వారా సంఖ్యను గుర్తించండి",
 
     // Reminders Screen & Modal
     reminders_title: "టిక్కెట్ రిమైండర్‌లు",

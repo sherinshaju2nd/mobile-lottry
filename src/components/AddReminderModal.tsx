@@ -540,7 +540,7 @@ export default function AddReminderModal({
 
                 <FlatList
                   data={lotteries}
-                  keyExtractor={(item) => item.code}
+                  keyExtractor={(item, index) => item?.code || `lottery-${index}`}
                   contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
                   showsVerticalScrollIndicator={false}
                   renderItem={({ item }) => {

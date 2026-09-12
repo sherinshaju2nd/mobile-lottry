@@ -11,6 +11,7 @@ import {
   Platform,
   AppState,
   AppStateStatus,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -55,15 +56,23 @@ import BarcodeResultModal from "../components/BarcodeResultModal";
 import ConfettiCelebration from "../components/ConfettiCelebration";
 import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import { useLanguage } from "../context/LanguageContext";
+import {
+  getSafeTodayISTDate,
+  formatSafeDateDisplay,
+} from "../utils/formatters";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
   const { t, language } = useLanguage();
-  const { code, date, highlight } = route.params || { code: "BT", date: "2026-08-10" };
-  const codeUpper = code.toUpperCase();
+  const todayISTDate = getSafeTodayISTDate();
 
-  const todayISTDate = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Kolkata",
-  });
+  const rawCode =
+    route?.params?.code ||
+    route?.params?.lotteryCode ||
+    route?.params?.lottery_code ||
+    "BT";
+  const codeUpper = String(rawCode).trim().toUpperCase();
+  const date = route?.params?.date || todayISTDate;
+  const highlight = route?.params?.highlight || null;
 
   const lotteryMeta: LotteryMeta = ALL_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
@@ -246,9 +255,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
       });
 
     // Smart polling for today's draw
-    const todayDate = new Date().toLocaleDateString("en-CA", {
-      timeZone: "Asia/Kolkata",
-    });
+    const todayDate = getSafeTodayISTDate();
     const pollInterval = setInterval(() => {
       if (date === todayDate && (!drawResult || !hasAnyDrawResult(drawResult))) {
         loadData();
@@ -468,7 +475,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        removeClippedSubviews={Platform.OS === "android"}
         overScrollMode="never"
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets={true}
@@ -525,7 +531,17 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 style={styles.pdfDownloadBtn}
                 activeOpacity={0.8}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                onPress={() => Linking.openURL(`https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`)}
+                onPress={() => {
+                  const pdfUrl = `https://www.keralalotteryresultstoday.in/api/pdf/${codeUpper}/${date}`;
+                  Linking.openURL(pdfUrl).catch(() => {
+                    Alert.alert(
+                      language === "ml" ? "ഡൗൺലോഡ്" : "Download PDF",
+                      language === "ml"
+                        ? "PDF ലിങ്ക് തുറക്കാൻ കഴിഞ്ഞില്ല."
+                        : "Could not open PDF result link."
+                    );
+                  });
+                }}
               >
                 <Download size={18} color={COLORS.primary} />
               </TouchableOpacity>
@@ -647,11 +663,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                   value={checkTicket}
                   onChangeText={setCheckTicket}
                   autoCapitalize="characters"
-                  onFocus={() => {
-                    setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({ y: 150, animated: true });
-                    }, 150);
-                  }}
                 />
 
                 <TouchableOpacity

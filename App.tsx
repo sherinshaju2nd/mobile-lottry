@@ -514,7 +514,9 @@ function AppContent() {
         console.warn("Asset caching/privacy load error:", e);
         setIsPrivacyAccepted(false);
       } finally {
-        await SplashScreen.hideAsync();
+        try {
+          await SplashScreen.hideAsync();
+        } catch {}
       }
     }
     loadAssetsAndCheckPrivacy();

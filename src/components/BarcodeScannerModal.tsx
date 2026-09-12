@@ -32,6 +32,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { scanTicketWithGeminiVision } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { isIndic } from "../constants/translations";
 import { triggerSuccessHaptic, triggerLightHaptic } from "../utils/haptics";
 
 interface BarcodeScannerModalProps {
@@ -47,6 +48,7 @@ export default function BarcodeScannerModal({
 }: BarcodeScannerModalProps) {
   const { language, t } = useLanguage();
   const isMl = language === "ml";
+  const indic = isIndic(language);
   const { width, height } = useWindowDimensions();
 
   const isLandscape = width > height;
@@ -165,9 +167,27 @@ export default function BarcodeScannerModal({
 
           {/* Header Title & Subtitle */}
           <View style={styles.headerCenter}>
-            <Scan size={18} color="#00E5FF" style={{ marginBottom: 3 }} />
-            <Text style={styles.headerTitle}>{t("scan_ticket_title")}</Text>
-            <Text style={styles.headerSubtitle}>
+            <Scan size={16} color="#00E5FF" style={{ marginBottom: 2 }} />
+            <Text
+              style={[
+                styles.headerTitle,
+                indic && { fontSize: 12, lineHeight: 16 },
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.7}
+            >
+              {t("scan_ticket_title")}
+            </Text>
+            <Text
+              style={[
+                styles.headerSubtitle,
+                indic && { fontSize: 8, letterSpacing: 0.6 },
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit={true}
+              minimumFontScale={0.75}
+            >
               SCAN • CHECK • GET RESULTS
             </Text>
           </View>
@@ -381,11 +401,19 @@ export default function BarcodeScannerModal({
               <View style={styles.overlaySide} />
             </View>
 
-            {/* Bottom Controls Area (Matching Image 2) */}
+            {/* Bottom Controls Area */}
             <View style={styles.overlayBottom}>
               {/* 1. Translucent Hint Pill */}
               <View style={styles.instructionPill}>
-                <Text style={styles.instructionPillText}>
+                <Text
+                  style={[
+                    styles.instructionPillText,
+                    indic && { fontSize: 10, lineHeight: 14 },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.7}
+                >
                   {t("align_barcode")}
                 </Text>
               </View>
@@ -401,24 +429,37 @@ export default function BarcodeScannerModal({
                   <ActivityIndicator
                     size="small"
                     color="#FFFFFF"
-                    style={{ marginRight: 10 }}
+                    style={{ marginRight: 8 }}
                   />
                 ) : (
                   <View style={styles.aiBtnIconBg}>
-                    <Sparkles size={16} color="#0084FF" />
+                    <Sparkles size={14} color="#0084FF" />
                   </View>
                 )}
 
                 <View style={styles.aiBtnTextWrap}>
-                  <Text style={styles.aiSmartScanBtnText} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.aiSmartScanBtnText,
+                      indic && { fontSize: 11, lineHeight: 15 },
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.7}
+                  >
                     {isAiScanning
                       ? t("ai_analyzing_ticket")
                       : t("ai_photo_scan_btn")}
                   </Text>
                   {!isAiScanning && (
                     <Text
-                      style={styles.aiSmartScanBtnSubText}
+                      style={[
+                        styles.aiSmartScanBtnSubText,
+                        indic && { fontSize: 8.5, lineHeight: 12 },
+                      ]}
                       numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                      minimumFontScale={0.7}
                     >
                       {t("ai_scan_hint")}
                     </Text>
@@ -438,13 +479,17 @@ export default function BarcodeScannerModal({
                   setTorchOn(!torchOn);
                 }}
               >
-                <Flashlight size={16} color={torchOn ? "#FACC15" : "#FFFFFF"} />
+                <Flashlight size={14} color={torchOn ? "#FACC15" : "#FFFFFF"} />
                 <View style={styles.flashlightDivider} />
                 <Text
                   style={[
                     styles.flashlightPillText,
                     torchOn && { color: "#FEF08A" },
+                    indic && { fontSize: 10 },
                   ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.75}
                 >
                   {torchOn ? t("flashlight_off") : t("flashlight_on")}
                 </Text>
@@ -453,7 +498,15 @@ export default function BarcodeScannerModal({
               {/* 4. Bottom Divider: "SCAN THIS BARCODE" */}
               <View style={styles.barcodeDividerRow}>
                 <View style={styles.barcodeDividerLine} />
-                <Text style={styles.barcodeDividerText}>
+                <Text
+                  style={[
+                    styles.barcodeDividerText,
+                    indic && { fontSize: 8.5, letterSpacing: 0.4 },
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={true}
+                  minimumFontScale={0.75}
+                >
                   {t("scan_this_barcode")}
                 </Text>
                 <View style={styles.barcodeDividerLine} />
@@ -524,20 +577,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#FACC15",
   },
   headerCenter: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 10,
   },
   headerTitle: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: 0.3,
+    letterSpacing: 0.1,
+    textAlign: "center",
   },
   headerSubtitle: {
     color: "#94A3B8",
-    fontSize: 9.5,
+    fontSize: 8.5,
     fontWeight: "700",
-    letterSpacing: 1.6,
+    letterSpacing: 1.2,
     marginTop: 2,
     textTransform: "uppercase",
   },
@@ -552,23 +608,23 @@ const styles = StyleSheet.create({
   },
   permissionTitle: {
     color: COLORS.primary,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
     marginTop: 16,
     marginBottom: 8,
   },
   permissionSub: {
     color: COLORS.textMuted,
-    fontSize: 14,
+    fontSize: 13,
     textAlign: "center",
     marginBottom: 24,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   grantBtn: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 13,
-    paddingHorizontal: 24,
-    borderRadius: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: COLORS.primary,
@@ -580,7 +636,7 @@ const styles = StyleSheet.create({
   grantBtnText: {
     color: COLORS.white,
     fontWeight: "800",
-    fontSize: 15,
+    fontSize: 14,
   },
 
   /* Camera & Viewfinder Overlay */
@@ -665,20 +721,20 @@ const styles = StyleSheet.create({
   },
   scannedText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
     marginTop: 8,
   },
 
-  /* Overlay Bottom Controls (Image 2) */
+  /* Overlay Bottom Controls */
   overlayBottom: {
     flex: 1.4,
     backgroundColor: "rgba(7, 11, 20, 0.72)",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 16,
   },
 
   /* 1. Instruction Pill */
@@ -686,58 +742,59 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.8)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    marginBottom: 14,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 10,
   },
   instructionPillText: {
     color: "#E2E8F0",
-    fontSize: 12.5,
+    fontSize: 11,
     fontWeight: "600",
     textAlign: "center",
   },
 
   /* 2. AI Smart Photo Scan Radiant Button */
   aiSmartScanBtn: {
-    width: "100%",
-    maxWidth: 350,
-    minHeight: 56,
-    borderRadius: 28,
+    alignSelf: "center",
+    maxWidth: "90%",
+    minHeight: 46,
+    borderRadius: 24,
     backgroundColor: "#0084FF",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 12,
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 7,
+    marginBottom: 10,
     shadowColor: "#0084FF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.55,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    elevation: 6,
   },
   aiBtnIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
   },
   aiBtnTextWrap: {
-    flex: 1,
     justifyContent: "center",
+    alignItems: "flex-start",
   },
   aiSmartScanBtnText: {
     color: "#FFFFFF",
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   aiSmartScanBtnSubText: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontSize: 10.5,
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 9.5,
     fontWeight: "600",
     marginTop: 1,
   },
@@ -752,10 +809,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.75)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    height: 42,
-    borderRadius: 21,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    height: 36,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    marginBottom: 12,
   },
   flashlightPillBtnActive: {
     backgroundColor: "rgba(30, 41, 59, 0.9)",
@@ -763,13 +820,13 @@ const styles = StyleSheet.create({
   },
   flashlightDivider: {
     width: 1,
-    height: 16,
+    height: 14,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   flashlightPillText: {
     color: "#FFFFFF",
-    fontSize: 12.5,
+    fontSize: 11,
     fontWeight: "700",
   },
 
@@ -778,8 +835,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    maxWidth: 350,
-    marginBottom: 12,
+    maxWidth: 340,
+    marginBottom: 10,
   },
   barcodeDividerLine: {
     flex: 1,
@@ -787,74 +844,74 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.15)",
   },
   barcodeDividerText: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     color: "#94A3B8",
-    fontSize: 10.5,
+    fontSize: 9,
     fontWeight: "800",
-    letterSpacing: 1.4,
+    letterSpacing: 1.0,
   },
 
   /* 5. Barcode Sample Card & Cyan Frame */
   sampleBarcodeWrapper: {
     position: "relative",
-    padding: 6,
+    padding: 5,
     alignItems: "center",
     justifyContent: "center",
   },
   sampleCorner: {
     position: "absolute",
-    width: 14,
-    height: 14,
+    width: 12,
+    height: 12,
     borderColor: "#00E5FF",
   },
   sampleCornerTL: {
     top: 0,
     left: 0,
-    borderTopWidth: 2.5,
-    borderLeftWidth: 2.5,
-    borderTopLeftRadius: 6,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderTopLeftRadius: 5,
   },
   sampleCornerTR: {
     top: 0,
     right: 0,
-    borderTopWidth: 2.5,
-    borderRightWidth: 2.5,
-    borderTopRightRadius: 6,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderTopRightRadius: 5,
   },
   sampleCornerBL: {
     bottom: 0,
     left: 0,
-    borderBottomWidth: 2.5,
-    borderLeftWidth: 2.5,
-    borderBottomLeftRadius: 6,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    borderBottomLeftRadius: 5,
   },
   sampleCornerBR: {
     bottom: 0,
     right: 0,
-    borderBottomWidth: 2.5,
-    borderRightWidth: 2.5,
-    borderBottomRightRadius: 6,
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderBottomRightRadius: 5,
   },
   barcodeCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
+    borderRadius: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 170,
+    minWidth: 150,
   },
   barcodeBarsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 24,
-    marginBottom: 3,
+    height: 20,
+    marginBottom: 2,
   },
   sampleBarcodeCode: {
     color: "#0F172A",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
-    letterSpacing: 0.8,
+    letterSpacing: 1.0,
   },
 });
