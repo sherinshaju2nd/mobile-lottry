@@ -78,7 +78,7 @@ const WAVE_BARS_COUNT = 14;
 // WhatsApp-style Animated Audio Waveform Timeline Component
 function AnimatedWaveformTimeline({ isRecording }: { isRecording: boolean }) {
   const animatedValues = useRef(
-    Array.from({ length: WAVE_BARS_COUNT }, () => new Animated.Value(0.35))
+    Array.from({ length: WAVE_BARS_COUNT }, () => new Animated.Value(0.35)),
   ).current;
 
   useEffect(() => {
@@ -96,8 +96,8 @@ function AnimatedWaveformTimeline({ isRecording }: { isRecording: boolean }) {
             duration: 140 + (i % 6) * 40,
             useNativeDriver: true,
           }),
-        ])
-      )
+        ]),
+      ),
     );
 
     animations.forEach((a) => a.start());
@@ -180,7 +180,6 @@ export default function AiVoiceAssistantModal({
     }
   }, [visible, language]);
 
-
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const timerRef = useRef<any>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -201,7 +200,7 @@ export default function AiVoiceAssistantModal({
             duration: 450,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
       loop.start();
       return () => loop.stop();
@@ -268,7 +267,7 @@ export default function AiVoiceAssistantModal({
         }
       }
     },
-    [selectedLang, stopAudio]
+    [selectedLang, stopAudio],
   );
 
   useEffect(() => {
@@ -291,7 +290,7 @@ export default function AiVoiceAssistantModal({
         Alert.alert(
           "Microphone Permission Required",
           "Please enable microphone access in your phone Settings so you can speak to Kerala Lottery AI in Malayalam or English.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -314,7 +313,7 @@ export default function AiVoiceAssistantModal({
       console.warn("Audio recording init error:", err);
       Alert.alert(
         "Recording Error",
-        "Could not access microphone. Please ensure microphone permissions are allowed."
+        "Could not access microphone. Please ensure microphone permissions are allowed.",
       );
       setIsRecording(false);
     }
@@ -375,15 +374,13 @@ export default function AiVoiceAssistantModal({
       const result = await chatWithGeminiAudioMobile(
         base64Audio,
         mimeType,
-        historyPayload
+        historyPayload,
       );
 
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === tempId
-            ? { ...m, text: result.userTranscript }
-            : m
-        )
+          m.id === tempId ? { ...m, text: result.userTranscript } : m,
+        ),
       );
 
       const botMsgId = `b-${Date.now()}`;
@@ -483,9 +480,10 @@ export default function AiVoiceAssistantModal({
       {
         id: "init",
         role: "model",
-        text: selectedLang === "ml"
-          ? "ചാറ്റ് ക്ലിയർ ചെയ്തു. എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാനാകും?\n\n(Chat cleared. How can I assist you?)"
-          : "Chat cleared. How can I assist you today?",
+        text:
+          selectedLang === "ml"
+            ? "ചാറ്റ് ക്ലിയർ ചെയ്തു. എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാനാകും?\n\n(Chat cleared. How can I assist you?)"
+            : "Chat cleared. How can I assist you today?",
         time: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
@@ -499,7 +497,8 @@ export default function AiVoiceAssistantModal({
     stopAudio();
   };
 
-  const currentSuggestions = selectedLang === "ml" ? QUICK_SUGGESTIONS_ML : QUICK_SUGGESTIONS_EN;
+  const currentSuggestions =
+    selectedLang === "ml" ? QUICK_SUGGESTIONS_ML : QUICK_SUGGESTIONS_EN;
 
   const formatTimer = (sec: number) => {
     const m = Math.floor(sec / 60);
@@ -516,7 +515,7 @@ export default function AiVoiceAssistantModal({
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.container}
           keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
         >
@@ -534,9 +533,6 @@ export default function AiVoiceAssistantModal({
               <View>
                 <View style={styles.badgeRow}>
                   <Text style={styles.title}>Kerala Lottery AI</Text>
-                  <View style={styles.modelBadge}>
-                    <Text style={styles.modelBadgeText}>Gemini AI</Text>
-                  </View>
                 </View>
                 <Text style={styles.subtitle}>
                   {selectedLang === "ml"
@@ -650,11 +646,13 @@ export default function AiVoiceAssistantModal({
                               key={i}
                               style={[styles.miniBar, { height: h * 0.7 }]}
                             />
-                          )
+                          ),
                         )}
                       </View>
                       <Text style={styles.voiceDurationText}>
-                        {m.voiceDuration ? `${m.voiceDuration}s voice` : "Voice"}
+                        {m.voiceDuration
+                          ? `${m.voiceDuration}s voice`
+                          : "Voice"}
                       </Text>
                     </View>
                   )}
@@ -766,6 +764,11 @@ export default function AiVoiceAssistantModal({
                   editable={!isLoading}
                   onSubmitEditing={() => handleSendText()}
                   returnKeyType="send"
+                  selectionColor="#0B3C5D"
+                  cursorColor="#0B3C5D"
+                  underlineColorAndroid="transparent"
+                  autoCapitalize="sentences"
+                  autoCorrect={false}
                   onFocus={() => {
                     setTimeout(() => {
                       scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -1050,7 +1053,8 @@ const styles = StyleSheet.create({
   dock: {
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === "ios" ? 24 : 10,
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
   },
@@ -1058,17 +1062,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    minHeight: 46,
   },
   inputField: {
     flex: 1,
-    height: 42,
+    height: 44,
     backgroundColor: "#F8FAFC",
-    borderRadius: 21,
+    borderRadius: 22,
     paddingHorizontal: 16,
-    fontSize: 13,
+    paddingVertical: Platform.OS === "android" ? 4 : 8,
+    fontSize: 13.5,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    color: "#1E293B",
+    borderColor: "#CBD5E1",
+    color: "#0F172A",
+    textAlignVertical: "center",
+    includeFontPadding: false,
   },
   micBtn: {
     width: 42,
