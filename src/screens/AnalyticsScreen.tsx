@@ -176,7 +176,7 @@ export default function AnalyticsScreen({ navigation }: any) {
   const [draws, setDraws] = useState<DrawResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [horizon, setHorizon] = useState<"30" | "90" | "all">("30");
+  const [horizon, setHorizon] = useState<"30" | "90" | "all">("90");
   const [activeTab, setActiveTab] = useState<"numbers" | "districts">(
     "numbers",
   );
@@ -231,7 +231,7 @@ export default function AnalyticsScreen({ navigation }: any) {
     loadData();
   };
 
-  // Filter draws by selected time horizon
+  // Filter draws by selected time horizon (defaults to 90 Draws)
   const filteredDraws = useMemo(() => {
     if (horizon === "all") return draws;
     const limit = horizon === "30" ? 30 : 90;
