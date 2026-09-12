@@ -146,6 +146,12 @@ export const translations = {
     results_pending_desc:
       "Draw results for today will be published live at 2:55 PM - 3:00 PM IST.",
     live_draw_in_progress: "LIVE DRAW IN PROGRESS",
+    live_sync_active: "LIVE SYNC ACTIVE",
+    streaming_live: "⚡ STREAMING LIVE",
+    live_streaming_numbers: "Live streaming incoming numbers...",
+    open_live_breakdown: "Open Live Draw Breakdown",
+    live_draw_venue_desc:
+      "Live draw in progress at Gorky Bhavan. Results will update automatically here live as numbers are announced.",
     draw_happening_now: "Draw Happening Right Now (3:00 PM)",
     live_draw_desc:
       "The live draw is currently in progress. Results will update automatically shortly on this page.",
@@ -296,6 +302,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "Barcode Ticket Reader",
     align_barcode: "Align ticket barcode inside frame",
+    barcode_scanned: "Barcode Scanned!",
+    flashlight_on: "Flashlight On",
+    flashlight_off: "Flashlight Off",
+    scan_this_barcode: "SCAN THIS BARCODE",
     select_draw_date: "Select Draw Date",
     select_draw_date_desc:
       "Select the draw date for ticket to fetch accurate results.",
@@ -307,6 +317,13 @@ export const translations = {
     search_across_all_records: "Search across all published draw records",
     scanned_ticket: "Scanned Ticket",
     rescan_btn: "Scan Another Ticket",
+    latest_badge: "LATEST",
+    tap_to_check_instantly: "Tap to check instantly",
+    winning_ticket_match: "WINNING TICKET MATCH!",
+    congrats_ticket_won: "Congratulations! Your scanned ticket won a prize!",
+    ticket_matched_label: "Ticket Matched:",
+    draw_name_label: "Draw Name:",
+    draw_date_label: "Draw Date:",
     fetching_results_loading: "Fetching draw results for date...",
     view_result_btn: "View Result",
     just_miss_btn: "Just Miss",
@@ -330,7 +347,6 @@ export const translations = {
     edit_reminder_title: "Edit Draw Reminder",
     select_lottery_label: "Select Kerala Lottery:",
     choose_lottery: "Choose lottery...",
-    draw_date_label: "Draw Date:",
     save_reminder_btn: "Save Draw Reminder",
     delete_reminder_title: "Delete Reminder",
     delete_reminder_confirm: "Remove reminder for ticket",
@@ -533,6 +549,12 @@ export const translations = {
     results_pending_desc:
       "ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഉച്ചയ്ക്ക് 2:55 - 3:00 മണിക്ക് തത്സമയം പ്രസിദ്ധീകരിക്കും.",
     live_draw_in_progress: "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു",
+    live_sync_active: "ലൈവ് സിങ്ക് സജീവം",
+    streaming_live: "⚡ തത്സമയം സ്ട്രീം ചെയ്യുന്നു",
+    live_streaming_numbers: "തത്സമയം അപ്‌ഡേറ്റ് ചെയ്യുന്നു...",
+    open_live_breakdown: "തത്സമയ ബോർഡ് തുറക്കുക",
+    live_draw_venue_desc:
+      "ഗോർക്കി ഭവനിൽ തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു. ഓരോ സമ്മാന നമ്പറുകളും ഇവിടെ തത്സമയം അപ്‌ഡേറ്റ് ചെയ്യപ്പെടും.",
     draw_happening_now:
       "ഇന്നത്തെ നറുക്കെടുപ്പ് ഇപ്പോൾ നടക്കുന്നു (ഉച്ചയ്ക്ക് 3:00 മണി)",
     live_draw_desc:
@@ -686,6 +708,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "ലോട്ടറി ബാർകോഡ് സ്‌കാൻ ചെയ്യുക",
     align_barcode: "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക",
+    barcode_scanned: "ബാർകോഡ് സ്‌കാൻ ചെയ്തു!",
+    flashlight_on: "ഫ്ലാഷ്‌ലൈറ്റ് ഓൺ",
+    flashlight_off: "ഫ്ലാഷ്‌ലൈറ്റ് ഓഫ്",
+    scan_this_barcode: "ഈ ബാർകോഡ് സ്‌കാൻ ചെയ്യുക",
     select_draw_date: "നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക",
     select_draw_date_desc:
       "ശരിയായ ഫലം ലഭിക്കുന്നതിന് ടിക്കറ്റിന്റെ നറുക്കെടുപ്പ് തീയതി തിരഞ്ഞെടുക്കുക.",
@@ -698,12 +724,20 @@ export const translations = {
       "പ്രസിദ്ധീകരിച്ച എല്ലാ റെക്കോർഡുകളിലും തിരയുന്നു",
     scanned_ticket: "സ്‌കാൻ ചെയ്ത ടിക്കറ്റ്",
     rescan_btn: "മറ്റൊരു ടിക്കറ്റ് സ്‌കാൻ ചെയ്യുക",
+    latest_badge: "ഏറ്റവും പുതിയത്",
+    tap_to_check_instantly: "ടാപ്പ് ചെയ്ത് പരിശോധിക്കുക",
+    winning_ticket_match: "സമ്മാനാർഹമായ ടിക്കറ്റ്!",
+    congrats_ticket_won:
+      "അഭിനന്ദനങ്ങൾ! നിങ്ങൾ പരിശോധിച്ച ടിക്കറ്റിന് സമ്മാനം ലഭിച്ചിരിക്കുന്നു!",
+    ticket_matched_label: "മാച്ച് ആയ ടിക്കറ്റ്:",
+    draw_name_label: "ലോട്ടറി പേര്:",
+    draw_date_label: "നറുക്കെടുപ്പ് തീയതി:",
     fetching_results_loading: "ഫലങ്ങൾ ശേഖരിക്കുന്നു...",
     view_result_btn: "ഫലം കാണുക",
     just_miss_btn: "ജസ്റ്റ് മിസ്സ്",
     change_date_btn: "തീയതി മാറ്റുക",
     or_divider_text: "അല്ലെങ്കിൽ",
-    ai_photo_scan_btn: "ബാർകോഡ് സ്‌കാൻ ആകുന്നില്ലേ? AI സ്‌കാൻ ഉപയോഗിക്കുക 📸",
+    ai_photo_scan_btn: "ബാർകോഡ് സ്‌കാൻ ആകുന്നില്ലേ? AI സ്‌കാൻ ഉപയോഗിക്കുക",
     ai_analyzing_ticket: "AI ടിക്കറ്റ് പരിശോധിക്കുന്നു...",
     ai_scan_hint: "മുഴുവൻ ടിക്കറ്റിന്റെയും ഫോട്ടോ എടുത്ത് നമ്പർ കണ്ടെത്തുക",
 
@@ -722,7 +756,6 @@ export const translations = {
     edit_reminder_title: "റിമൈൻഡറിൽ മാറ്റം വരുത്തുക",
     select_lottery_label: "ലോട്ടറി തിരഞ്ഞെടുക്കുക:",
     choose_lottery: "ലോട്ടറി തിരഞ്ഞെടുക്കുക...",
-    draw_date_label: "നറുക്കെടുപ്പ് തീയതി:",
     save_reminder_btn: "റിമൈൻഡർ സേവ് ചെയ്യുക",
     delete_reminder_title: "റിമൈൻഡർ ഡിലീറ്റ് ചെയ്യുക",
     delete_reminder_confirm: "ഈ ടിക്കറ്റിനായുള്ള റിമൈൻഡർ നീക്കം ചെയ്യണോ?",
@@ -926,6 +959,12 @@ export const translations = {
     results_pending_desc:
       "आज के ड्रॉ परिणाम दोपहर 2:55 - 3:00 बजे लाइव प्रकाशित किए जाएंगे।",
     live_draw_in_progress: "लाइव ड्रॉ जारी है",
+    live_sync_active: "लाइव सिंक सक्रिय",
+    streaming_live: "⚡ लाइव स्ट्रीमिंग",
+    live_streaming_numbers: "लाइव नंबर अपडेट हो रहे हैं...",
+    open_live_breakdown: "लाइव ड्रॉ विवरण देखें",
+    live_draw_venue_desc:
+      "गोरकी भवन में लाइव ड्रॉ जारी है। नंबर घोषित होते ही परिणाम अपने आप लाइव अपडेट होंगे।",
     draw_happening_now: "ड्रॉ अभी चल रहा है (दोपहर 3:00 बजे)",
     live_draw_desc:
       "लाइव ड्रॉ अभी प्रगति पर है। परिणाम जल्द ही इस पृष्ठ पर स्वतः अपडेट होंगे।",
@@ -1073,6 +1112,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "बारकोड टिकट स्कैनर",
     align_barcode: "टिकट बारकोड को फ्रेम के अंदर रखें",
+    barcode_scanned: "बारकोड स्कैन हो गया!",
+    flashlight_on: "फ्लैशलाइट चालू",
+    flashlight_off: "फ्लैशलाइट बंद",
+    scan_this_barcode: "इस बारकोड को स्कैन करें",
     select_draw_date: "ड्रॉ तिथि चुनें",
     select_draw_date_desc:
       "सटीक परिणाम प्राप्त करने के लिए टिकट की ड्रॉ तिथि चुनें।",
@@ -1084,12 +1127,19 @@ export const translations = {
     search_across_all_records: "प्रकाशित सभी रिकॉर्ड में खोजें",
     scanned_ticket: "स्कैन किया गया टिकट",
     rescan_btn: "दूसरा टिकट स्कैन करें",
+    latest_badge: "नवीनतम",
+    tap_to_check_instantly: "तुरंत जांचने के लिए टैप करें",
+    winning_ticket_match: "विजेता टिकट मिल गया!",
+    congrats_ticket_won: "बधाई हो! आपके स्कैन किए गए टिकट ने इनाम जीता है!",
+    ticket_matched_label: "मैच हुआ टिकट:",
+    draw_name_label: "ड्रॉ का नाम:",
+    draw_date_label: "ड्रॉ की तिथि:",
     fetching_results_loading: "परिणाम प्राप्त किए जा रहे हैं...",
     view_result_btn: "परिणाम देखें",
     just_miss_btn: "जस्ट मिस",
     change_date_btn: "तिथि बदलें",
     or_divider_text: "या",
-    ai_photo_scan_btn: "बारकोड स्कैन नहीं हो रहा? AI स्कैन करें 📸",
+    ai_photo_scan_btn: "बारकोड स्कैन नहीं हो रहा? AI स्कैन करें",
     ai_analyzing_ticket: "AI टिकट फोटो का विश्लेषण कर रहा है...",
     ai_scan_hint: "पूरे टिकट का फोटो लेकर AI से नंबर पहचानें",
 
@@ -1107,7 +1157,6 @@ export const translations = {
     edit_reminder_title: "रिमाइंडर संपादित करें",
     select_lottery_label: "केरल लॉटरी चुनें:",
     choose_lottery: "लॉटरी चुनें...",
-    draw_date_label: "ड्रॉ तिथि:",
     save_reminder_btn: "रिमाइंडर सहेजें",
     delete_reminder_title: "रिमाइंडर हटाएं",
     delete_reminder_confirm: "क्या इस टिकट का रिमाइंडर हटाना चाहते हैं?",
@@ -1312,6 +1361,12 @@ export const translations = {
     results_pending_desc:
       "இன்றைய குலுக்கல் முடிவுகள் மதியம் 2:55 - 3:00 மணிக்கு நேரலையாக வெளியிடப்படும்.",
     live_draw_in_progress: "நேரலை குலுக்கல் நடைபெறுகிறது",
+    live_sync_active: "நேரடி ஒத்திசைவு செயலில் உள்ளது",
+    streaming_live: "⚡ நேரலை ஸ்ட்ரீமிங்",
+    live_streaming_numbers: "எண்கள் நேரலையாகப் புதுப்பிக்கப்படுகின்றன...",
+    open_live_breakdown: "நேரடி குலுக்கல் விவரங்களைக் காண்க",
+    live_draw_venue_desc:
+      "கோர்க்கி பவனில் நேரடி குலுக்கல் நடைபெறுகிறது. எண்கள் அறிவிக்கப்படும் போது முடிவுகள் தானாகவே நேரலையாகப் புதுப்பிக்கப்படும்.",
     draw_happening_now: "குலுக்கல் தற்போது நடைபெறுகிறது (மதியம் 3:00 மணி)",
     live_draw_desc:
       "நேரலை குலுக்கல் நடைபெற்று வருகிறது. முடிவுகள் விரைவில் தானாகவே புதுப்பிக்கப்படும்.",
@@ -1465,6 +1520,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "லாட்டரி பார்கோடு ஸ்கேனர்",
     align_barcode: "டிக்கெட் பார்கோடை சட்டத்திற்குள் வைக்கவும்",
+    barcode_scanned: "பார்கோடு ஸ்கேன் செய்யப்பட்டது!",
+    flashlight_on: "ஃபிளாஷ்லைட் ஆன்",
+    flashlight_off: "ஃபிளாஷ்லைட் ஆஃப்",
+    scan_this_barcode: "இந்த பார்கோடை ஸ்கேன் செய்யவும்",
     select_draw_date: "குலுக்கல் தேதியைத் தேர்ந்தெடுக்கவும்",
     select_draw_date_desc:
       "சரியான முடிவைப் பெற டிக்கெட்டின் குலுக்கல் தேதியைத் தேர்ந்தெடுக்கவும்.",
@@ -1476,12 +1535,20 @@ export const translations = {
     search_across_all_records: "வெளியிடப்பட்ட அனைத்து பதிவுகளிலும் தேடுகிறது",
     scanned_ticket: "ஸ்கேன் செய்யப்பட்ட டிக்கெட்",
     rescan_btn: "மற்றொரு டிக்கெட்டை ஸ்கேன் செய்",
+    latest_badge: "சமீபத்தியது",
+    tap_to_check_instantly: "உடனே சரிபார்க்க தட்டவும்",
+    winning_ticket_match: "வெற்றி பெற்ற டிக்கெட்!",
+    congrats_ticket_won:
+      "வாழ்த்துகள்! நீங்கள் ஸ்கேன் செய்த டிக்கெட் பரிசு வென்றுள்ளது!",
+    ticket_matched_label: "பொருந்திய டிக்கெட்:",
+    draw_name_label: "குலுக்கல் பெயர்:",
+    draw_date_label: "குலுக்கல் தேதி:",
     fetching_results_loading: "முடிவுகள் சேகரிக்கப்படுகின்றன...",
     view_result_btn: "முடிவைக் காண்க",
     just_miss_btn: "ஜஸ்ட் மிஸ்",
     change_date_btn: "தேதியை மாற்றுக",
     or_divider_text: "அல்லது",
-    ai_photo_scan_btn: "பார்கோடு ஸ்கேன் ஆகவில்லையா? AI ஸ்கேன் செய்க 📸",
+    ai_photo_scan_btn: "பார்கோடு ஸ்கேன் ஆகவில்லையா? AI ஸ்கேன் செய்க",
     ai_analyzing_ticket: "AI டிக்கெட் புகைப்படத்தை ஆய்வு செய்கிறது...",
     ai_scan_hint: "முழு டிக்கெட் புகைப்படத்தின் மூலம் எண்ணைக் கண்டறியவும்",
 
@@ -1500,7 +1567,6 @@ export const translations = {
     edit_reminder_title: "நினைவூட்டலைத் திருத்து",
     select_lottery_label: "லாட்டரியைத் தேர்ந்தெடுக்கவும்:",
     choose_lottery: "லாட்டரியைத் தேர்வுசெய்...",
-    draw_date_label: "குலுக்கல் தேதி:",
     save_reminder_btn: "நினைவூட்டலைச் சேமி",
     delete_reminder_title: "நினைவூட்டலை நீக்கு",
     delete_reminder_confirm: "இந்த நினைவூட்டலை நீக்க விரும்புகிறீர்களா?",
@@ -1704,6 +1770,12 @@ export const translations = {
     results_pending_desc:
       "ಇಂದಿನ ಡ್ರಾ ಫಲಿತಾಂಶಗಳು ಮಧ್ಯಾಹ್ನ 2:55 - 3:00 ಗಂಟೆಗೆ ನೇರವಾಗಿ ಪ್ರಕಟವಾಗುತ್ತವೆ.",
     live_draw_in_progress: "ಲೈವ್ ಡ್ರಾ ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+    live_sync_active: "ಲೈವ್ ಸಿಂಕ್ ಸಕ್ರಿಯವಾಗಿದೆ",
+    streaming_live: "⚡ ಲೈವ್ ಸ್ಟ್ರೀಮಿಂಗ್",
+    live_streaming_numbers: "ಲೈವ್ ಸಂಖ್ಯೆಗಳು ನವೀಕರಣಗೊಳ್ಳುತ್ತಿವೆ...",
+    open_live_breakdown: "ಲೈವ್ ಡ್ರಾ ವಿವರಗಳನ್ನು ನೋಡಿ",
+    live_draw_venue_desc:
+      "ಗೋರ್ಕಿ ಭವನದಲ್ಲಿ ನೇರ ಡ್ರಾ ನಡೆಯುತ್ತಿದೆ. ಸಂಖ್ಯೆಗಳು ಪ್ರಕಟವಾದಂತೆ ಫಲಿತಾಂಶಗಳು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ನವೀಕರಣಗೊಳ್ಳುತ್ತವೆ.",
     draw_happening_now: "ಡ್ರಾ ಈಗ ನಡೆಯುತ್ತಿದೆ (ಮಧ್ಯಾಹ್ನ 3:00)",
     live_draw_desc:
       "ನೇರ ಡ್ರಾ ಪ್ರಕ್ರಿಯೆ ನಡೆಯುತ್ತಿದೆ. ಫಲಿತಾಂಶಗಳು ಶೀಘ್ರದಲ್ಲೇ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಅಪ್‌ಡೇಟ್ ಆಗುತ್ತವೆ.",
@@ -1853,6 +1925,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "ಬಾರ್‌ಕೋಡ್ ಟಿಕೆಟ್ ಸ್ಕ್ಯಾನರ್",
     align_barcode: "ಟಿಕೆಟ್ ಬಾರ್‌ಕೋಡ್ ಅನ್ನು ಚೌಕಟ್ಟಿನೊಳಗೆ ಇರಿಸಿ",
+    barcode_scanned: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗಿದೆ!",
+    flashlight_on: "ಫ್ಲ್ಯಾಶ್‌ಲೈಟ್ ಆನ್",
+    flashlight_off: "ಫ್ಲ್ಯಾಶ್‌ಲೈಟ್ ಆಫ್",
+    scan_this_barcode: "ಈ ಬಾರ್‌ಕೋಡ್ ಅನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
     select_draw_date: "ಡ್ರಾ ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ",
     select_draw_date_desc:
       "ನಿಖರ ಫಲಿತಾಂಶ ಪಡೆಯಲು ಟಿಕೆಟ್‌ನ ಡ್ರಾ ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
@@ -1864,12 +1940,20 @@ export const translations = {
     search_across_all_records: "ಪ್ರಕಟಿತ ಎಲ್ಲಾ ದಾಖಲೆಗಳಲ್ಲಿ ಹುಡುಕಲಾಗುತ್ತಿದೆ",
     scanned_ticket: "ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಟಿಕೆಟ್",
     rescan_btn: "ಇನ್ನೊಂದು ಟಿಕೆಟ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+    latest_badge: "ಇತ್ತೀಚಿನದು",
+    tap_to_check_instantly: "ತಕ್ಷಣ ಪರಿಶೀಲಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
+    winning_ticket_match: "ಗೆದ್ದ ಟಿಕೆಟ್ ಹೊಂದಾಣಿಕೆ!",
+    congrats_ticket_won:
+      "ಅಭಿನಂದನೆಗಳು! ನಿಮ್ಮ ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಟಿಕೆಟ್‌ಗೆ ಬಹುಮಾನ ಬಂದಿದೆ!",
+    ticket_matched_label: "ಹೊಂದಾಣಿಕೆಯಾದ ಟಿಕೆಟ್:",
+    draw_name_label: "ಡ್ರಾ ಹೆಸರು:",
+    draw_date_label: "ಡ್ರಾ ದಿನಾಂಕ:",
     fetching_results_loading: "ಫಲಿತಾಂಶಗಳನ್ನು ಸಂಗ್ರಹಿಸಲಾಗುತ್ತಿದೆ...",
     view_result_btn: "ಫಲಿತಾಂಶ ವೀಕ್ಷಿಸಿ",
     just_miss_btn: "ಜಸ್ಟ್ ಮಿಸ್",
     change_date_btn: "ದಿನಾಂಕ ಬದಲಾಯಿಸಿ",
     or_divider_text: "ಅಥವಾ",
-    ai_photo_scan_btn: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿಲ್ಲವೇ? AI ಸ್ಕ್ಯಾನ್ ಬಳಸಿ 📸",
+    ai_photo_scan_btn: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿಲ್ಲವೇ? AI ಸ್ಕ್ಯಾನ್ ಬಳಸಿ",
     ai_analyzing_ticket: "AI ಟಿಕೆಟ್ ಫೋಟೋ ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
     ai_scan_hint: "ಸಂಪೂರ್ಣ ಟಿಕೆಟ್ ಫೋಟೋ ತೆಗೆದು AI ಮೂಲಕ ಸಂಖ್ಯೆ ಗುರುತಿಸಿ",
 
@@ -1887,7 +1971,6 @@ export const translations = {
     edit_reminder_title: "ಜ್ಞಾಪನೆಯನ್ನು ತಿದ್ದುಪಡಿ ಮಾಡಿ",
     select_lottery_label: "ಕೇರಳ ಲಾಟರಿ ಆಯ್ಕೆಮಾಡಿ:",
     choose_lottery: "ಲಾಟರಿ ಆಯ್ಕೆ...",
-    draw_date_label: "ಡ್ರಾ ದಿನಾಂಕ:",
     save_reminder_btn: "ಜ್ಞಾಪನೆ ಉಳಿಸಿ",
     delete_reminder_title: "ಜ್ಞಾಪನೆ ಅಳಿಸಿ",
     delete_reminder_confirm: "ಈ ಜ್ಞಾಪನೆಯನ್ನು ತೆಗೆದುಹಾಕಬೇಕೆ?",
@@ -2091,6 +2174,12 @@ export const translations = {
     results_pending_desc:
       "నేటి డ్రా ఫలితాలు మధ్యాహ్నం 2:55 - 3:00 గంటలకు ప్రత్యక్షంగా ప్రచురించబడతాయి.",
     live_draw_in_progress: "లైవ్ డ్రా కొనసాగుతోంది",
+    live_sync_active: "లైవ్ సింక్ సక్రియంగా ఉంది",
+    streaming_live: "⚡ లైవ్ స్ట్రీమింగ్",
+    live_streaming_numbers: "లైవ్ నంబర్లు అప్‌డేట్ అవుతున్నాయి...",
+    open_live_breakdown: "లైవ్ డ్రా వివరాలను చూడండి",
+    live_draw_venue_desc:
+      "గోర్కీ భవన్‌లో లైవ్ డ్రా జరుగుతోంది. నంబర్లు ప్రకటించగానే ఫలితాలు ఆటోమేటిక్‌గా ఇక్కడ లైవ్‌గా అప్‌డేట్ అవుతాయి.",
     draw_happening_now: "డ్రా ప్రస్తుతం జరుగుతోంది (మధ్యాహ్నం 3:00)",
     live_draw_desc:
       "ప్రత్యక్ష డ్రా ప్రక్రియ జరుగుతోంది. ఫలితాలు త్వరలో ఈ పేజీలో స్వయంచాలకంగా అప్‌డేట్ అవుతాయి.",
@@ -2240,6 +2329,10 @@ export const translations = {
     // Barcode Scanner & Result
     scan_ticket_title: "బార్‌కోడ్ టిక్కెట్ స్కానర్",
     align_barcode: "టిక్కెట్ బార్‌కోడ్‌ను ఫ్రేమ్ లోపల ఉంచండి",
+    barcode_scanned: "బార్‌కోడ్ స్కాన్ చేయబడింది!",
+    flashlight_on: "ఫ్లాష్‌లైట్ ఆన్",
+    flashlight_off: "ఫ్లాష్‌లైట్ ఆఫ్",
+    scan_this_barcode: "ఈ బార్‌కోడ్‌ను స్కాన్ చేయండి",
     select_draw_date: "డ్రా తేదీని ఎంచుకోండి",
     select_draw_date_desc:
       "ఖచ్చితమైన ఫలితం పొందడానికి టిక్కెట్ యొక్క డ్రా తేదీని ఎంచుకోండి.",
@@ -2251,12 +2344,20 @@ export const translations = {
     search_across_all_records: "ప్రచురించిన అన్ని రికార్డులలో శోధిస్తోంది",
     scanned_ticket: "స్కాన్ చేసిన టిక్కెట్",
     rescan_btn: "మరొక టిక్కెట్‌ను స్కాన్ చేయండి",
+    latest_badge: "తాజాది",
+    tap_to_check_instantly: "వెంటనే తనిఖీ చేయడానికి నొక్కండి",
+    winning_ticket_match: "గెలిచిన టిక్కెట్ మ్యాచ్!",
+    congrats_ticket_won:
+      "అభినందనలు! మీ స్కాన్ చేసిన టిక్కెట్‌కు బహుమతి వచ్చింది!",
+    ticket_matched_label: "మ్యాచ్ అయిన టిక్కెట్:",
+    draw_name_label: "డ్రా పేరు:",
+    draw_date_label: "డ్రా తేదీ:",
     fetching_results_loading: "ఫలితాలు సేకరించబడుతున్నాయి...",
     view_result_btn: "ఫలితం చూడండి",
     just_miss_btn: "జస్ట్ మిస్",
     change_date_btn: "తేదీ మార్చండి",
     or_divider_text: "లేదా",
-    ai_photo_scan_btn: "బార్‌కోడ్ స్కాన్ అవ్వడం లేదా? AI స్కాన్ ఉపయోగించండి 📸",
+    ai_photo_scan_btn: "బార్‌కోడ్ స్కాన్ అవ్వడం లేదా? AI స్కాన్ ఉపయోగించండి",
     ai_analyzing_ticket: "AI టిక్కెట్ ఫోటోను విశ్లేషిస్తోంది...",
     ai_scan_hint: "పూర్తి టిక్కెట్ ఫోటో తీసి AI ద్వారా సంఖ్యను గుర్తించండి",
 
@@ -2274,7 +2375,6 @@ export const translations = {
     edit_reminder_title: "రిమైండర్ సవరించండి",
     select_lottery_label: "కేరళ లాటరీని ఎంచుకోండి:",
     choose_lottery: "లాటరీ ఎంపిక...",
-    draw_date_label: "డ్రా తేదీ:",
     save_reminder_btn: "రిమైండర్ సేవ్ చేయి",
     delete_reminder_title: "రిమైండర్ తొలగించు",
     delete_reminder_confirm: "ఈ రిమైండర్‌ను తొలగించాలనుకుంటున్నారా?",

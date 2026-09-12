@@ -48,9 +48,9 @@ import {
   Star,
   BarChart3,
   Share2,
+  Radio,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import LiveDrawBanner from "../components/LiveDrawBanner";
 import { DrawCardSkeleton } from "../components/ShimmerSkeleton";
 import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import {
@@ -101,7 +101,6 @@ import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import AiSocialDigestModal from "../components/AiSocialDigestModal";
-import ComplianceDisclaimerCard from "../components/ComplianceDisclaimerCard";
 import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -639,22 +638,6 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* 3:00 PM Live Draw In Progress Banner */}
-        <LiveDrawBanner
-          lotteryName={
-            todayDraw?.lottery_code
-              ? (getLotteryTranslatedName(todayDraw.lottery_code, language) || todayDraw.draw_name || todayLottery.name)
-              : todayLottery.name
-          }
-          onPress={() => {
-            if (todayDraw) {
-              navigation.navigate("DrawBreakdown", {
-                code: todayDraw.lottery_code,
-                date: todayDraw.draw_date,
-              });
-            }
-          }}
-        />
 
         {/* Hero Banner Skeleton or Real Content */}
         {isLoading ? (
@@ -1165,6 +1148,10 @@ export default function HomeScreen({ navigation }: any) {
                 if (!numbers || !Array.isArray(numbers) || numbers.length === 0)
                   return null;
 
+                const is3Col =
+                  ["5th", "6th", "7th", "8th", "9th", "guess", "mc"].includes(key) ||
+                  numbers.length >= 6;
+
                 return (
                   <View key={key} style={styles.tierCard}>
                     <View style={styles.tierHeader}>
@@ -1176,8 +1163,21 @@ export default function HomeScreen({ navigation }: any) {
 
                     <View style={styles.numbersGrid}>
                       {numbers.map((num, idx) => (
-                        <View key={idx} style={styles.numberChip}>
-                          <Text style={styles.numberChipText}>{num}</Text>
+                        <View
+                          key={idx}
+                          style={[
+                            styles.numberChip,
+                            is3Col && styles.numberChip3Col,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.numberChipText,
+                              is3Col && styles.numberChipText3Col,
+                            ]}
+                          >
+                            {num}
+                          </Text>
                         </View>
                       ))}
                     </View>
@@ -1353,68 +1353,130 @@ export default function HomeScreen({ navigation }: any) {
             </View>
           ) : isAfter3PM ? (
             /* Today's Draw Live In-Progress Card */
-            <View style={[styles.scheduledCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                <View style={styles.scheduledBadgeRow}>
-                  <ActivityIndicator size="small" color="#2563EB" />
+            <View style={styles.scheduledCard}>
+              {/* Header Badges Row */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    backgroundColor: "#FEF2F2",
+                    borderWidth: 1,
+                    borderColor: "#FECACA",
+                    paddingVertical: 5,
+                    paddingHorizontal: 11,
+                    borderRadius: 20,
+                  }}
+                >
+                  <Radio size={13} color="#DC2626" />
                   <Text
-                    style={[
-                      styles.scheduledBadgeText,
-                      { color: "#1D4ED8" },
-                      language === "ml" && { fontSize: 10.5 },
-                    ]}
+                    style={{
+                      fontSize: language === "ml" ? 10.5 : 11,
+                      fontWeight: "900",
+                      color: "#DC2626",
+                      letterSpacing: 0.4,
+                    }}
                   >
-                    {language === "ml"
-                      ? "തത്സമയ നറുക്കെടുപ്പ് പുരോഗമിക്കുന്നു"
-                      : "LIVE DRAW IN PROGRESS"}
+                    {t("live_draw_in_progress")}
                   </Text>
                 </View>
 
                 {/* Live Socket Status Pill */}
                 {socketStatus === "live_updating" ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#F59E0B" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FEF3C7", paddingHorizontal: 9, paddingVertical: 4.5, borderRadius: 14, borderWidth: 1, borderColor: "#F59E0B" }}>
                     <Zap size={11} color="#B45309" />
-                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>⚡ STREAMING LIVE</Text>
+                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#92400E" }}>{t("streaming_live")}</Text>
                   </View>
                 ) : getIsPollingWindow(isTodayBumper) && socketStatus === "connected" ? (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#ECFDF5", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "#A7F3D0" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#F0FDF4", paddingHorizontal: 9, paddingVertical: 4.5, borderRadius: 14, borderWidth: 1, borderColor: "#BBF7D0" }}>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" }} />
-                    <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#065F46" }}>LIVE SYNC ACTIVE</Text>
+                    <Text style={{ fontSize: 9.5, fontWeight: "800", color: "#166534" }}>{t("live_sync_active")}</Text>
                   </View>
                 ) : null}
               </View>
 
+              {/* Lottery Title */}
               <Text
                 style={[
                   styles.scheduledTitle,
-                  { color: "#1E3A8A" },
-                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
+                  { color: "#0F172A", marginTop: 0, marginBottom: 12 },
+                  language === "ml" && { fontSize: 20, lineHeight: 28, fontWeight: "900" },
                 ]}
               >
-                {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
+                {getLotteryTranslatedName(todayLottery.code, language) || todayLottery.name} ({todayLottery.code})
               </Text>
-              <Text
-                style={[
-                  styles.scheduledSubtitle,
-                  { color: "#2563EB" },
-                  language === "ml" && { fontSize: 12, lineHeight: 17 },
-                ]}
+
+              {/* Status Info Box */}
+              <View
+                style={{
+                  backgroundColor: "#F8FAFC",
+                  borderRadius: 16,
+                  padding: 14,
+                  borderWidth: 1,
+                  borderColor: "#E2E8F0",
+                  marginBottom: 12,
+                }}
               >
-                {language === "ml"
-                  ? `ഇന്നത്തെ നറുക്കെടുപ്പ് ഫലം ഇപ്പോൾ നടന്നുകൊണ്ടിരിക്കുന്നു (${todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})`
-                  : `Draw Happening Right Now (${todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})`}
-              </Text>
-              <Text
-                style={[
-                  styles.scheduledDesc,
-                  { color: "#1E40AF" },
-                  language === "ml" && { fontSize: 10.5, lineHeight: 15 },
-                ]}
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                  <Clock size={15} color={COLORS.primary} />
+                  <Text
+                    style={{
+                      fontSize: 13.5,
+                      fontWeight: "800",
+                      color: "#0F172A",
+                    }}
+                  >
+                    {t("draw_happening_now")}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#64748B",
+                    lineHeight: 18,
+                    marginBottom: 10,
+                  }}
+                >
+                  {t("live_draw_venue_desc")}
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    backgroundColor: "#EFF6FF",
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    borderRadius: 8,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  <ActivityIndicator size="small" color={COLORS.primary} style={{ transform: [{ scale: 0.7 }] }} />
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: COLORS.primary }}>
+                    {t("live_streaming_numbers")}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Live Draw Action Button */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  triggerLightHaptic();
+                  navigation.navigate("DrawBreakdown", {
+                    code: todayLottery.code,
+                    date: todayISTDate,
+                  });
+                }}
+                style={[styles.viewBreakdownBtn, { flexDirection: "row", gap: 6 }]}
               >
-                {language === "ml"
-                  ? "തത്സമയ നറുക്കെടുപ്പ് ഇപ്പോൾ നടന്നു കൊണ്ടിരിക്കുന്നു. ഫലം ഉടൻ ലൈവായി ലഭ്യമാകും."
-                  : "The live draw is currently in progress. Results will update automatically without manual refresh."}
-              </Text>
+                <Text style={styles.viewBreakdownText}>
+                  {t("open_live_breakdown")}
+                </Text>
+                <ChevronRight size={15} color={COLORS.primary} />
+              </TouchableOpacity>
             </View>
           ) : (
             /* Today's Draw Coming Soon Scheduled Card */
@@ -1422,41 +1484,28 @@ export default function HomeScreen({ navigation }: any) {
               style={[
                 styles.scheduledCard,
                 isTodayBumper && {
-                  backgroundColor: "#FFFDF0",
                   borderColor: "#F59E0B",
-                  borderWidth: 1.5,
                 },
               ]}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                <View
-                  style={[
-                    styles.scheduledBadgeRow,
-                    isTodayBumper && { backgroundColor: "#FEF3C7" },
-                    { marginBottom: 0 },
-                  ]}
-                >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                <View style={styles.scheduledBadgeRow}>
                   {isTodayBumper ? (
-                    <Sparkles size={13} color="#B45309" />
+                    <Sparkles size={16} color="#92400E" />
                   ) : (
-                    <Clock size={13} color={COLORS.primary} />
+                    <Clock size={16} color="#92400E" />
                   )}
                   <Text
                     style={[
                       styles.scheduledBadgeText,
-                      isTodayBumper
-                        ? { color: "#92400E", fontWeight: "900" }
-                        : { color: COLORS.primary },
-                      language === "ml" && { fontSize: 10.5 },
+                      language === "ml" && { fontSize: 11 },
                     ]}
                   >
                     {isTodayBumper
-                      ? language === "ml"
+                      ? (language === "ml"
                         ? "👑 കേരള ബംപർ ലോട്ടറി ഇന്ന്"
-                        : "👑 KERALA BUMPER LOTTERY TODAY"
-                      : language === "ml"
-                        ? "ഫലം ഉടൻ ലഭ്യമാകും"
-                        : "RESULT COMING SOON"}
+                        : "👑 KERALA BUMPER LOTTERY TODAY")
+                      : t("result_coming_soon")}
                   </Text>
                 </View>
 
@@ -1472,8 +1521,7 @@ export default function HomeScreen({ navigation }: any) {
               <Text
                 style={[
                   styles.scheduledTitle,
-                  isTodayBumper && { color: "#78350F" },
-                  language === "ml" && { fontSize: 16.5, lineHeight: 23, fontWeight: "900" },
+                  language === "ml" && { fontSize: 20, lineHeight: 28 },
                 ]}
               >
                 {language === "ml" && todayLottery.nameMl ? todayLottery.nameMl : todayLottery.name} ({todayLottery.code})
@@ -1481,7 +1529,7 @@ export default function HomeScreen({ navigation }: any) {
 
               {/* Bumper Quick Badges */}
               {isTodayBumper && (
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginVertical: 8 }}>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
                   <View style={{ backgroundColor: "#D97706", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 }}>
                     <Text style={{ color: "#FFFFFF", fontWeight: "900", fontSize: 11 }}>
                       🏆 {todayLottery.jackpot || "₹25 Crore"}
@@ -1505,70 +1553,119 @@ export default function HomeScreen({ navigation }: any) {
               {/* Digital Countdown Timer Box */}
               {!countdown.isDrawPassed && (
                 <View
-                  style={{
-                    backgroundColor: isTodayBumper ? "#FEF3C7" : "#F0FDF4",
-                    borderRadius: 14,
-                    padding: 12,
-                    marginVertical: 10,
-                    borderWidth: 1,
-                    borderColor: isTodayBumper ? "#FCD34D" : "#BBF7D0",
-                  }}
+                  style={[
+                    styles.countdownContainer,
+                    isTodayBumper && {
+                      backgroundColor: "#FFFBEB",
+                      borderColor: "#FDE68A",
+                    },
+                  ]}
                 >
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <Text style={{ fontSize: 11, fontWeight: "800", color: isTodayBumper ? "#92400E" : "#166534", textTransform: "uppercase" }}>
-                      ⏰ {language === "ml" ? "നറുക്കെടുപ്പ് കൗണ്ട്ഡൗൺ" : "Live Draw Countdown"} ({todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})
-                    </Text>
-                    <Text style={{ fontSize: 10, fontWeight: "700", color: "#6B7280" }}>Official IST</Text>
+                  <View style={styles.countdownHeaderRow}>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <View
+                        style={[
+                          styles.countdownLiveDot,
+                          isTodayBumper && { backgroundColor: "#D97706" },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.countdownHeaderText,
+                          isTodayBumper && { color: "#92400E" },
+                        ]}
+                      >
+                        {language === "ml" ? "നറുക്കെടുപ്പ് കൗണ്ട്ഡൗൺ" : "LIVE DRAW COUNTDOWN"} ({todayLottery.drawTime || (isTodayBumper ? "2:00 PM" : "3:00 PM")})
+                      </Text>
+                    </View>
+                    <Text style={styles.countdownIstText}>Official IST</Text>
                   </View>
 
-                  <View style={{ flexDirection: "row", gap: 8 }}>
-                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
-                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                  <View style={styles.countdownDigitsRow}>
+                    <View style={styles.countdownDigitCard}>
+                      <Text
+                        style={[
+                          styles.countdownDigitNum,
+                          isTodayBumper && { color: "#B45309" },
+                        ]}
+                      >
                         {String(countdown.hours).padStart(2, "0")}
                       </Text>
-                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>HRS</Text>
+                      <Text style={styles.countdownDigitLabel}>HRS</Text>
                     </View>
-                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
-                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                    <View
+                      style={[
+                        styles.countdownDivider,
+                        isTodayBumper && { backgroundColor: "#FDE68A" },
+                      ]}
+                    />
+                    <View style={styles.countdownDigitCard}>
+                      <Text
+                        style={[
+                          styles.countdownDigitNum,
+                          isTodayBumper && { color: "#B45309" },
+                        ]}
+                      >
                         {String(countdown.minutes).padStart(2, "0")}
                       </Text>
-                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>MIN</Text>
+                      <Text style={styles.countdownDigitLabel}>MIN</Text>
                     </View>
-                    <View style={{ flex: 1, backgroundColor: "#FFFFFF", paddingVertical: 8, borderRadius: 8, alignItems: "center", borderWidth: 1, borderColor: "rgba(0,0,0,0.05)" }}>
-                      <Text style={{ fontSize: 18, fontWeight: "900", color: isTodayBumper ? "#B45309" : COLORS.primary }}>
+                    <View
+                      style={[
+                        styles.countdownDivider,
+                        isTodayBumper && { backgroundColor: "#FDE68A" },
+                      ]}
+                    />
+                    <View style={styles.countdownDigitCard}>
+                      <Text
+                        style={[
+                          styles.countdownDigitNum,
+                          isTodayBumper && { color: "#B45309" },
+                        ]}
+                      >
                         {String(countdown.seconds).padStart(2, "0")}
                       </Text>
-                      <Text style={{ fontSize: 9, fontWeight: "700", color: "#64748B", marginTop: 1 }}>SEC</Text>
+                      <Text style={styles.countdownDigitLabel}>SEC</Text>
                     </View>
                   </View>
                 </View>
               )}
 
-              <Text
-                style={[
-                  styles.scheduledSubtitle,
-                  isTodayBumper ? { color: "#92400E" } : { color: COLORS.primary },
-                  language === "ml" && { fontSize: 12, lineHeight: 17 },
-                ]}
-              >
-                {isTodayBumper
-                  ? (language === "ml" ? "പ്രത്യേക ബംപർ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 2:00 മണിക്ക്" : `Special Bumper Draw Scheduled Today at ${todayLottery.drawTime || "2:00 PM"}`)
-                  : (language === "ml" ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്" : "Draw Scheduled Today at 3:00 PM")}
-              </Text>
-              <Text
-                style={[
-                  styles.scheduledDesc,
-                  language === "ml" && { fontSize: 10.5, lineHeight: 15 },
-                ]}
-              >
-                {isTodayBumper
-                  ? (language === "ml"
-                      ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) ബംപർ നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
-                      : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published live at ${todayLottery.drawTime || "2:00 PM"}.`)
-                  : (language === "ml"
-                      ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
-                      : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`)}
-              </Text>
+              {/* Scheduled Information Section */}
+              <View style={styles.scheduledInfoSection}>
+                <View style={styles.scheduledInfoTitleRow}>
+                  <View
+                    style={[
+                      styles.scheduledAccentBar,
+                      isTodayBumper && { backgroundColor: "#D97706" },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.scheduledSubtitle,
+                      language === "ml" && { fontSize: 14, lineHeight: 20 },
+                    ]}
+                  >
+                    {isTodayBumper
+                      ? (language === "ml" ? `പ്രത്യേക ബംപർ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് ${todayLottery.drawTime || "2:00 PM"} മണിക്ക്` : `Special Bumper Draw Scheduled Today at ${todayLottery.drawTime || "2:00 PM"}`)
+                      : (language === "ml" ? "ഇന്നത്തെ നറുക്കെടുപ്പ് ഉച്ചയ്ക്ക് 3:00 മണിക്ക്" : "Draw Scheduled Today at 3:00 PM")}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.scheduledDesc,
+                    language === "ml" && { fontSize: 12, lineHeight: 18 },
+                  ]}
+                >
+                  {isTodayBumper
+                    ? (language === "ml"
+                        ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) ബംപർ നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
+                        : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published live at ${todayLottery.drawTime || "2:00 PM"}.`)
+                    : (language === "ml"
+                        ? `${todayLottery.nameMl || todayLottery.name} (${todayLottery.code}) നറുക്കെടുപ്പ് ഫലം തത്സമയം ലഭ്യമാകും.`
+                        : `Winning results for ${todayLottery.name} (${todayLottery.code}) will be published automatically.`)}
+                </Text>
+              </View>
             </View>
           ))}
 
@@ -1736,6 +1833,10 @@ export default function HomeScreen({ navigation }: any) {
               if (!numbers || !Array.isArray(numbers) || numbers.length === 0)
                 return null;
 
+              const is3Col =
+                ["5th", "6th", "7th", "8th", "9th", "guess", "mc"].includes(key) ||
+                numbers.length >= 6;
+
               return (
                 <View key={key} style={styles.tierCard}>
                   <View style={styles.tierHeader}>
@@ -1747,8 +1848,21 @@ export default function HomeScreen({ navigation }: any) {
 
                   <View style={styles.numbersGrid}>
                     {numbers.map((num, idx) => (
-                      <View key={idx} style={styles.numberChip}>
-                        <Text style={styles.numberChipText}>{num}</Text>
+                      <View
+                        key={idx}
+                        style={[
+                          styles.numberChip,
+                          is3Col && styles.numberChip3Col,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.numberChipText,
+                            is3Col && styles.numberChipText3Col,
+                          ]}
+                        >
+                          {num}
+                        </Text>
                       </View>
                     ))}
                   </View>
@@ -2118,8 +2232,6 @@ export default function HomeScreen({ navigation }: any) {
           </Text>
         </View> */}
 
-        <ComplianceDisclaimerCard style={{ marginHorizontal: 16 }} />
-
         <View style={styles.footer}>
           <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim")}>
             <Text style={styles.footerLink}>{language === "ml" ? "സമ്മാന ക്ലെയിം" : "Claim"}</Text>
@@ -2456,33 +2568,136 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   scheduledCard: {
-    backgroundColor: COLORS.goldLight,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.goldBorder,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: "#F1F5F9",
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 3,
   },
   scheduledBadgeRow: {
+    backgroundColor: "#FEF3C7",
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
+    gap: 8,
+    alignSelf: "flex-start",
   },
-  scheduledBadgeText: { fontSize: 11, fontWeight: "800", color: COLORS.gold },
-  scheduledTitle: {
-    fontSize: 22,
+  scheduledBadgeText: {
+    fontSize: 12.5,
     fontWeight: "900",
-    color: COLORS.textDark,
-    marginBottom: 2,
+    color: "#92400E",
+    letterSpacing: 0.5,
+  },
+  scheduledTitle: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#0F172A",
+    marginTop: 6,
+    marginBottom: 14,
+    letterSpacing: -0.3,
+  },
+  countdownContainer: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#DCFCE7",
+    marginBottom: 16,
+  },
+  countdownHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  countdownLiveDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: "#16A34A",
+    marginRight: 7,
+  },
+  countdownHeaderText: {
+    fontSize: 11.5,
+    fontWeight: "900",
+    color: "#166534",
+    letterSpacing: 0.3,
+  },
+  countdownIstText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  countdownDigitsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  countdownDigitCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  countdownDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: "#D1FAE5",
+  },
+  countdownDigitNum: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#047857",
+  },
+  countdownDigitLabel: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    color: "#64748B",
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  scheduledInfoSection: {
+    marginTop: 2,
+  },
+  scheduledInfoTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  scheduledAccentBar: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    backgroundColor: "#16A34A",
+    marginRight: 8,
   },
   scheduledSubtitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: COLORS.gold,
-    marginBottom: 6,
+    fontSize: 15.5,
+    fontWeight: "900",
+    color: "#0F172A",
   },
-  scheduledDesc: { fontSize: 12, color: COLORS.textDark, lineHeight: 18 },
+  scheduledDesc: {
+    fontSize: 13,
+    color: "#64748B",
+    lineHeight: 19,
+    marginTop: 2,
+  },
   checkerCard: {
     backgroundColor: COLORS.cardBg,
     borderRadius: 16,
@@ -2751,19 +2966,24 @@ const styles = StyleSheet.create({
   numbersGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 8,
+    gap: 6,
   },
   numberChip: {
-    width: "48%",
+    width: "48.8%",
     backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 9,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+  },
+  numberChip3Col: {
+    width: "31.8%",
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   numberChipText: {
     fontSize: 14.5,
@@ -2771,6 +2991,10 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     letterSpacing: 0.5,
     textAlign: "center",
+  },
+  numberChipText3Col: {
+    fontSize: 13.5,
+    letterSpacing: 0.3,
   },
   footer: {
     flexDirection: "row",

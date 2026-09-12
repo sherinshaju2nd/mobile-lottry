@@ -373,7 +373,7 @@ export default function BarcodeScannerModal({
                   <View style={styles.scannedOverlay}>
                     <CheckCircle size={48} color="#22C55E" />
                     <Text style={styles.scannedText}>
-                      {isMl ? "ബാർകോഡ് സ്‌കാൻ ചെയ്തു!" : "Barcode Scanned!"}
+                      {t("barcode_scanned")}
                     </Text>
                   </View>
                 )}
@@ -386,9 +386,7 @@ export default function BarcodeScannerModal({
               {/* 1. Translucent Hint Pill */}
               <View style={styles.instructionPill}>
                 <Text style={styles.instructionPillText}>
-                  {isMl
-                    ? "ടിക്കറ്റ് ബാർകോഡ് ചട്ടക്കൂടിനുള്ളിൽ വെക്കുക"
-                    : "Align the barcode inside the frame"}
+                  {t("align_barcode")}
                 </Text>
               </View>
 
@@ -448,13 +446,7 @@ export default function BarcodeScannerModal({
                     torchOn && { color: "#FEF08A" },
                   ]}
                 >
-                  {torchOn
-                    ? isMl
-                      ? "Flashlight Off"
-                      : "Flashlight Off"
-                    : isMl
-                      ? "Flashlight On"
-                      : "Flashlight On"}
+                  {torchOn ? t("flashlight_off") : t("flashlight_on")}
                 </Text>
               </TouchableOpacity>
 
@@ -462,7 +454,7 @@ export default function BarcodeScannerModal({
               <View style={styles.barcodeDividerRow}>
                 <View style={styles.barcodeDividerLine} />
                 <Text style={styles.barcodeDividerText}>
-                  {isMl ? "ഈ ബാർകോഡ് സ്‌കാൻ ചെയ്യുക" : "SCAN THIS BARCODE"}
+                  {t("scan_this_barcode")}
                 </Text>
                 <View style={styles.barcodeDividerLine} />
               </View>

@@ -252,7 +252,7 @@ export default function BarcodeResultModal({
                 <View style={styles.sectionHeaderRow}>
                   <Text style={styles.sectionLabel}>{t("select_draw_prompt")}</Text>
                   <Text style={styles.sectionHint}>
-                    {isMl ? "ടാപ്പ് ചെയ്ത് പരിശോധിക്കുക" : "Tap to check instantly"}
+                    {t("tap_to_check_instantly")}
                   </Text>
                 </View>
 
@@ -292,7 +292,7 @@ export default function BarcodeResultModal({
                             <View style={styles.inlineLatestBadge}>
                               <Sparkles size={9} color="#16A34A" />
                               <Text style={styles.inlineLatestBadgeText}>
-                                {isMl ? "ഏറ്റവും പുതിയത്" : "LATEST"}
+                                {t("latest_badge")}
                               </Text>
                             </View>
                           )}
@@ -337,12 +337,10 @@ export default function BarcodeResultModal({
                 <View style={styles.winBanner}>
                   <Text style={styles.celebrationEmoji}>🎉 🏆 ✨</Text>
                   <Text style={styles.winTitle}>
-                    {isMl ? "സമ്മാനാർഹമായ ടിക്കറ്റ്!" : "WINNING TICKET MATCH!"}
+                    {t("winning_ticket_match")}
                   </Text>
                   <Text style={styles.winSubtitle}>
-                    {isMl
-                      ? "അഭിനന്ദനങ്ങൾ! നിങ്ങൾ പരിശോധിച്ച ടിക്കറ്റിന് സമ്മാനം ലഭിച്ചിരിക്കുന്നു!"
-                      : "Congratulations! Your scanned ticket won a prize!"}
+                    {t("congrats_ticket_won")}
                   </Text>
                 </View>
 
@@ -354,21 +352,21 @@ export default function BarcodeResultModal({
                     </View>
 
                     <Text style={styles.prizeAmountText}>
-                      {match.prize_amount || (isMl ? "സമ്മാനാർഹമായ ടിക്കറ്റ്" : "Winning Ticket")}
+                      {match.prize_amount || t("first_prize")}
                     </Text>
 
                     <View style={styles.divider} />
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>
-                        {isMl ? "മാച്ച് ആയ ടിക്കറ്റ്:" : "Ticket Matched:"}
+                        {t("ticket_matched_label")}
                       </Text>
                       <Text style={styles.detailValueBold}>{match.ticket_matched}</Text>
                     </View>
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>
-                        {isMl ? "ലോട്ടറി പേര്:" : "Draw Name:"}
+                        {t("draw_name_label")}
                       </Text>
                       <Text style={styles.detailValue}>
                         {match.draw_name} ({match.draw_code})
@@ -377,7 +375,7 @@ export default function BarcodeResultModal({
 
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>
-                        {isMl ? "നറുക്കെടുപ്പ് തീയതി:" : "Draw Date:"}
+                        {t("draw_date_label")}
                       </Text>
                       <Text style={styles.detailValue}>
                         {formatDisplayDate(match.draw_date)}
