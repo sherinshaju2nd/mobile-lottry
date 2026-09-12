@@ -17,6 +17,7 @@ import {
   AppStateStatus,
   Vibration,
   KeyboardAvoidingView,
+  Modal,
 } from "react-native";
 
 if (
@@ -28,7 +29,7 @@ if (
     UIManager.setLayoutAnimationEnabledExperimental(true);
   } catch {}
 }
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Trophy,
   Clock,
@@ -37,6 +38,8 @@ import {
   AlertCircle,
   Sparkles,
   ChevronRight,
+  ChevronDown,
+  Check,
   Globe,
   RotateCw,
   Download,
@@ -69,6 +72,7 @@ import {
   WEEKLY_LOTTERIES,
   BUMPER_LOTTERIES,
   getLotteryMalayalamName,
+  getLotteryTranslatedName,
   LotteryMeta,
   getDayTranslated,
   getIsBeforeSwitchTime,
@@ -77,6 +81,7 @@ import {
   getIsPollingWindow,
   getDrawTimeDisplay,
 } from "../constants/lotteries";
+import { SUPPORTED_LANGUAGES, isIndic } from "../constants/translations";
 import {
   fetchAllDraws,
   getCachedDrawsQuick,
@@ -101,8 +106,10 @@ import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function HomeScreen({ navigation }: any) {
-  const { t, language, setShowLanguageModal } = useLanguage();
+  const insets = useSafeAreaInsets();
+  const { t, language, setLanguage, setShowLanguageModal } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   // Core Data States
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
@@ -541,7 +548,7 @@ export default function HomeScreen({ navigation }: any) {
                   numberOfLines={1}
                   style={[
                     styles.appName,
-                    language === "ml" && { fontSize: 13, lineHeight: 18, fontWeight: "800" },
+                    isIndic(language) && { fontSize: 13, lineHeight: 18, fontWeight: "800" },
                   ]}
                 >
                   {t("app_header_title")}
@@ -550,7 +557,7 @@ export default function HomeScreen({ navigation }: any) {
                   numberOfLines={1}
                   style={[
                     styles.appSubtitle,
-                    language === "ml" && { fontSize: 9.5, lineHeight: 13 },
+                    isIndic(language) && { fontSize: 9.5, lineHeight: 13 },
                   ]}
                 >
                   {t("app_header_subtitle")}
@@ -597,28 +604,36 @@ export default function HomeScreen({ navigation }: any) {
 
               <TouchableOpacity
                 style={{
+                  height: 34,
+                  borderRadius: 17,
+                  backgroundColor: COLORS.primaryLight,
                   flexDirection: "row",
                   alignItems: "center",
-                  gap: 4,
-                  backgroundColor: COLORS.primaryLight,
+                  justifyContent: "center",
                   paddingHorizontal: 8,
-                  paddingVertical: 5,
-                  borderRadius: 20,
+                  gap: 3,
                   borderWidth: 1,
                   borderColor: COLORS.primary,
                 }}
-                onPress={() => setShowLanguageModal(true)}
+                onPress={() => {
+                  triggerLightHaptic();
+                  setShowLangDropdown((prev) => !prev);
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel="Select Language"
               >
                 <Globe size={13} color={COLORS.primary} />
                 <Text
                   style={{
-                    fontSize: language === "ml" ? 10 : 11,
+                    fontSize: 11,
                     fontWeight: "800",
                     color: COLORS.primary,
+                    letterSpacing: 0.5,
                   }}
                 >
-                  {language === "ml" ? "മലയാളം" : "EN"}
+                  {language.toUpperCase()}
                 </Text>
+                <ChevronDown size={11} color={COLORS.primary} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
           </View>
@@ -627,9 +642,9 @@ export default function HomeScreen({ navigation }: any) {
         {/* 3:00 PM Live Draw In Progress Banner */}
         <LiveDrawBanner
           lotteryName={
-            language === "ml" && todayDraw?.lottery_code && getLotteryMalayalamName(todayDraw.lottery_code)
-              ? getLotteryMalayalamName(todayDraw.lottery_code)
-              : todayDraw?.draw_name || todayLottery.name
+            todayDraw?.lottery_code
+              ? (getLotteryTranslatedName(todayDraw.lottery_code, language) || todayDraw.draw_name || todayLottery.name)
+              : todayLottery.name
           }
           onPress={() => {
             if (todayDraw) {
@@ -2173,6 +2188,115 @@ export default function HomeScreen({ navigation }: any) {
         onClose={() => setIsAiDigestOpen(false)}
         drawData={allDraws[0] || {}}
       />
+
+      {/* Quick Language Dropdown / Select Menu */}
+      <Modal
+        visible={showLangDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLangDropdown(false)}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.3)",
+            justifyContent: "flex-start",
+            alignItems: "flex-end",
+            paddingTop: insets.top + 48,
+            paddingRight: 16,
+          }}
+          activeOpacity={1}
+          onPress={() => setShowLangDropdown(false)}
+        >
+          <View
+            style={{
+              backgroundColor: COLORS.white,
+              borderRadius: 14,
+              padding: 6,
+              width: 195,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 10,
+              elevation: 10,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+            }}
+            onStartShouldSetResponder={() => true}
+          >
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderBottomWidth: 1,
+                borderBottomColor: "#F1F5F9",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Globe size={13} color={COLORS.textLight} />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  color: COLORS.textLight,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                }}
+              >
+                {t("change_language")}
+              </Text>
+            </View>
+
+            {SUPPORTED_LANGUAGES.map((item) => {
+              const isActive = language === item.code;
+              return (
+                <TouchableOpacity
+                  key={item.code}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingVertical: 7,
+                    paddingHorizontal: 10,
+                    borderRadius: 8,
+                    backgroundColor: isActive ? COLORS.primaryLight : "transparent",
+                    marginTop: 2,
+                  }}
+                  onPress={() => {
+                    triggerLightHaptic();
+                    setLanguage(item.code);
+                    setShowLangDropdown(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Text style={{ fontSize: 16 }}>{item.flag}</Text>
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 13,
+                          fontWeight: isActive ? "700" : "600",
+                          color: isActive ? COLORS.primary : COLORS.textDark,
+                        }}
+                      >
+                        {item.nativeName}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: COLORS.textLight }}>
+                        {item.name} ({item.shortCode})
+                      </Text>
+                    </View>
+                  </View>
+                  {isActive && (
+                    <Check size={16} color={COLORS.primary} strokeWidth={2.5} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

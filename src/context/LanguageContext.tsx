@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Language, translations } from "../constants/translations";
+import { Language, translations, isIndic, TranslationKey } from "../constants/translations";
 
 const LANGUAGE_KEY = "@app_language_preference";
+const VALID_LANGUAGES: Language[] = ["en", "ml", "hi", "ta", "kn", "te"];
 
 interface LanguageContextType {
   language: Language;
+  isIndicLang: boolean;
   setLanguage: (lang: Language) => Promise<void>;
-  t: (key: keyof typeof translations.en) => string;
+  t: (key: TranslationKey) => string;
   isLoading: boolean;
   showLanguageModal: boolean;
   setShowLanguageModal: (show: boolean) => void;
@@ -26,8 +28,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Load saved language preference from local storage
     AsyncStorage.getItem(LANGUAGE_KEY)
       .then((savedLang) => {
-        if (savedLang === "en" || savedLang === "ml") {
-          setLanguageState(savedLang);
+        if (savedLang && VALID_LANGUAGES.includes(savedLang as Language)) {
+          setLanguageState(savedLang as Language);
           setIsLanguageSelected(true);
           setShowLanguageModal(false);
         } else {
@@ -56,7 +58,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const t = (key: keyof typeof translations.en): any => {
+  const t = (key: TranslationKey): any => {
     const dict = (translations as any)[language] || translations.en;
     return dict[key] ?? (translations.en as any)[key] ?? String(key);
   };
@@ -65,6 +67,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <LanguageContext.Provider
       value={{
         language,
+        isIndicLang: isIndic(language),
         setLanguage,
         t,
         isLoading,

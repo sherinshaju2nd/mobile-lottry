@@ -20,14 +20,15 @@ import {
   FileText,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
-import { ALL_LOTTERIES, getLotteryMalayalamName, getDayTranslated, getDrawTimeDisplay } from "../constants/lotteries";
+import { ALL_LOTTERIES, getLotteryTranslatedName, getDayTranslated, getDrawTimeDisplay } from "../constants/lotteries";
+import { isIndic } from "../constants/translations";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
   const { t, language } = useLanguage();
   const { code } = route.params || { code: "BT" };
-  const codeUpper = code.toUpperCase();
+  const codeUpper = code ? code.toUpperCase() : "BT";
 
   const lotteryMeta = ALL_LOTTERIES.find((l) => l.code === codeUpper) || {
     name: `${codeUpper} Lottery`,
@@ -109,22 +110,22 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
     const appStateSub = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
       appStateSub.remove();
     };
   }, [codeUpper]);
 
   useEffect(() => {
-    const q = searchFilter.trim().toLowerCase();
-    if (!q) {
+    if (!searchFilter.trim()) {
       setFilteredHistory(history);
     } else {
-      const filtered = history.filter((d) => {
-        const dateMatch = d.draw_date.toLowerCase().includes(q);
-        const nameMatch = d.draw_name.toLowerCase().includes(q);
-        const ticketMatch = (d.first?.ticket || "").toLowerCase().includes(q);
-        return dateMatch || nameMatch || ticketMatch;
-      });
+      const q = searchFilter.toLowerCase().trim();
+      const filtered = history.filter(
+        (d) =>
+          d.draw_date.toLowerCase().includes(q) ||
+          (d.first?.ticket ? d.first.ticket.toLowerCase().includes(q) : false) ||
+          (d.first?.location ? d.first.location.toLowerCase().includes(q) : false)
+      );
       setFilteredHistory(filtered);
     }
   }, [searchFilter, history]);
@@ -132,7 +133,13 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
   const renderItem = ({ item }: { item: DrawResult }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate("DrawBreakdown", { code: codeUpper, date: item.draw_date })}
+      activeOpacity={0.7}
+      onPress={() =>
+        navigation.navigate("DrawBreakdown", {
+          code: item.lottery_code,
+          date: item.draw_date,
+        })
+      }
     >
       <View style={styles.cardTop}>
         <Text style={styles.dateText}>{item.draw_date}</Text>
@@ -142,12 +149,12 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
       </View>
 
       <Text style={styles.drawName}>
-        {item.draw_name} {getLotteryMalayalamName(codeUpper) ? `(${getLotteryMalayalamName(codeUpper)})` : ""}
+        {getLotteryTranslatedName(codeUpper, language) || item.draw_name}
       </Text>
 
       <View style={styles.winnerBox}>
         <Text style={styles.winnerLabel}>
-          {language === "ml" ? "1-ാം സമ്മാന വിജയിച്ച ടിക്കറ്റ്" : "1ST PRIZE WINNING TICKET"}
+          {t("winning_1st_ticket")}
         </Text>
         <Text style={styles.winnerTicket}>{item.first?.ticket || "N/A"}</Text>
         {item.first?.location && (
@@ -159,7 +166,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 
       <View style={styles.cardFooter}>
         <Text style={styles.footerText}>
-          {language === "ml" ? "സമ്പൂർണ്ണ ഫലങ്ങൾ കാണുക" : "View Full Results & Breakdown"}
+          {t("view_full_archive_item")}
         </Text>
         <ChevronRight size={14} color={COLORS.primary} />
       </View>
@@ -178,18 +185,18 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
             <Text
               style={[
                 styles.title,
-                language === "ml" && { fontSize: 16.5, lineHeight: 24 },
+                isIndic(language) && { fontSize: 16.5, lineHeight: 24 },
               ]}
             >
-              {language === "ml" && lotteryMeta.nameMl ? lotteryMeta.nameMl : lotteryMeta.name} ({codeUpper})
+              {getLotteryTranslatedName(codeUpper, language) || lotteryMeta.name} ({codeUpper})
             </Text>
             <Text
               style={[
                 styles.subtitle,
-                language === "ml" && { fontSize: 11.5 },
+                isIndic(language) && { fontSize: 11.5 },
               ]}
             >
-              {language === "ml" ? "നറുക്കെടുപ്പ് ദിനം:" : "Draw Day:"} {getDayTranslated(lotteryMeta.day, language)} • {filteredHistory.length} {language === "ml" ? "ഫലങ്ങൾ" : "Draws"}
+              {t("draw_day")}: {getDayTranslated(lotteryMeta.day, language)} • {filteredHistory.length} {t("draws_count_suffix")}
             </Text>
           </View>
         </View>
@@ -221,14 +228,14 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
               <View style={{ backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, borderWidth: 1, borderColor: "#FCD34D" }}>
                 <Text style={{ fontSize: 10.5, fontWeight: "900", color: "#92400E" }}>
                   {lotteryDbMeta.draw_date === todayISTDate
-                    ? language === "ml" ? "👑 ഇന്ന് നറുക്കെടുപ്പ്" : "👑 DRAWS TODAY"
-                    : language === "ml" ? `👑 അടുത്ത നറുക്കെടുപ്പ്: ${lotteryDbMeta.draw_date}` : `👑 NEXT DRAW: ${lotteryDbMeta.draw_date}`}
+                    ? t("draws_today")
+                    : `${t("next_draw")}: ${lotteryDbMeta.draw_date}`}
                 </Text>
               </View>
               <ChevronRight size={14} color="#D97706" />
             </View>
             <Text style={{ fontSize: 13, fontWeight: "900", color: "#78350F" }}>
-              {language === "ml" ? "നറുക്കെടുപ്പ് സമയം:" : "Draw Time:"} {lotteryDbMeta.draw_time || ((lotteryMeta as any).isBumper ? "2:00 PM" : "3:00 PM")}
+              {t("draw_time")}: {lotteryDbMeta.draw_time || ((lotteryMeta as any).isBumper ? "2:00 PM" : "3:00 PM")}
               {lotteryDbMeta.jackpot ? ` • ${lotteryDbMeta.jackpot}` : ""}
             </Text>
           </TouchableOpacity>
@@ -239,7 +246,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           <Search size={16} color={COLORS.textLight} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.filterInput}
-            placeholder={language === "ml" ? "തീയതിയോ ടിക്കറ്റോ നൽകി തിരയുക..." : "Filter by date (e.g. 2026-08-10) or ticket..."}
+            placeholder={t("search_draws_placeholder")}
             placeholderTextColor={COLORS.textLight}
             value={searchFilter}
             onChangeText={setSearchFilter}

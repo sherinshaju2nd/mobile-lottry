@@ -34,6 +34,8 @@ import {
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { isIndic, getDistrictTranslatedName } from "../constants/translations";
+import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
 import { triggerLightHaptic } from "../utils/haptics";
 import ShimmerSkeleton from "../components/ShimmerSkeleton";
@@ -168,7 +170,7 @@ function SingleDigitWheel({
 
 // Kerala State Lottery - Analytics & Frequency Statistics
 export default function AnalyticsScreen({ navigation }: any) {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isMl = language === "ml";
 
   const [draws, setDraws] = useState<DrawResult[]>([]);
@@ -261,8 +263,10 @@ export default function AnalyticsScreen({ navigation }: any) {
         const digits = draw.first.ticket.replace(/\D/g, "");
         if (digits.length >= 4) {
           const e4 = digits.slice(-4);
-          const e2 = digits.slice(-2);
           ending4Map[e4] = (ending4Map[e4] || 0) + 1;
+        }
+        if (digits.length >= 2) {
+          const e2 = digits.slice(-2);
           ending2Map[e2] = (ending2Map[e2] || 0) + 1;
         }
         const lastD = parseInt(digits.slice(-1), 10);
@@ -343,7 +347,9 @@ export default function AnalyticsScreen({ navigation }: any) {
           if (loc.includes(dist.toLowerCase())) {
             distCounts[dist].count += 1;
             distCounts[dist].lotteries.push(
-              draw.draw_name || draw.lottery_code,
+              (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
+                draw.draw_name ||
+                draw.lottery_code,
             );
             break;
           }
@@ -358,7 +364,7 @@ export default function AnalyticsScreen({ navigation }: any) {
     const maxCount = Math.max(...ranked.map((r) => r.count), 1);
 
     return { ranked, maxCount, totalJackpotDraws };
-  }, [filteredDraws]);
+  }, [filteredDraws, language]);
 
   // Interactive custom number lookup (evaluated on Check History or Quick Pick)
   const searchResult = useMemo(() => {
@@ -384,8 +390,11 @@ export default function AnalyticsScreen({ navigation }: any) {
           tierBreakdown["1st Prize"] = (tierBreakdown["1st Prize"] || 0) + 1;
           matchedDraws.push({
             date: draw.draw_date,
-            name: draw.draw_name || draw.lottery_code,
-            tier: "1st Prize",
+            name:
+              (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
+              draw.draw_name ||
+              draw.lottery_code,
+            tier: t("tier_1st"),
             fullTicket: draw.first.ticket,
           });
         }
@@ -404,21 +413,24 @@ export default function AnalyticsScreen({ navigation }: any) {
           "8th",
           "9th",
         ] as const;
-        tiers.forEach((t) => {
-          const nums = draw.prizes![t];
+        tiers.forEach((tierKey) => {
+          const nums = draw.prizes![tierKey];
           if (Array.isArray(nums)) {
             nums.forEach((num) => {
               const d = String(num).replace(/\D/g, "");
               if (d.endsWith(query) || d === query) {
                 totalMatches++;
                 const tierName =
-                  t === "consolation"
-                    ? "Consolation"
-                    : `${t.toUpperCase()} Prize`;
+                  tierKey === "consolation"
+                    ? t("tier_consolation")
+                    : t(`tier_${tierKey}` as any);
                 tierBreakdown[tierName] = (tierBreakdown[tierName] || 0) + 1;
                 matchedDraws.push({
                   date: draw.draw_date,
-                  name: draw.draw_name || draw.lottery_code,
+                  name:
+                    (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
+                    draw.draw_name ||
+                    draw.lottery_code,
                   tier: tierName,
                   fullTicket: String(num),
                 });
@@ -441,7 +453,7 @@ export default function AnalyticsScreen({ navigation }: any) {
       hitRatePct,
       matchedDraws: matchedDraws.slice(0, 8),
     };
-  }, [submittedQuery, filteredDraws]);
+  }, [submittedQuery, filteredDraws, language, t]);
 
   // Live Odd/Even & High/Low Pattern Balance Indicator
   const digitBalance = useMemo(() => {
@@ -470,21 +482,18 @@ export default function AnalyticsScreen({ navigation }: any) {
 
     if (sum >= 12 && sum <= 24) balanceScore = Math.min(99, balanceScore + 2);
 
-    let statusTextEn = "Highly Balanced";
-    let statusTextMl = "മികച്ച സന്തുലിതാവസ്ഥ";
+    let statusText = t("pattern_highly_balanced");
     let statusColor = "#16A34A";
     let bgTint = "#F0FDF4";
     let borderTint = "#BBF7D0";
 
     if (balanceScore < 70) {
-      statusTextEn = "Skewed Pattern";
-      statusTextMl = "ഒരു ഭാഗത്തേക്ക് ചരിഞ്ഞത്";
+      statusText = t("pattern_skewed");
       statusColor = "#D97706";
       bgTint = "#FFFBEB";
       borderTint = "#FDE68A";
     } else if (balanceScore < 85) {
-      statusTextEn = "Moderately Balanced";
-      statusTextMl = "സാധാരണ സന്തുലിതാവസ്ഥ";
+      statusText = t("pattern_moderately_balanced");
       statusColor = "#2563EB";
       bgTint = "#EFF6FF";
       borderTint = "#BFDBFE";
@@ -497,8 +506,7 @@ export default function AnalyticsScreen({ navigation }: any) {
       high,
       sum,
       balanceScore,
-      statusTextEn,
-      statusTextMl,
+      statusText,
       statusColor,
       bgTint,
       borderTint,
@@ -530,18 +538,19 @@ export default function AnalyticsScreen({ navigation }: any) {
             <Text
               style={[
                 styles.headerTitle,
-                isMl && { fontSize: 14.5, lineHeight: 20 },
+                isIndic(language) && { fontSize: 14.5, lineHeight: 20 },
               ]}
             >
-              {isMl ? "ഫല സ്ഥിതിവിവരക്കണക്കുകൾ" : "Analytics & Trends"}
+              {t("analytics_title")}
             </Text>
           </View>
           <Text
-            style={[styles.headerSub, isMl && { fontSize: 10, lineHeight: 14 }]}
+            style={[
+              styles.headerSub,
+              isIndic(language) && { fontSize: 10, lineHeight: 14 },
+            ]}
           >
-            {isMl
-              ? `${filteredDraws.length} നറുക്കെടുപ്പുകളുടെ വിശകലനം`
-              : `Deep trends across ${filteredDraws.length} recent draws`}
+            {`${t("analytics_sub_prefix")} ${filteredDraws.length} ${t("analytics_sub_suffix")}`.trim()}
           </Text>
         </View>
       </View>
@@ -549,9 +558,9 @@ export default function AnalyticsScreen({ navigation }: any) {
       {/* Horizon Selector (30 Days / 90 Days / All) */}
       <View style={styles.horizonBar}>
         {[
-          { key: "30", label: isMl ? "30 നറുക്കെടുപ്പ്" : "Last 30 Draws" },
-          { key: "90", label: isMl ? "90 നറുക്കെടുപ്പ്" : "Last 90 Draws" },
-          { key: "all", label: isMl ? "മുഴുവൻ ഫലം" : "All History" },
+          { key: "30", label: t("last_30_draws") },
+          { key: "90", label: t("last_90_draws") },
+          { key: "all", label: t("all_history") },
         ].map((tab) => {
           const active = horizon === tab.key;
           return (
@@ -568,7 +577,7 @@ export default function AnalyticsScreen({ navigation }: any) {
                 style={[
                   styles.horizonChipText,
                   active && styles.horizonChipTextActive,
-                  isMl && { fontSize: 10, lineHeight: 13, fontWeight: "800" },
+                  isIndic(language) && { fontSize: 10, lineHeight: 13, fontWeight: "800" },
                 ]}
                 numberOfLines={1}
               >
@@ -600,11 +609,11 @@ export default function AnalyticsScreen({ navigation }: any) {
             style={[
               styles.tabBtnText,
               activeTab === "numbers" && styles.tabBtnTextActive,
-              isMl && { fontSize: 11, lineHeight: 15 },
+              isIndic(language) && { fontSize: 11, lineHeight: 15 },
             ]}
             numberOfLines={1}
           >
-            {isMl ? "ഹോട്ട് / കോൾഡ് നമ്പറുകൾ" : "Number Trends"}
+            {t("tab_number_trends")}
           </Text>
         </TouchableOpacity>
 
@@ -627,11 +636,11 @@ export default function AnalyticsScreen({ navigation }: any) {
             style={[
               styles.tabBtnText,
               activeTab === "districts" && styles.tabBtnTextActive,
-              isMl && { fontSize: 11, lineHeight: 15 },
+              isIndic(language) && { fontSize: 11, lineHeight: 15 },
             ]}
             numberOfLines={1}
           >
-            {isMl ? "ഭാഗ്യ സ്ഥലങ്ങൾ" : "Lucky Locations"}
+            {t("tab_lucky_locations")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -664,20 +673,18 @@ export default function AnalyticsScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "🔍 ലക്കി പിക്ക്" : "🔍 4 Digit history"}
+                    {t("analytics_4digit_history")}
                   </Text>
                   <Text
                     style={[
                       styles.cardSub,
-                      isMl && { fontSize: 10, lineHeight: 14 },
+                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
                     ]}
                   >
-                    {isMl
-                      ? "2, 3, 4 അക്കങ്ങളുടെ മുൻകാല വിജയ ചരിത്രം പരിശോധിക്കുക"
-                      : "Check frequency, hit rate & prize tiers for any digits"}
+                    {t("analytics_4digit_desc")}
                   </Text>
                 </View>
               </View>
@@ -718,17 +725,12 @@ export default function AnalyticsScreen({ navigation }: any) {
                         { color: digitBalance.statusColor },
                       ]}
                     >
-                      {digitBalance.balanceScore}%{" "}
-                      {isMl
-                        ? digitBalance.statusTextMl
-                        : digitBalance.statusTextEn}
+                      {digitBalance.balanceScore}% {digitBalance.statusText}
                     </Text>
                   </View>
                   <View style={styles.balancePill}>
                     <Text style={styles.balancePillText}>
-                      {isMl
-                        ? `തുക: ${digitBalance.sum}`
-                        : `Sum: ${digitBalance.sum}`}
+                      {t("sum_label")}: {digitBalance.sum}
                     </Text>
                   </View>
                 </View>
@@ -750,14 +752,12 @@ export default function AnalyticsScreen({ navigation }: any) {
                 <View style={styles.balanceTagsRow}>
                   <View style={styles.balanceTag}>
                     <Text style={styles.balanceTagLabel}>
-                      {digitBalance.odd} {isMl ? "ഒറ്റ" : "Odd"} :{" "}
-                      {digitBalance.even} {isMl ? "ഇരട്ട" : "Even"}
+                      {digitBalance.odd} {t("odd_label")} : {digitBalance.even} {t("even_label")}
                     </Text>
                   </View>
                   <View style={styles.balanceTag}>
                     <Text style={styles.balanceTagLabel}>
-                      {digitBalance.high} {isMl ? "ഉയർന്നത് (5-9)" : "High (5-9)"} :{" "}
-                      {digitBalance.low} {isMl ? "കുറഞ്ഞത് (0-4)" : "Low (0-4)"}
+                      {digitBalance.high} {t("high_label")} : {digitBalance.low} {t("low_label")}
                     </Text>
                   </View>
                 </View>
@@ -772,7 +772,7 @@ export default function AnalyticsScreen({ navigation }: any) {
                 <View style={styles.checkHistoryBtnContent}>
                   <Search size={18} color="#FFFFFF" />
                   <Text style={styles.checkHistoryBtnText}>
-                    {isMl ? "ചരിത്രം പരിശോധിക്കുക" : "Check History"}
+                    {t("check_history_btn")}
                   </Text>
                 </View>
                 <View style={styles.checkHistoryArrowCircle}>
@@ -785,11 +785,11 @@ export default function AnalyticsScreen({ navigation }: any) {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                   <Zap size={14} color="#F59E0B" fill="#F59E0B" />
                   <Text style={styles.quickPicksTitle}>
-                    {isMl ? "ദ്രുത തിരഞ്ഞെടുപ്പ്" : "Quick Picks"}
+                    {t("quick_picks_title")}
                   </Text>
                 </View>
                 <Text style={styles.quickPicksSub}>
-                  {isMl ? "ഉടൻ പരിശോധിക്കാൻ നമ്പർ തൊടുക" : "Tap a number to check instantly"}
+                  {t("quick_picks_desc")}
                 </Text>
               </View>
 
@@ -855,14 +855,12 @@ export default function AnalyticsScreen({ navigation }: any) {
                           ]}
                         >
                           <Text style={styles.searchHitsBadgeText}>
-                            {searchResult.totalMatches}{" "}
-                            {isMl ? "തവണ വിജയിച്ചു" : "Times Drawn"}
+                            {searchResult.totalMatches} {t("times_drawn")}
                           </Text>
                         </View>
                         {searchResult.totalMatches > 0 && (
                           <Text style={styles.searchHitRateText}>
-                            {searchResult.hitRatePct}%{" "}
-                            {isMl ? "ഡ്രോകളിൽ" : "Draw Hit Rate"}
+                            {searchResult.hitRatePct}% {t("draw_hit_rate")}
                           </Text>
                         )}
                       </View>
@@ -891,10 +889,10 @@ export default function AnalyticsScreen({ navigation }: any) {
                       <Text
                         style={[
                           styles.recentDrawsLabel,
-                          isMl && { fontSize: 10 },
+                          isIndic(language) && { fontSize: 10 },
                         ]}
                       >
-                        {isMl ? "സമീപകാല വിജയങ്ങൾ:" : "RECENT MATCHING DRAWS:"}
+                        {t("recent_matching_draws")}
                       </Text>
                       {searchResult.matchedDraws.map((m, idx) => (
                         <View key={idx} style={styles.drawMatchRow}>
@@ -920,11 +918,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                   ) : (
                     <View style={styles.noMatchBox}>
                       <Text
-                        style={[styles.noMatchText, isMl && { fontSize: 11 }]}
+                        style={[styles.noMatchText, isIndic(language) && { fontSize: 11 }]}
                       >
-                        {isMl
-                          ? `കഴിഞ്ഞ ${filteredDraws.length} നറുക്കെടുപ്പുകളിൽ ഈ നമ്പർ വന്നിട്ടില്ല.`
-                          : `No winning matches found for '${searchResult.query}' in selected draws.`}
+                        {t("no_matches_found")}
                       </Text>
                     </View>
                   )}
@@ -933,11 +929,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                 <View style={styles.searchIdleBox}>
                   <Sparkles size={18} color="#2563EB" />
                   <Text
-                    style={[styles.searchIdleText, isMl && { fontSize: 10.5 }]}
+                    style={[styles.searchIdleText, isIndic(language) && { fontSize: 10.5 }]}
                   >
-                    {isMl
-                      ? "ഒരു 2, 3 അല്ലെങ്കിൽ 4 അക്ക നമ്പർ നൽകുകയോ മുകളിലെ സൂചനകളിൽ തൊടുകയോ ചെയ്യുക."
-                      : "Enter any 2, 3, or 4 digits or tap a quick suggestion above to see full prize history."}
+                    {t("analytics_idle_hint")}
                   </Text>
                 </View>
               )}
@@ -953,22 +947,18 @@ export default function AnalyticsScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl
-                      ? "🔥 ആവർത്തിച്ച 4-അക്കങ്ങൾ"
-                      : "🔥 Repeated 4-Digit Numbers"}
+                    {t("repeated_4digit_title")}
                   </Text>
                   <Text
                     style={[
                       styles.cardSub,
-                      isMl && { fontSize: 10, lineHeight: 14 },
+                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
                     ]}
                   >
-                    {isMl
-                      ? "കഴിഞ്ഞ നറുക്കെടുപ്പുകളിൽ കൂടുതൽ തവണ വന്ന അവസാന 4 അക്കങ്ങൾ"
-                      : "Most recurring last 4 digits in prize tiers"}
+                    {t("repeated_4digit_sub")}
                   </Text>
                 </View>
               </View>
@@ -1008,37 +998,33 @@ export default function AnalyticsScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl
-                      ? "⚡ ആവർത്തിച്ച 2-അക്കങ്ങൾ"
-                      : "⚡ Repeated 2-Digit Numbers"}
+                    {t("repeated_2digit_title")}
                   </Text>
                   <Text
                     style={[
                       styles.cardSub,
-                      isMl && { fontSize: 10, lineHeight: 14 },
+                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
                     ]}
                   >
-                    {isMl
-                      ? "കൂടുതൽ സമ്മാനങ്ങളിൽ ആവർത്തിച്ച 2 അക്കങ്ങൾ"
-                      : "Top recurring 2-digit ending combinations"}
+                    {t("repeated_2digit_sub")}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.chipsWrap}>
-                {numberStats.hot2.map(([num, count], idx) => (
+                {numberStats.hot2.map(([num, count]) => (
                   <View key={num} style={styles.badgeChipGreen}>
                     <Text style={styles.badgeChipGreenNum}>{num}</Text>
                     <Text
                       style={[
                         styles.badgeChipGreenCount,
-                        isMl && { fontSize: 9.5 },
+                        isIndic(language) && { fontSize: 9.5 },
                       ]}
                     >
-                      {count} {isMl ? "തവണ" : "draws"}
+                      {count} {t("times_drawn")}
                     </Text>
                   </View>
                 ))}
@@ -1055,22 +1041,18 @@ export default function AnalyticsScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl
-                      ? "❄️ ആവർത്തിക്കാത്ത നമ്പറുകൾ"
-                      : "❄️ Non-Repeated Numbers"}
+                    {t("cold_2digit_title")}
                   </Text>
                   <Text
                     style={[
                       styles.cardSub,
-                      isMl && { fontSize: 10, lineHeight: 14 },
+                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
                     ]}
                   >
-                    {isMl
-                      ? "ഈ കാലയളവിൽ ഏറ്റവും കുറവ് തവണ മാത്രം വന്ന 2 അക്കങ്ങൾ"
-                      : "Least frequently drawn pairs during this period"}
+                    {t("cold_2digit_sub")}
                   </Text>
                 </View>
               </View>
@@ -1082,10 +1064,10 @@ export default function AnalyticsScreen({ navigation }: any) {
                     <Text
                       style={[
                         styles.badgeChipBlueCount,
-                        isMl && { fontSize: 9.5 },
+                        isIndic(language) && { fontSize: 9.5 },
                       ]}
                     >
-                      {count} {isMl ? "തവണ" : "only"}
+                      {count} {t("times_drawn")}
                     </Text>
                   </View>
                 ))}
@@ -1097,22 +1079,18 @@ export default function AnalyticsScreen({ navigation }: any) {
               <Text
                 style={[
                   styles.cardTitle,
-                  isMl && { fontSize: 13.5, lineHeight: 18 },
+                  isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                 ]}
               >
-                {isMl
-                  ? "📊 അവസാന അക്ക വിതരണം (0 - 9)"
-                  : "📊 Last Digit Distribution (0 - 9)"}
+                {t("digit_dist_title")}
               </Text>
               <Text
                 style={[
                   styles.cardSub,
-                  isMl && { fontSize: 10, lineHeight: 14 },
+                  isIndic(language) && { fontSize: 10, lineHeight: 14 },
                 ]}
               >
-                {isMl
-                  ? "ലോട്ടറി നമ്പറുകളുടെ അവസാന അക്കത്തിന്റെ സാന്നിധ്യം"
-                  : "How often each individual digit (0–9) ends a winning prize"}
+                {t("digit_dist_sub")}
               </Text>
 
               <View style={styles.digitDistributionRow}>
@@ -1157,20 +1135,18 @@ export default function AnalyticsScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.cardTitle,
-                      isMl && { fontSize: 13.5, lineHeight: 18 },
+                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
                     ]}
                   >
-                    {isMl ? "🏆 ഭാഗ്യ സ്ഥലങ്ങൾ" : "🏆 Lucky Locations"}
+                    {t("district_leaderboard_title")}
                   </Text>
                   <Text
                     style={[
                       styles.cardSub,
-                      isMl && { fontSize: 10, lineHeight: 14 },
+                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
                     ]}
                   >
-                    {isMl
-                      ? `ആകെ ${districtStats.totalJackpotDraws} നറുക്കെടുപ്പുകളിലെ ജില്ല തിരിച്ചുള്ള വിജയികൾ`
-                      : `Distribution of 1st prize tickets across Kerala's 14 districts`}
+                    {t("district_leaderboard_sub")}
                   </Text>
                 </View>
               </View>
@@ -1203,22 +1179,20 @@ export default function AnalyticsScreen({ navigation }: any) {
                       <View style={styles.distInfoCol}>
                         <View style={styles.distNameRow}>
                           <Text
-                            style={[styles.distName, isMl && { fontSize: 12 }]}
+                            style={[styles.distName, isIndic(language) && { fontSize: 12 }]}
                           >
-                            {dist.name}
+                            {getDistrictTranslatedName(dist.name, language)}
                           </Text>
                           <Text
                             style={[
                               styles.distJackpotCount,
-                              isMl && { fontSize: 10.5 },
+                              isIndic(language) && { fontSize: 10.5 },
                             ]}
                           >
                             {dist.count}{" "}
-                            {isMl
-                              ? "വിജയികൾ"
-                              : dist.count === 1
-                                ? "win"
-                                : "wins"}
+                            {dist.count === 1
+                              ? t("win_singular")
+                              : t("wins_count")}
                           </Text>
                         </View>
 
@@ -1244,11 +1218,9 @@ export default function AnalyticsScreen({ navigation }: any) {
         <View style={styles.infoBanner}>
           <Info size={16} color="#64748B" />
           <Text
-            style={[styles.infoText, isMl && { fontSize: 10, lineHeight: 15 }]}
+            style={[styles.infoText, isIndic(language) && { fontSize: 10, lineHeight: 15 }]}
           >
-            {isMl
-              ? "സ്ഥിതിവിവരക്കണക്കുകൾ മുൻകാല ഡാറ്റ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ലോട്ടറി നറുക്കെടുപ്പ് പൂർണ്ണമായും ഗവൺമെന്റ് മെഷീൻ റാൻഡം പ്രക്രിയയാണ്."
-              : "Analytics are computed purely from official past draw records. Kerala Lottery draws are 100% random and independent."}
+            {t("analytics_disclaimer")}
           </Text>
         </View>
 

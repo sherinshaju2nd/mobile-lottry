@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Globe, Check, Sparkles, X } from "lucide-react-native";
 import { useLanguage } from "../context/LanguageContext";
-import { Language } from "../constants/translations";
+import { Language, SUPPORTED_LANGUAGES, getTranslation } from "../constants/translations";
 import { COLORS } from "../constants/colors";
 
 export default function LanguageSelectionModal() {
@@ -30,6 +30,23 @@ export default function LanguageSelectionModal() {
     setLanguage(selected);
   };
 
+  const getConfirmButtonText = (lang: Language) => {
+    switch (lang) {
+      case "ml":
+        return "തുടരുക (Continue)";
+      case "hi":
+        return "पुष्टि करें और आगे बढ़ें (Continue)";
+      case "ta":
+        return "உறுதிசெய்து தொடரவும் (Continue)";
+      case "kn":
+        return "ದೃಢೀಕರಿಸಿ ಮತ್ತು ಮುಂದುವರಿಯಿರಿ (Continue)";
+      case "te":
+        return "నిర్ధారించి కొనసాగండి (Continue)";
+      default:
+        return "Confirm & Continue";
+    }
+  };
+
   return (
     <Modal
       visible={showLanguageModal}
@@ -45,10 +62,22 @@ export default function LanguageSelectionModal() {
             </View>
 
             <Text style={styles.title}>Select App Language</Text>
-            <Text style={styles.malayalamTitle}>ഭാഷ തിരഞ്ഞെടുക്കുക</Text>
+            <Text style={styles.malayalamTitle}>
+              {selected === "ml"
+                ? "ഭാഷ തിരഞ്ഞെടുക്കുക"
+                : selected === "hi"
+                ? "अपनी भाषा चुनें"
+                : selected === "ta"
+                ? "மொழியைத் தேர்ந்தெடுக்கவும்"
+                : selected === "kn"
+                ? "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+                : selected === "te"
+                ? "భాషను ఎంచుకోండి"
+                : "ഭാഷ തിരഞ്ഞെടുക്കുക"}
+            </Text>
 
             <Text style={styles.subtitle}>
-              Choose your preferred language for Kerala Lottery results, live draw updates, and prize checking.
+              {getTranslation(selected, "select_language_desc")}
             </Text>
 
             {isLanguageSelected && (
@@ -61,72 +90,50 @@ export default function LanguageSelectionModal() {
             )}
           </View>
 
-          {/* Language Cards */}
+          {/* 6 Language Cards */}
           <View style={styles.optionsContainer}>
-            {/* English Option */}
-            <TouchableOpacity
-              style={[
-                styles.optionCard,
-                selected === "en" && styles.selectedOptionCard,
-              ]}
-              onPress={() => setSelected("en")}
-              activeOpacity={0.8}
-            >
-              <View style={styles.optionLeft}>
-                <View style={styles.flagBadge}>
-                  <Text style={styles.flagText}>🇬🇧</Text>
-                </View>
-                <View>
-                  <Text style={styles.optionTitle}>English</Text>
-                  <Text style={styles.optionSub}>Default App Language</Text>
-                </View>
-              </View>
+            {SUPPORTED_LANGUAGES.map((langItem) => {
+              const isSelected = selected === langItem.code;
+              return (
+                <TouchableOpacity
+                  key={langItem.code}
+                  style={[
+                    styles.optionCard,
+                    isSelected && styles.selectedOptionCard,
+                  ]}
+                  onPress={() => setSelected(langItem.code)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.optionLeft}>
+                    <View style={styles.flagBadge}>
+                      <Text style={styles.flagText}>{langItem.flag}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.optionTitle}>{langItem.nativeName}</Text>
+                      <Text style={styles.optionSub}>
+                        {langItem.name} ({langItem.shortCode}) • {langItem.subTitle}
+                      </Text>
+                    </View>
+                  </View>
 
-              <View
-                style={[
-                  styles.radioCircle,
-                  selected === "en" && styles.selectedRadioCircle,
-                ]}
-              >
-                {selected === "en" && <Check size={14} color={COLORS.white} />}
-              </View>
-            </TouchableOpacity>
-
-            {/* Malayalam Option */}
-            <TouchableOpacity
-              style={[
-                styles.optionCard,
-                selected === "ml" && styles.selectedOptionCard,
-              ]}
-              onPress={() => setSelected("ml")}
-              activeOpacity={0.8}
-            >
-              <View style={styles.optionLeft}>
-                <View style={styles.flagBadge}>
-                  <Text style={styles.flagText}>🇮🇳</Text>
-                </View>
-                <View>
-                  <Text style={styles.optionTitle}>മലയാളം</Text>
-                  <Text style={styles.optionSub}>Malayalam Language</Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.radioCircle,
-                  selected === "ml" && styles.selectedRadioCircle,
-                ]}
-              >
-                {selected === "ml" && <Check size={14} color={COLORS.white} />}
-              </View>
-            </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.radioCircle,
+                      isSelected && styles.selectedRadioCircle,
+                    ]}
+                  >
+                    {isSelected && <Check size={14} color={COLORS.white} strokeWidth={2.5} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* Subtext info */}
           <View style={styles.infoBox}>
             <Sparkles size={16} color={COLORS.gold} />
             <Text style={styles.infoText}>
-               You can change your language preference anytime from the top bar.
+              {getTranslation(selected, "language_note")}
             </Text>
           </View>
 
@@ -137,7 +144,7 @@ export default function LanguageSelectionModal() {
             activeOpacity={0.85}
           >
             <Text style={styles.confirmBtnText}>
-              {selected === "ml" ? "തുടരുക (Continue)" : "Confirm & Continue"}
+              {getConfirmButtonText(selected)}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -153,12 +160,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    padding: 24,
+    padding: 20,
     justifyContent: "center",
   },
   header: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 20,
     position: "relative",
   },
   closeTopBtn: {
@@ -168,48 +175,53 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   globeBadge: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: COLORS.primaryLight,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "800",
     color: COLORS.textDark,
     textAlign: "center",
     marginBottom: 4,
   },
   malayalamTitle: {
-    fontSize: 22,
-    fontWeight: "800",
+    fontSize: 16,
+    fontWeight: "700",
     color: COLORS.primary,
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: COLORS.textLight,
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
     paddingHorizontal: 12,
   },
   optionsContainer: {
-    gap: 14,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 20,
   },
   optionCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: COLORS.cardBg,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
+    backgroundColor: COLORS.white,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   selectedOptionCard: {
     borderColor: COLORS.primary,
@@ -218,34 +230,36 @@ const styles = StyleSheet.create({
   optionLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
+    flex: 1,
   },
   flagBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.background,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.cardBg,
     justifyContent: "center",
     alignItems: "center",
   },
   flagText: {
-    fontSize: 24,
+    fontSize: 20,
   },
   optionTitle: {
-    fontSize: 17,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "700",
     color: COLORS.textDark,
+    marginBottom: 2,
   },
   optionSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    fontSize: 11,
+    color: COLORS.textLight,
   },
   radioCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
-    borderColor: COLORS.textLight,
+    borderColor: COLORS.border,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -256,31 +270,36 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.cardBg,
-    padding: 12,
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(245, 158, 11, 0.08)",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 10,
-    marginBottom: 28,
+    marginBottom: 20,
   },
   infoText: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: "#B45309",
+    fontWeight: "500",
+    textAlign: "center",
     flex: 1,
   },
   confirmBtn: {
-    height: 54,
-    borderRadius: 14,
     backgroundColor: COLORS.primary,
-    justifyContent: "center",
+    paddingVertical: 15,
+    borderRadius: 14,
     alignItems: "center",
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 4,
   },
   confirmBtnText: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: "700",
     color: COLORS.white,
+    letterSpacing: 0.5,
   },
 });

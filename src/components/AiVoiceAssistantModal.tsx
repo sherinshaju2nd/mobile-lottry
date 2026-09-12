@@ -39,6 +39,7 @@ import {
 import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 
 import { useLanguage } from "../context/LanguageContext";
+import { Language, isIndic } from "../constants/translations";
 
 interface Message {
   id: string;
@@ -125,19 +126,30 @@ export default function AiVoiceAssistantModal({
   onClose,
 }: AiVoiceAssistantModalProps) {
   const { language, t } = useLanguage();
-  const [selectedLang, setSelectedLang] = useState<"ml" | "en">(language || "ml");
+  const [selectedLang, setSelectedLang] = useState<Language>(language || "en");
 
-  const getGreeting = (lang: "ml" | "en") => {
-    return lang === "ml"
-      ? "നമസ്കാരം! ഞാൻ കേരള ലോട്ടറി AI വോയ്‌സ് അസിസ്റ്റന്റാണ്. മൈക്ക് അമർത്തി സംസാരിക്കൂ അല്ലെങ്കിൽ ചോദ്യങ്ങൾ ടൈപ്പ് ചെയ്യൂ.\n\n(Tap the microphone to speak or type your question in Malayalam or English.)"
-      : "Hello! I am Kerala Lottery AI Assistant. Tap the microphone to speak or type your question in English or Malayalam.";
+  const getGreeting = (lang: Language) => {
+    switch (lang) {
+      case "ml":
+        return "നമസ്കാരം! ഞാൻ കേരള ലോട്ടറി AI വോയ്‌സ് അസിസ്റ്റന്റാണ്. മൈക്ക് അമർത്തി സംസാരിക്കൂ അല്ലെങ്കിൽ ചോദ്യങ്ങൾ ടൈപ്പ് ചെയ്യൂ.\n\n(Tap the microphone to speak or type your question.)";
+      case "hi":
+        return "नमस्ते! मैं केरल लॉटरी एआई वॉयस असिस्टेंट हूँ। माइक दबाकर बोलें या अपने प्रश्न टाइप करें।";
+      case "ta":
+        return "வணக்கம்! நான் கேரளா லாட்டரி AI வாய்ஸ் அசிஸ்டன்ட். மைக் அழுத்தி பேசவும் அல்லது உங்கள் கேள்விகளை தட்டச்சு செய்யவும்.";
+      case "kn":
+        return "ನಮಸ್ಕಾರ! ನಾನು ಕೇರಳ ಲಾಟರಿ AI ವಾಯ್ಸ್ ಅಸಿಸ್ಟೆಂಟ್. ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ ಅಥವಾ ನಿಮ್ಮ ಪ್ರಶ್ನೆಗಳನ್ನು ಟೈಪ್ ಮಾಡಿ.";
+      case "te":
+        return "నమస్కారం! నేను కేరళ లాటరీ AI వాయిస్ అసిస్టెంట్‌ని. మైక్ నొక్కి మాట్లాడండి లేదా మీ ప్రశ్నలను టైప్ చేయండి.";
+      default:
+        return "Hello! I am Kerala Lottery AI Assistant. Tap the microphone to speak or type your question.";
+    }
   };
 
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "init",
       role: "model",
-      text: getGreeting(language || "ml"),
+      text: getGreeting(language || "en"),
       time: new Date().toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -220,7 +232,15 @@ export default function AiVoiceAssistantModal({
     (text: string, msgId?: string) => {
       stopAudio();
       const cleanText = text.replace(/[*#_`]/g, "").trim();
-      const langCode = selectedLang === "ml" ? "ml-IN" : "en-IN";
+      const localeMap: Record<Language, string> = {
+        en: "en-IN",
+        ml: "ml-IN",
+        hi: "hi-IN",
+        ta: "ta-IN",
+        kn: "kn-IN",
+        te: "te-IN",
+      };
+      const langCode = localeMap[selectedLang] || "en-IN";
 
       if (msgId) setPlayingMessageId(msgId);
 

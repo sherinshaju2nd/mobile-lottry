@@ -88,49 +88,191 @@ export const BUMPER_LOTTERIES: LotteryMeta[] = [
 
 export const ALL_LOTTERIES: LotteryMeta[] = [...WEEKLY_LOTTERIES, ...BUMPER_LOTTERIES];
 
-export function getLotteryMalayalamName(code?: string): string {
+import { Language } from "./translations";
+
+export const LOTTERY_NAMES_BY_LANG: Record<string, Record<Language, string>> = {
+  BT: {
+    en: "Bhagyathara",
+    ml: "ഭാഗ്യതാരാ",
+    hi: "भाग्यतारा",
+    ta: "பாக்யதாரா",
+    kn: "ಭಾಗ್ಯತಾರಾ",
+    te: "భాగ్యతార",
+  },
+  SS: {
+    en: "Sthree Sakthi",
+    ml: "സ്ത്രീശക്തി",
+    hi: "स्त्री शक्ति",
+    ta: "ஸ்த்ரீ சக்தி",
+    kn: "ಸ್ತ್ರೀ ಶಕ್ತಿ",
+    te: "స్త్రీ శక్తి",
+  },
+  DL: {
+    en: "Dhanalekshmi",
+    ml: "ധനലക്ഷ്മി",
+    hi: "धनलक्ष्मी",
+    ta: "தனலக்ஷ்மி",
+    kn: "ಧನಲಕ್ಷ್ಮಿ",
+    te: "ధనలక్ష్మి",
+  },
+  KN: {
+    en: "Karunya Plus",
+    ml: "കാരുണ്യ പ്ലസ്",
+    hi: "कारुण्या प्लस",
+    ta: "காருண்யா பிளஸ்",
+    kn: "ಕಾರುಣ್ಯ ಪ್ಲಸ್",
+    te: "కారుణ్య ప్లస్",
+  },
+  SK: {
+    en: "Suvarna Keralam",
+    ml: "സുവർണ്ണ കേരളം",
+    hi: "सुवर्ण केरलम",
+    ta: "சுவர்ண கேரளம்",
+    kn: "ಸುವರ್ಣ ಕೇರಳಂ",
+    te: "సువర్ణ కేరళం",
+  },
+  KR: {
+    en: "Karunya",
+    ml: "കാരുണ്യ",
+    hi: "कारुण्या",
+    ta: "காருண்யா",
+    kn: "ಕಾರುಣ್ಯ",
+    te: "కారుణ్య",
+  },
+  SM: {
+    en: "Samrudhi",
+    ml: "സമൃദ്ധി",
+    hi: "समृद्धि",
+    ta: "சம்ருத்தி",
+    kn: "ಸಮೃದ್ಧಿ",
+    te: "సమృద్ధి",
+  },
+  W: {
+    en: "Win-Win",
+    ml: "വിൻ വിൻ",
+    hi: "विन विन",
+    ta: "வின் வின்",
+    kn: "ವಿನ್ ವಿನ್",
+    te: "విన్ విన్",
+  },
+  WIN: {
+    en: "Win-Win",
+    ml: "വിൻ വിൻ",
+    hi: "विन विन",
+    ta: "வின் வின்",
+    kn: "ವಿನ್ ವಿನ್",
+    te: "విన్ విన్",
+  },
+  AK: {
+    en: "Akshaya",
+    ml: "അക്ഷയ",
+    hi: "अक्षया",
+    ta: "அக்ஷயா",
+    kn: "ಅಕ್ಷಯ",
+    te: "అక్షయ",
+  },
+  NR: {
+    en: "Nirmal",
+    ml: "നിർമ്മൽ",
+    hi: "निर्मल",
+    ta: "நிர்மல்",
+    kn: "ನಿರ್ಮಲ್",
+    te: "నిర్మల్",
+  },
+  FF: {
+    en: "Fifty Fifty",
+    ml: "ഫിഫ്റ്റി ഫിഫ്റ്റി",
+    hi: "फिफ्टी फिफ्टी",
+    ta: "பிப்டி பிப்டி",
+    kn: "ಫಿಫ್ಟಿ ಫಿಫ್ಟಿ",
+    te: "ఫిఫ్టీ ఫిఫ్టీ",
+  },
+  XN: {
+    en: "Christmas New Year Bumper",
+    ml: "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
+    hi: "क्रिसमस न्यू ईयर बंपर",
+    ta: "கிறிஸ்துமஸ் புத்தாண்டு பம்பர்",
+    kn: "ಕ್ರಿಸ್ಮಸ್ ಹೊಸ ವರ್ಷದ ಬಂಪರ್",
+    te: "క్రిస్మస్ న్యూ ఇయర్ బంపర్",
+  },
+  SB: {
+    en: "Summer Bumper",
+    ml: "സമ്മർ ബംപർ",
+    hi: "समर बंपर",
+    ta: "சம்மர் பம்பர்",
+    kn: "ಸಮ್ಮರ್ ಬಂಪರ್",
+    te: "సమ్మర్ బంపర్",
+  },
+  VB: {
+    en: "Vishu Bumper",
+    ml: "വിഷു ബംപർ",
+    hi: "विषु बंपर",
+    ta: "விஷு பம்பர்",
+    kn: "ವಿಷು ಬಂಪರ್",
+    te: "విషు బంపర్",
+  },
+  MB: {
+    en: "Monsoon Bumper",
+    ml: "മൺസൂൺ ബംപർ",
+    hi: "मानसून बंपर",
+    ta: "மான்சூன் பம்பர்",
+    kn: "ಮಾನ್ಸೂನ್ ಬಂಪರ್",
+    te: "మాన్సూన్ బంపర్",
+  },
+  TH: {
+    en: "Thiruvonam Bumper",
+    ml: "തിരുവോണം ബംപർ",
+    hi: "तिरुவோணம் बंपर",
+    ta: "திருவோணம் பம்பர்",
+    kn: "ತಿರುವೋಣಂ ಬಂಪರ್",
+    te: "తిరువోణం బంపర్",
+  },
+  PB: {
+    en: "Pooja Bumper",
+    ml: "പൂജ ബംപർ",
+    hi: "पूजा बंपर",
+    ta: "பூஜை பம்பர்",
+    kn: "ಪೂಜಾ ಬಂಪರ್",
+    te: "పూజా బంపర్",
+  },
+};
+
+export function getLotteryTranslatedName(code?: string, lang: Language = "en"): string {
   if (!code) return "";
   const codeUpper = code.toUpperCase().trim();
-  const match = ALL_LOTTERIES.find(
-    (l) => l.code.toUpperCase() === codeUpper
-  );
-  if (match?.nameMl) return match.nameMl;
-
-  // Additional legacy & alternate code mappings
-  const codeMap: Record<string, string> = {
-    BT: "ഭാഗ്യതാരാ",
-    SS: "സ്ത്രീശക്തി",
-    DL: "ധനലക്ഷ്മി",
-    KN: "കാരുണ്യ പ്ലസ്",
-    SK: "സുവർണ്ണ കേരളം",
-    KR: "കാരുണ്യ",
-    SM: "സമൃദ്ധി",
-    W: "വിൻ വിൻ",
-    WIN: "വിൻ വിൻ",
-    AK: "അക്ഷയ",
-    NR: "നിർമ്മൽ",
-    FF: "ഫിഫ്റ്റി ഫിഫ്റ്റി",
-    XN: "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
-    SB: "സമ്മർ ബംപർ",
-    VB: "വിഷു ബംപർ",
-    MB: "മൺസൂൺ ബംപർ",
-    TH: "തിരുവോണം ബംപർ",
-    PB: "പൂജ ബംപർ",
-  };
-  return codeMap[codeUpper] || "";
+  if (LOTTERY_NAMES_BY_LANG[codeUpper]?.[lang]) {
+    return LOTTERY_NAMES_BY_LANG[codeUpper][lang];
+  }
+  const match = ALL_LOTTERIES.find((l) => l.code.toUpperCase() === codeUpper);
+  if (lang === "ml" && match?.nameMl) return match.nameMl;
+  return match?.name || code;
 }
 
-export function getDayTranslated(dayName?: string, lang: "en" | "ml" = "en"): string {
+export function getLotteryMalayalamName(code?: string): string {
+  return getLotteryTranslatedName(code, "ml");
+}
+
+export function getDayTranslated(dayName?: string, lang: Language = "en"): string {
   if (!dayName) return "";
   if (lang === "en") return dayName;
   const d = dayName.toLowerCase().trim();
-  if (d.includes("monday") || d.includes("mon")) return "തിങ്കൾ";
-  if (d.includes("tuesday") || d.includes("tue")) return "ചൊവ്വ";
-  if (d.includes("wednesday") || d.includes("wed")) return "ബുധൻ";
-  if (d.includes("thursday") || d.includes("thu")) return "വ്യാഴം";
-  if (d.includes("friday") || d.includes("fri")) return "വെള്ളി";
-  if (d.includes("saturday") || d.includes("sat")) return "ശനി";
-  if (d.includes("sunday") || d.includes("sun")) return "ഞായർ";
+
+  const dayMap: Record<string, Record<Language, string>> = {
+    monday: { en: "Monday", ml: "തിങ്കൾ", hi: "सोमवार", ta: "திங்கள்", kn: "ಸೋಮವಾರ", te: "సోమవారం" },
+    tuesday: { en: "Tuesday", ml: "ചൊവ്വ", hi: "मंगलवार", ta: "செவ்வாய்", kn: "ಮಂಗಳವಾರ", te: "మంగళవారం" },
+    wednesday: { en: "Wednesday", ml: "ಬುಧൻ", hi: "बुधवार", ta: "புதன்", kn: "ಬುಧವಾರ", te: "బుధవారం" },
+    thursday: { en: "Thursday", ml: "വ്യാഴം", hi: "गुरुवार", ta: "வியாழன்", kn: "ಗುರುವಾರ", te: "గురువారం" },
+    friday: { en: "Friday", ml: "വെള്ളി", hi: "शुक्रवार", ta: "வெள்ளி", kn: "ಶುಕ್ರವಾರ", te: "శుక్రవారం" },
+    saturday: { en: "Saturday", ml: "ശനി", hi: "शनिवार", ta: "சனி", kn: "ಶನಿವಾರ", te: "శనివారం" },
+    sunday: { en: "Sunday", ml: "ഞായർ", hi: "रविवार", ta: "ஞாயிறு", kn: "ಭಾನುವಾರ", te: "ఆదివారం" },
+  };
+
+  for (const [key, map] of Object.entries(dayMap)) {
+    if (d.includes(key) || (key.length >= 3 && d.includes(key.slice(0, 3)))) {
+      return map[lang] || dayName;
+    }
+  }
+
   return dayName;
 }
 

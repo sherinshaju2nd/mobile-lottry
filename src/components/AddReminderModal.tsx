@@ -40,7 +40,7 @@ import {
   openNotificationSettings,
 } from "../utils/notificationScheduler";
 import { fetchLotteries, formatTicketSearchInput } from "../api/lotteryApi";
-import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta, getDayTranslated } from "../constants/lotteries";
+import { ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta, getDayTranslated, getLotteryTranslatedName } from "../constants/lotteries";
 import { useLanguage } from "../context/LanguageContext";
 
 interface LotteryOption {
@@ -419,7 +419,7 @@ export default function AddReminderModal({
                         numberOfLines={1}
                       >
                         {selectedLottery
-                          ? (isMl ? (selectedLottery.nameMl || selectedLottery.name) : selectedLottery.name)
+                          ? (getLotteryTranslatedName(selectedLottery.code, language) || selectedLottery.name)
                           : t("choose_lottery")}
                       </Text>
                       {selectedLottery && (
@@ -573,7 +573,7 @@ export default function AddReminderModal({
                                 isSelected && { color: COLORS.primary, fontWeight: "900" },
                               ]}
                             >
-                              {isMl ? (item.nameMl || item.name) : item.name}
+                              {getLotteryTranslatedName(item.code, language) || item.name}
                             </Text>
                             <Text style={styles.lotteryMeta}>
                               {getDayTranslated(item.day, language)} · {item.drawTime}

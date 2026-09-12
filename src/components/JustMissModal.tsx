@@ -65,7 +65,7 @@ export default function JustMissModal({
   draw,
   onViewResult,
 }: JustMissModalProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMl = language === "ml";
   const [activeTab, setActiveTab] = useState<"all" | "1_digit" | "shuffled" | "2_digits">("all");
 
@@ -254,17 +254,17 @@ export default function JustMissModal({
     if (draw.first?.ticket && draw.first.ticket !== "N/A") {
       checkCandidate(
         draw.first.ticket,
-        isMl ? "ഒന്നാം സമ്മാനം" : "1st Prize",
+        t("tier_1st"),
         draw.prizes?.amounts?.["1st"] || "₹1,00,00,000"
       );
     }
 
     // 2. Consolation
     if (draw.prizes?.consolation && Array.isArray(draw.prizes.consolation)) {
-      draw.prizes.consolation.forEach((t) =>
+      draw.prizes.consolation.forEach((tNum) =>
         checkCandidate(
-          String(t),
-          isMl ? "സമാശ്വാസ സമ്മാനം" : "Consolation Prize",
+          String(tNum),
+          t("tier_consolation"),
           draw.prizes?.amounts?.consolation || "₹8,000"
         )
       );
@@ -272,22 +272,22 @@ export default function JustMissModal({
 
     // 3. Other Tiers
     const tierKeys = [
-      { key: "2nd", nameEn: "2nd Prize", nameMl: "രണ്ടാം സമ്മാനം" },
-      { key: "3rd", nameEn: "3rd Prize", nameMl: "മൂന്നാം സമ്മാനം" },
-      { key: "4th", nameEn: "4th Prize", nameMl: "നാലാം സമ്മാനം" },
-      { key: "5th", nameEn: "5th Prize", nameMl: "അഞ്ചാം സമ്മാനം" },
-      { key: "6th", nameEn: "6th Prize", nameMl: "ആറാം സമ്മാനം" },
-      { key: "7th", nameEn: "7th Prize", nameMl: "ഏഴാം സമ്മാനം" },
-      { key: "8th", nameEn: "8th Prize", nameMl: "എട്ടാം സമ്മാനം" },
-      { key: "9th", nameEn: "9th Prize", nameMl: "ഒമ്പതാം സമ്മാനം" },
+      { key: "2nd", label: t("tier_2nd") },
+      { key: "3rd", label: t("tier_3rd") },
+      { key: "4th", label: t("tier_4th") },
+      { key: "5th", label: t("tier_5th") },
+      { key: "6th", label: t("tier_6th") },
+      { key: "7th", label: t("tier_7th") },
+      { key: "8th", label: t("tier_8th") },
+      { key: "9th", label: t("tier_9th") },
     ] as const;
 
-    tierKeys.forEach(({ key, nameEn, nameMl }) => {
+    tierKeys.forEach(({ key, label }) => {
       const arr = draw.prizes?.[key];
       const amt = draw.prizes?.amounts?.[key];
       if (Array.isArray(arr)) {
         arr.forEach((ticketNum) => {
-          checkCandidate(String(ticketNum), isMl ? nameMl : nameEn, amt);
+          checkCandidate(String(ticketNum), label, amt);
         });
       }
     });

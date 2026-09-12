@@ -18,7 +18,9 @@ import {
   ALL_LOTTERIES,
   LotteryMeta,
   getDayTranslated,
+  getLotteryTranslatedName,
 } from "../constants/lotteries";
+import { isIndic } from "../constants/translations";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -54,87 +56,74 @@ export default function LotteriesScreen({ navigation }: any) {
 
   const renderSkeleton = () => (
     <View style={{ gap: 12 }}>
-      {[1, 2, 3, 4].map((k) => (
+      {[1, 2, 3, 4, 5].map((i) => (
         <View
-          key={k}
+          key={i}
           style={[
             styles.card,
-            { opacity: 0.6, borderColor: "#E2E8F0" },
+            { backgroundColor: COLORS.cardBg, borderColor: COLORS.border, minHeight: 110 },
           ]}
         >
-          <View style={styles.cardHeader}>
-            <View style={[styles.codeChip, { backgroundColor: "#E2E8F0", width: 45, height: 22 }]} />
-            <View style={{ width: 80, height: 16, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 12 }}>
+            <View style={{ width: 60, height: 22, backgroundColor: "#E2E8F0", borderRadius: 6 }} />
+            <View style={{ width: 70, height: 20, backgroundColor: "#E2E8F0", borderRadius: 6 }} />
           </View>
-          <View style={{ width: 140, height: 20, backgroundColor: "#E2E8F0", borderRadius: 6, marginVertical: 6 }} />
-          <View style={{ width: "70%", height: 14, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
+          <View style={{ width: 140, height: 18, backgroundColor: "#E2E8F0", borderRadius: 6, marginBottom: 8 }} />
+          <View style={{ width: 90, height: 14, backgroundColor: "#E2E8F0", borderRadius: 4 }} />
         </View>
       ))}
     </View>
   );
 
-  const todayISTDate = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Kolkata",
-  });
-
   const renderItem = ({ item }: { item: LotteryMeta }) => {
-    const isBumper = item.isBumper;
-    const isAnnouncedUpcoming = Boolean(
-      isBumper && item.draw_date && item.draw_date >= todayISTDate,
-    );
-    const isDrawToday = Boolean(isBumper && item.draw_date === todayISTDate);
+    const isBumper = item.isBumper || activeTab === "bumper";
+    const todayIST = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const isDrawToday = item.draw_date ? item.draw_date === todayIST : false;
+    const isAnnouncedUpcoming = isBumper && item.draw_date && !isDrawToday;
 
     return (
       <TouchableOpacity
         style={[
           styles.card,
-          isBumper && styles.bumperCard,
+          isDrawToday && styles.cardToday,
           isAnnouncedUpcoming && {
             borderColor: "#F59E0B",
-            borderWidth: 2,
+            borderWidth: 1.5,
             backgroundColor: "#FFFDF0",
-            shadowColor: "#F59E0B",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.18,
-            shadowRadius: 10,
-            elevation: 4,
           },
         ]}
-        onPress={() => navigation.navigate("LotteryArchive", { code: item.code })}
-        activeOpacity={0.85}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate("LotteryArchive", { lotteryCode: item.code })}
       >
         <View style={styles.cardHeader}>
-          <View style={styles.badgeRow}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <View
               style={[
-                styles.codeChip,
-                isAnnouncedUpcoming && { backgroundColor: "#D97706" },
+                styles.codeBadge,
+                isAnnouncedUpcoming && { backgroundColor: "#FEF3C7" },
               ]}
             >
               <Text
                 style={[
                   styles.codeText,
-                  isAnnouncedUpcoming && { color: "#FFFFFF" },
+                  isAnnouncedUpcoming && { color: "#92400E" },
                 ]}
               >
                 {item.code}
               </Text>
             </View>
+
             {isAnnouncedUpcoming ? (
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 4,
                   backgroundColor: "#FEF3C7",
                   paddingHorizontal: 8,
                   paddingVertical: 3,
-                  borderRadius: 12,
+                  borderRadius: 6,
                   borderWidth: 1,
                   borderColor: "#FCD34D",
                 }}
               >
-                <Sparkles size={11} color="#B45309" />
                 <Text
                   style={{
                     fontSize: 10.5,
@@ -142,20 +131,14 @@ export default function LotteriesScreen({ navigation }: any) {
                     color: "#92400E",
                   }}
                 >
-                  {isDrawToday
-                    ? language === "ml"
-                      ? "ഇന്ന് നറുക്കെടുപ്പ്"
-                      : "DRAWS TODAY"
-                    : language === "ml"
-                      ? `തീയതി: ${item.draw_date}`
-                      : `Draw: ${item.draw_date}`}
+                  {isDrawToday ? t("draws_today") : `${t("draw_date")}: ${item.draw_date}`}
                 </Text>
               </View>
             ) : (
               <Text
                 style={[
                   styles.dayText,
-                  language === "ml" && { fontSize: 11, paddingHorizontal: 8 },
+                  isIndic(language) && { fontSize: 11, paddingHorizontal: 8 },
                 ]}
               >
                 {getDayTranslated(item.day, language)}
@@ -169,10 +152,10 @@ export default function LotteriesScreen({ navigation }: any) {
           style={[
             styles.title,
             isAnnouncedUpcoming && { color: "#78350F" },
-            language === "ml" && { fontSize: 15, lineHeight: 22, fontWeight: "800" },
+            isIndic(language) && { fontSize: 15, lineHeight: 22, fontWeight: "800" },
           ]}
         >
-          {language === "ml" && item.nameMl ? item.nameMl : item.name}
+          {getLotteryTranslatedName(item.code, language) || item.name}
         </Text>
 
         {isBumper && item.jackpot && (
@@ -190,10 +173,10 @@ export default function LotteriesScreen({ navigation }: any) {
               style={[
                 styles.jackpotText,
                 isAnnouncedUpcoming && { color: "#92400E" },
-                language === "ml" && { fontSize: 11 },
+                isIndic(language) && { fontSize: 11 },
               ]}
             >
-              {language === "ml" ? "ഒന്നാം സമ്മാനം:" : "1st Prize:"}{" "}
+              {t("first_prize")}:{" "}
               <Text
                 style={{
                   fontWeight: "900",
@@ -227,7 +210,7 @@ export default function LotteriesScreen({ navigation }: any) {
                 textTransform: "uppercase",
               }}
             >
-              {language === "ml" ? "🗓️ പ്രഖ്യാപിച്ച തീയതി" : "🗓️ ANNOUNCED DRAW DATE"}
+              {t("announced_draw_date")}
             </Text>
             <Text
               style={{
@@ -247,19 +230,15 @@ export default function LotteriesScreen({ navigation }: any) {
                   marginTop: 2,
                 }}
               >
-                {language === "ml" ? "ടിക്കറ്റ് വില:" : "Ticket:"} {item.ticket_price}
+                {t("ticket_price")}: {item.ticket_price}
               </Text>
             )}
           </View>
         ) : (
-          <Text style={[styles.subtitle, language === "ml" && { fontSize: 11, lineHeight: 16 }]}>
+          <Text style={[styles.subtitle, isIndic(language) && { fontSize: 11, lineHeight: 16 }]}>
             {isBumper
-              ? language === "ml"
-                ? `നറുക്കെടുപ്പ് സമയം: ${item.drawSeason || "ഉച്ചയ്ക്ക് 2:00 മണി"}`
-                : `Draw Season: ${item.drawSeason || "Annual Bumper"}`
-              : language === "ml"
-                ? "നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി"
-                : `Draw: ${item.drawTime}`}
+              ? `${t("draw_season")}: ${item.drawSeason || "2:00 PM"}`
+              : `${t("draw_time")}: ${item.drawTime || "3:00 PM"}`}
           </Text>
         )}
 
@@ -268,7 +247,7 @@ export default function LotteriesScreen({ navigation }: any) {
             style={[
               styles.footerLink,
               isAnnouncedUpcoming && { color: "#D97706" },
-              language === "ml" && { fontSize: 11.5 },
+              isIndic(language) && { fontSize: 11.5 },
             ]}
           >
             {t("view_archive")} →
@@ -285,7 +264,7 @@ export default function LotteriesScreen({ navigation }: any) {
           <Text
             style={[
               styles.headerTitle,
-              language === "ml" && { fontSize: 16.5, lineHeight: 24 },
+              isIndic(language) && { fontSize: 16.5, lineHeight: 24 },
             ]}
           >
             {t("lotteries_title")}
@@ -293,7 +272,7 @@ export default function LotteriesScreen({ navigation }: any) {
           <Text
             style={[
               styles.headerSubtitle,
-              language === "ml" && { fontSize: 10.5, lineHeight: 15 },
+              isIndic(language) && { fontSize: 10.5, lineHeight: 15 },
             ]}
           >
             {t("lotteries_subtitle")}
@@ -313,10 +292,10 @@ export default function LotteriesScreen({ navigation }: any) {
               style={[
                 styles.tabText,
                 activeTab === "weekly" && styles.activeTabText,
-                language === "ml" && { fontSize: 11 },
+                isIndic(language) && { fontSize: 11 },
               ]}
             >
-              {language === "ml" ? `പ്രതിവാര ലോട്ടറി (${weeklyData.length})` : `Weekly Draws (${weeklyData.length})`}
+              {t("weekly_tab")} ({weeklyData.length})
             </Text>
           </TouchableOpacity>
 
@@ -331,10 +310,10 @@ export default function LotteriesScreen({ navigation }: any) {
               style={[
                 styles.tabText,
                 activeTab === "bumper" && styles.activeTabText,
-                language === "ml" && { fontSize: 11 },
+                isIndic(language) && { fontSize: 11 },
               ]}
             >
-              {language === "ml" ? `ബംപർ ലോട്ടറി (${bumperData.length})` : `Bumper Draws (${bumperData.length})`}
+              {t("bumper_tab")} ({bumperData.length})
             </Text>
           </TouchableOpacity>
         </View>
@@ -421,6 +400,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  cardToday: {
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
+    backgroundColor: "#F0FDF4",
+  },
   bumperCard: {
     borderColor: "#FCD34D",
     backgroundColor: "#FFFDF7",
@@ -436,6 +420,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   badgeRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  codeBadge: {
+    backgroundColor: "#0B3C5D",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
   codeChip: {
     backgroundColor: "#0B3C5D",
     paddingHorizontal: 9,

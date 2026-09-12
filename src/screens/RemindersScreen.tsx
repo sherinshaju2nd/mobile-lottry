@@ -192,7 +192,7 @@ export default function RemindersScreen({ navigation }: any) {
               </View>
             ) : isChecked ? (
               <View style={styles.badgeChecked}>
-                <Text style={styles.badgeCheckedText}>{isMl ? "ഫലം പരിശോധിച്ചു" : "Checked"}</Text>
+                <Text style={styles.badgeCheckedText}>{t("verified")}</Text>
               </View>
             ) : (
               <View style={styles.badgePast}>
@@ -204,7 +204,7 @@ export default function RemindersScreen({ navigation }: any) {
           {hasWon && item.winningStatus?.amount && (
             <View style={styles.winAmountBox}>
               <Text style={styles.winAmountText}>
-                {isMl ? "സമ്മാനത്തുക" : "Prize Amount"}: {item.winningStatus.amount}
+                {t("first_prize")}: {item.winningStatus.amount}
               </Text>
             </View>
           )}
@@ -220,8 +220,8 @@ export default function RemindersScreen({ navigation }: any) {
           <View style={styles.metaRow}>
             <Clock3 size={13} color={COLORS.textMuted} />
             <Text style={styles.metaText}>
-              {isMl ? `നറുക്കെടുപ്പ് ${formatTime(item.drawTime)}` : `Draw at ${formatTime(item.drawTime)}`}
-              {item.reminderLeadMinutes ? ` (${item.reminderLeadMinutes}m alert)` : ""}
+              {t("draw_time")}: {formatTime(item.drawTime)}
+              {item.reminderLeadMinutes ? ` (${item.reminderLeadMinutes}m)` : ""}
             </Text>
           </View>
 
@@ -237,7 +237,7 @@ export default function RemindersScreen({ navigation }: any) {
           >
             <Ticket size={12} color={COLORS.primary} />
             <Text style={styles.verifyTicketBtnText}>
-              {isMl ? "ഫലം പരിശോധിക്കുക" : "Verify Ticket"}
+              {t("verify_ticket_title")}
             </Text>
           </TouchableOpacity>
         </View>

@@ -26,6 +26,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
+import { isIndic } from "../constants/translations";
 
 const SUPPORT_EMAIL = "keralalotteryresultstoday@gmail.com";
 const WHATSAPP_PHONE = "+919778570477";
@@ -38,29 +39,22 @@ const CONTACT_PERSON = "Ajo Mon John";
 const WEBSITE_URL = "https://www.keralalotteryresultstoday.in";
 
 export default function ContactScreen({ navigation }: any) {
-  const { language } = useLanguage();
-  const isMl = language === "ml";
+  const { language, t } = useLanguage();
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(
-      isMl
-        ? "കേരള ലോട്ടറി ആപ്പ് സപ്പോർട്ട് അന്വേഷണം"
-        : "Kerala Lottery Results App - Support Inquiry"
-    );
+    const subject = encodeURIComponent("Kerala Lottery Results App - Support Inquiry");
     const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}`;
     Linking.openURL(url).catch(() => {
       Alert.alert(
-        isMl ? "ഇമെയിൽ തുറക്കാൻ കഴിഞ്ഞില്ല" : "Could not open mail app",
-        `${isMl ? "ദയവായി ഈ ഇമെയിലിലേക്ക് അയക്കുക:" : "Please write to:"} ${SUPPORT_EMAIL}`
+        "Could not open mail app",
+        `Please write to: ${SUPPORT_EMAIL}`
       );
     });
   };
 
   const handleWhatsApp = async () => {
     const msg = encodeURIComponent(
-      isMl
-        ? "നമസ്കാരം, കേരള ലോട്ടറി റിസൾട്ട്സ് ആപ്പുമായി ബന്ധപ്പെട്ടാണ് ഞാൻ ബന്ധപ്പെടുന്നത്."
-        : "Hello, I am contacting you regarding the Kerala Lottery Results Today app."
+      "Hello, I am contacting you regarding the Kerala Lottery Results Today app."
     );
     const waScheme = `whatsapp://send?phone=${WHATSAPP_CLEAN}&text=${msg}`;
     const waWeb = `https://wa.me/${WHATSAPP_CLEAN}?text=${msg}`;
@@ -75,8 +69,8 @@ export default function ContactScreen({ navigation }: any) {
     } catch {
       Linking.openURL(waWeb).catch(() => {
         Alert.alert(
-          isMl ? "WhatsApp തുറക്കാൻ കഴിഞ്ഞില്ല" : "Could not open WhatsApp",
-          `${isMl ? "WhatsApp നമ്പർ:" : "WhatsApp number:"} ${PHONE_1}`
+          "Could not open WhatsApp",
+          `WhatsApp number: ${PHONE_1}`
         );
       });
     }
@@ -87,8 +81,8 @@ export default function ContactScreen({ navigation }: any) {
     const url = `tel:${cleanNumber}`;
     Linking.openURL(url).catch(() => {
       Alert.alert(
-        isMl ? "കോൾ ചെയ്യാൻ കഴിഞ്ഞില്ല" : "Could not initiate call",
-        `${isMl ? "ഫോൺ നമ്പർ:" : "Phone number:"} ${phoneNumber}`
+        "Could not initiate call",
+        `Phone number: ${phoneNumber}`
       );
     });
   };
@@ -112,11 +106,11 @@ export default function ContactScreen({ navigation }: any) {
             <ArrowLeft size={20} color={COLORS.textDark} />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
-            <Text style={styles.title}>
-              {isMl ? "ബന്ധപ്പെടുക (Contact Us)" : "Contact Us"}
+            <Text style={[styles.title, isIndic(language) && { fontSize: 17 }]}>
+              {t("contact_title")}
             </Text>
-            <Text style={styles.subtitle}>
-              {isMl ? "സഹായവും അന്വേഷണങ്ങളും" : "Helpdesk, Feedback & Inquiries"}
+            <Text style={[styles.subtitle, isIndic(language) && { fontSize: 11.5 }]}>
+              {t("contact_subtitle")}
             </Text>
           </View>
         </View>
@@ -129,24 +123,20 @@ export default function ContactScreen({ navigation }: any) {
           <View style={styles.heroBanner}>
             <View style={styles.heroBadge}>
               <Text style={styles.heroBadgeText}>
-                {isMl ? "സഹായ കേന്ദ്രം" : "HELPDESK & SUPPORT"}
+                {t("contact_hero_badge")}
               </Text>
             </View>
-            <Text style={styles.heroTitle}>
-              {isMl
-                ? "നിങ്ങളുടെ സംശയങ്ങൾക്കും നിർദ്ദേശങ്ങൾക്കും സ്വാഗതം"
-                : "We're Here to Help You"}
+            <Text style={[styles.heroTitle, isIndic(language) && { fontSize: 18, lineHeight: 24 }]}>
+              {t("contact_hero_title")}
             </Text>
-            <Text style={styles.heroDesc}>
-              {isMl
-                ? "ആപ്പുമായി ബന്ധപ്പെട്ട സാങ്കേതിക സഹായങ്ങൾക്കോ ഫീഡ്‌ബാക്കിനോ താഴെ നൽകിയിരിക്കുന്ന മാധ്യമങ്ങൾ വഴി ഞങ്ങളെ നേരിട്ട് ബന്ധപ്പെടാം."
-                : "Have a question about lottery results, barcode scanning, or app feedback? Reach out to our team directly."}
+            <Text style={[styles.heroDesc, isIndic(language) && { fontSize: 11.5, lineHeight: 17 }]}>
+              {t("contact_hero_desc")}
             </Text>
           </View>
 
           {/* Direct Channels Section */}
-          <Text style={styles.sectionHeading}>
-            {isMl ? "നേരിട്ട് ബന്ധപ്പെടാനുള്ള വഴികൾ:" : "Direct Contact Channels"}
+          <Text style={[styles.sectionHeading, isIndic(language) && { fontSize: 13 }]}>
+            {t("direct_contact_heading")}
           </Text>
 
           {/* WhatsApp Card */}
@@ -160,18 +150,16 @@ export default function ContactScreen({ navigation }: any) {
             </View>
             <View style={styles.cardInfo}>
               <View style={styles.cardTitleRow}>
-                <Text style={styles.cardTitle}>WhatsApp Support</Text>
+                <Text style={styles.cardTitle}>{t("whatsapp_support")}</Text>
                 <View style={styles.quickBadge}>
                   <Text style={styles.quickBadgeText}>
-                    {isMl ? "തത്സമയം" : "Fastest"}
+                    {t("fastest_badge")}
                   </Text>
                 </View>
               </View>
               <Text style={styles.cardValue}>{PHONE_1}</Text>
               <Text style={styles.cardSub}>
-                {isMl
-                  ? `ബന്ധപ്പെടേണ്ട വ്യക്തി: ${CONTACT_PERSON} (ചാറ്റ് ചെയ്യാൻ ക്ലിക്ക് ചെയ്യുക)`
-                  : `Contact Person: ${CONTACT_PERSON} (Tap to chat)`}
+                {CONTACT_PERSON}
               </Text>
             </View>
             <ExternalLink size={16} color="#16A34A" />
@@ -188,13 +176,11 @@ export default function ContactScreen({ navigation }: any) {
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardTitle}>
-                {isMl ? "ഔദ്യോഗിക ഇമെയിൽ" : "Official Support Email"}
+                {t("official_email")}
               </Text>
               <Text style={styles.cardValue}>{SUPPORT_EMAIL}</Text>
               <Text style={styles.cardSub}>
-                {isMl
-                  ? "ഇമെയിൽ അയക്കാൻ ക്ലിക്ക് ചെയ്യുക"
-                  : "Tap to send an email inquiry"}
+                {SUPPORT_EMAIL}
               </Text>
             </View>
             <ExternalLink size={16} color={COLORS.primary} />
@@ -208,12 +194,10 @@ export default function ContactScreen({ navigation }: any) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>
-                  {isMl ? "ഫോൺ ഹെൽപ്പ്‌ലൈൻ" : "Phone Helpline"}
+                  {t("phone_helpline")}
                 </Text>
                 <Text style={styles.cardSub}>
-                  {isMl
-                    ? "വിളിക്കാൻ നമ്പറിൽ ടാപ്പ് ചെയ്യുക"
-                    : "Tap a number below to call directly"}
+                  {PHONE_1}
                 </Text>
               </View>
             </View>
@@ -229,12 +213,12 @@ export default function ContactScreen({ navigation }: any) {
               <View>
                 <Text style={styles.phoneRowNumber}>{PHONE_1}</Text>
                 <Text style={styles.phoneRowLabel}>
-                  {CONTACT_PERSON} ({isMl ? "പ്രൈമറി" : "Primary"})
+                  {CONTACT_PERSON}
                 </Text>
               </View>
               <View style={styles.callPill}>
                 <Phone size={12} color="#FFFFFF" />
-                <Text style={styles.callPillText}>{isMl ? "വിളിക്കുക" : "Call"}</Text>
+                <Text style={styles.callPillText}>{t("call_btn")}</Text>
               </View>
             </TouchableOpacity>
 
@@ -249,12 +233,12 @@ export default function ContactScreen({ navigation }: any) {
               <View>
                 <Text style={styles.phoneRowNumber}>{PHONE_2}</Text>
                 <Text style={styles.phoneRowLabel}>
-                  {isMl ? "സെക്കൻഡറി ഹെൽപ്പ്‌ലൈൻ" : "Secondary Helpline"}
+                  {PHONE_2}
                 </Text>
               </View>
               <View style={styles.callPill}>
                 <Phone size={12} color="#FFFFFF" />
-                <Text style={styles.callPillText}>{isMl ? "വിളിക്കുക" : "Call"}</Text>
+                <Text style={styles.callPillText}>{t("call_btn")}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -265,12 +249,10 @@ export default function ContactScreen({ navigation }: any) {
               <Clock size={16} color={COLORS.textMuted} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.metaLabel}>
-                  {isMl ? "പ്രവർത്തന സമയം" : "Support Hours"}
+                  {t("support_hours")}
                 </Text>
                 <Text style={styles.metaValue}>
-                  {isMl
-                    ? "തിങ്കൾ – ശനി: രാവിലെ 9:00 AM മുതൽ വൈകുന്നേരം 7:00 PM വരെ"
-                    : "Monday – Saturday: 9:00 AM – 7:00 PM IST"}
+                  {t("support_hours_value")}
                 </Text>
               </View>
             </View>
@@ -285,7 +267,7 @@ export default function ContactScreen({ navigation }: any) {
               <Globe size={16} color={COLORS.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.metaLabel}>
-                  {isMl ? "ഔദ്യോഗിക വെബ്സൈറ്റ്" : "Official Website"}
+                  {t("official_website")}
                 </Text>
                 <Text style={[styles.metaValue, { color: COLORS.primary, fontWeight: "700" }]}>
                   {WEBSITE_URL}
@@ -296,8 +278,8 @@ export default function ContactScreen({ navigation }: any) {
           </View>
 
           {/* Quick Help Links */}
-          <Text style={styles.sectionHeading}>
-            {isMl ? "മറ്റു വിവരങ്ങൾ & സഹായ ഗൈഡുകൾ:" : "Helpful Resources"}
+          <Text style={[styles.sectionHeading, isIndic(language) && { fontSize: 13 }]}>
+            {t("helpful_resources")}
           </Text>
 
           <View style={styles.quickLinksGrid}>
@@ -307,8 +289,8 @@ export default function ContactScreen({ navigation }: any) {
               activeOpacity={0.75}
             >
               <FileText size={18} color={COLORS.primary} />
-              <Text style={styles.quickLinkText}>
-                {isMl ? "സമ്മാനം ക്ലെയിം ചെയ്യുന്ന വിധം" : "Prize Claim Guide"}
+              <Text style={[styles.quickLinkText, isIndic(language) && { fontSize: 12 }]}>
+                {t("prize_claim_guide")}
               </Text>
             </TouchableOpacity>
 
@@ -318,8 +300,8 @@ export default function ContactScreen({ navigation }: any) {
               activeOpacity={0.75}
             >
               <HelpCircle size={18} color={COLORS.primary} />
-              <Text style={styles.quickLinkText}>
-                {isMl ? "പതിവ് ചോദ്യങ്ങൾ (FAQ)" : "Frequently Asked (FAQ)"}
+              <Text style={[styles.quickLinkText, isIndic(language) && { fontSize: 12 }]}>
+                {t("faq")}
               </Text>
             </TouchableOpacity>
           </View>
