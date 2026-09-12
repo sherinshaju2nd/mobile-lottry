@@ -121,6 +121,8 @@ export const translations = {
     status_active: "Active",
     status_upcoming: "Upcoming",
     status_past: "Past",
+    status_checked: "Checked",
+    verified: "Checked",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "Latest Lottery Results",
@@ -498,6 +500,8 @@ export const translations = {
     status_active: "സജീവം",
     status_upcoming: "വരാനിരിക്കുന്നത്",
     status_past: "കഴിഞ്ഞത്",
+    status_checked: "പരിശോധിച്ചു",
+    verified: "പരിശോധിച്ചു",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "ഏറ്റവും പുതിയ ലോട്ടറി ഫലങ്ങൾ",
@@ -883,6 +887,8 @@ export const translations = {
     status_active: "सक्रिय",
     status_upcoming: "आगामी",
     status_past: "पिछला",
+    status_checked: "जांचा गया",
+    verified: "जांचा गया",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "नवीनतम लॉटरी परिणाम",
@@ -1259,6 +1265,8 @@ export const translations = {
     status_active: "செயலில்",
     status_upcoming: "வரவிருக்கும்",
     status_past: "கடந்தவை",
+    status_checked: "சரிபார்க்கப்பட்டது",
+    verified: "சரிபார்க்கப்பட்டது",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "சமீபத்திய லாட்டரி முடிவுகள்",
@@ -1643,6 +1651,8 @@ export const translations = {
     status_active: "ಸಕ್ರಿಯ",
     status_upcoming: "ಮುಂಬರುವ",
     status_past: "ಹಿಂದಿನ",
+    status_checked: "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
+    verified: "ಪರಿಶೀಲಿಸಲಾಗಿದೆ",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "ಇತ್ತೀಚಿನ ಲಾಟರಿ ಫಲಿತಾಂಶಗಳು",
@@ -2021,6 +2031,8 @@ export const translations = {
     status_active: "యాక్టివ్",
     status_upcoming: "రాబోయేవి",
     status_past: "గతించినవి",
+    status_checked: "తనిఖీ చేయబడింది",
+    verified: "తనిఖీ చేయబడింది",
 
     // Home Screen - Hero & Draw Status
     latest_draws: "తాజా లాటరీ ఫలితాలు",
