@@ -225,7 +225,7 @@ export const translations = {
     weekly_tab: "Weekly Draws",
     bumper_tab: "Bumper Draws",
     ticket_price: "Ticket Price",
-    view_archive: "View Draw Archive",
+    view_archive: "View Details",
     announced_draw_date: "🗓️ ANNOUNCED DRAW DATE",
     draws_today: "DRAWS TODAY",
     draw_season: "Draw Season",
@@ -357,10 +357,14 @@ export const translations = {
     mins_15: "15 mins",
     mins_30: "30 mins",
     hour_1: "1 hour",
-    high_priority_notif_5m: "🔔 You'll receive a high-priority push notification 5 minutes before the draw begins.",
-    high_priority_notif_15m: "🔔 You'll receive a high-priority push notification 15 minutes before the draw begins.",
-    high_priority_notif_30m: "🔔 You'll receive a high-priority push notification 30 minutes before the draw begins.",
-    high_priority_notif_1h: "🔔 You'll receive a high-priority push notification 1 hour before the draw begins.",
+    high_priority_notif_5m:
+      "🔔 You'll receive a high-priority push notification 5 minutes before the draw begins.",
+    high_priority_notif_15m:
+      "🔔 You'll receive a high-priority push notification 15 minutes before the draw begins.",
+    high_priority_notif_30m:
+      "🔔 You'll receive a high-priority push notification 30 minutes before the draw begins.",
+    high_priority_notif_1h:
+      "🔔 You'll receive a high-priority push notification 1 hour before the draw begins.",
     quick_presets: "Quick Presets",
     select_draw_date_modal_title: "Select Draw Date",
     update_reminder_btn: "Update Reminder",
@@ -371,15 +375,20 @@ export const translations = {
     allow_push_notifications: "Allow Push Notifications",
     allow_push_desc: "Receive instant updates for draws and reminders",
     daily_3pm_draw_reminder: "3:00 PM Daily Draw Reminder",
-    daily_3pm_draw_reminder_desc: "Heads-up reminder before the 3:00 PM daily lottery draw",
+    daily_3pm_draw_reminder_desc:
+      "Heads-up reminder before the 3:00 PM daily lottery draw",
     bumper_2pm_draw_reminder: "2:00 PM Bumper Draw Reminder",
-    bumper_2pm_draw_reminder_desc: "Special reminder before the 2:00 PM bumper lottery draws",
+    bumper_2pm_draw_reminder_desc:
+      "Special reminder before the 2:00 PM bumper lottery draws",
     saved_ticket_reminders: "Saved Ticket Draw Reminders",
-    saved_ticket_reminders_desc: "Alerts for tickets added to your personal reminder list",
+    saved_ticket_reminders_desc:
+      "Alerts for tickets added to your personal reminder list",
     favorites_only_mode: "Favorite Lotteries Only Mode",
-    favorites_only_mode_desc: "Only notify for lotteries marked with a star (⭐)",
+    favorites_only_mode_desc:
+      "Only notify for lotteries marked with a star (⭐)",
     os_perm_disabled_title: "OS Notifications Disabled",
-    os_perm_disabled_desc: "Enable notifications in system settings to receive draw alerts.",
+    os_perm_disabled_desc:
+      "Enable notifications in system settings to receive draw alerts.",
     open_settings_btn: "Open",
 
     // AI Voice Assistant & Chat
@@ -795,10 +804,14 @@ export const translations = {
     mins_15: "15 മിനിറ്റ്",
     mins_30: "30 മിനിറ്റ്",
     hour_1: "1 മണിക്കൂർ",
-    high_priority_notif_5m: "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 5 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
-    high_priority_notif_15m: "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 15 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
-    high_priority_notif_30m: "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 30 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
-    high_priority_notif_1h: "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 1 മണിക്കൂർ മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
+    high_priority_notif_5m:
+      "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 5 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
+    high_priority_notif_15m:
+      "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 15 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
+    high_priority_notif_30m:
+      "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 30 മിനിറ്റ് മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
+    high_priority_notif_1h:
+      "🔔 നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് 1 മണിക്കൂർ മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.",
     quick_presets: "ദ്രുത തീയതികൾ",
     select_draw_date_modal_title: "തീയതി തിരഞ്ഞെടുക്കുക",
     update_reminder_btn: "മാറ്റം വരുത്തുക",
@@ -809,15 +822,20 @@ export const translations = {
     allow_push_notifications: "എല്ലാ നോട്ടിഫിക്കേഷനുകളും",
     allow_push_desc: "തത്സമയ അലേർട്ടുകളും ഫലങ്ങളും തൽക്ഷണം നേടുക",
     daily_3pm_draw_reminder: "3:00 PM പ്രതിദിന നറുക്കെടുപ്പ് അലേർട്ട്",
-    daily_3pm_draw_reminder_desc: "പ്രതിദിന നറുക്കെടുപ്പ് തുടങ്ങുന്നതിന് മുൻപ് ഓർമ്മപ്പെടുത്തൽ",
+    daily_3pm_draw_reminder_desc:
+      "പ്രതിദിന നറുക്കെടുപ്പ് തുടങ്ങുന്നതിന് മുൻപ് ഓർമ്മപ്പെടുത്തൽ",
     bumper_2pm_draw_reminder: "2:00 PM ബംപർ നറുക്കെടുപ്പ് അലേർട്ട്",
-    bumper_2pm_draw_reminder_desc: "ബംപർ നറുക്കെടുപ്പുകൾക്ക് മുൻപുള്ള പ്രത്യേക അലേർട്ട്",
+    bumper_2pm_draw_reminder_desc:
+      "ബംപർ നറുക്കെടുപ്പുകൾക്ക് മുൻപുള്ള പ്രത്യേക അലേർട്ട്",
     saved_ticket_reminders: "സേവ് ചെയ്ത ടിക്കറ്റ് ഓർമ്മപ്പെടുത്തൽ",
-    saved_ticket_reminders_desc: "നിങ്ങൾ ആപ്പിൽ ചേർത്ത ടിക്കറ്റുകളുടെ ഓർമ്മപ്പെടുത്തൽ",
+    saved_ticket_reminders_desc:
+      "നിങ്ങൾ ആപ്പിൽ ചേർത്ത ടിക്കറ്റുകളുടെ ഓർമ്മപ്പെടുത്തൽ",
     favorites_only_mode: "പ്രിയപ്പെട്ട ലോട്ടറികൾക്ക് മാത്രം",
-    favorites_only_mode_desc: "സ്റ്റാർ ചെയ്ത ലോട്ടറികൾക്ക് മാത്രം അലേർട്ടുകൾ അയക്കുക",
+    favorites_only_mode_desc:
+      "സ്റ്റാർ ചെയ്ത ലോട്ടറികൾക്ക് മാത്രം അലേർട്ടുകൾ അയക്കുക",
     os_perm_disabled_title: "സിസ്റ്റം പെർമിഷൻ ഓഫാണ്",
-    os_perm_disabled_desc: "അലേർട്ടുകൾ ലഭിക്കുന്നതിന് ഫോൺ ക്രമീകരണങ്ങളിൽ പെർമിഷൻ നൽകുക.",
+    os_perm_disabled_desc:
+      "അലേർട്ടുകൾ ലഭിക്കുന്നതിന് ഫോൺ ക്രമീകരണങ്ങളിൽ പെർമിഷൻ നൽകുക.",
     open_settings_btn: "തുറക്കുക",
 
     // AI Voice Assistant & Chat
@@ -1225,10 +1243,14 @@ export const translations = {
     mins_15: "15 मिनट",
     mins_30: "30 मिनट",
     hour_1: "1 घंटा",
-    high_priority_notif_5m: "🔔 ड्रॉ शुरू होने से 5 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
-    high_priority_notif_15m: "🔔 ड्रॉ शुरू होने से 15 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
-    high_priority_notif_30m: "🔔 ड्रॉ शुरू होने से 30 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
-    high_priority_notif_1h: "🔔 ड्रॉ शुरू होने से 1 घंटा पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
+    high_priority_notif_5m:
+      "🔔 ड्रॉ शुरू होने से 5 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
+    high_priority_notif_15m:
+      "🔔 ड्रॉ शुरू होने से 15 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
+    high_priority_notif_30m:
+      "🔔 ड्रॉ शुरू होने से 30 मिनट पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
+    high_priority_notif_1h:
+      "🔔 ड्रॉ शुरू होने से 1 घंटा पहले आपको हाई-प्रायोरिटी पुश नोटिफिकेशन प्राप्त होगा।",
     quick_presets: "त्वरित चयन",
     select_draw_date_modal_title: "ड्रॉ तिथि चुनें",
     update_reminder_btn: "रिमाइंडर अपडेट करें",
@@ -1241,13 +1263,17 @@ export const translations = {
     daily_3pm_draw_reminder: "3:00 PM दैनिक ड्रा रिमाइंडर",
     daily_3pm_draw_reminder_desc: "3:00 PM दैनिक लॉटरी ड्रॉ से पहले रिमाइंडर",
     bumper_2pm_draw_reminder: "2:00 PM बंपर ड्रा रिमाइंडर",
-    bumper_2pm_draw_reminder_desc: "2:00 PM बंपर लॉटरी ड्रॉ से पहले विशेष रिमाइंडर",
+    bumper_2pm_draw_reminder_desc:
+      "2:00 PM बंपर लॉटरी ड्रॉ से पहले विशेष रिमाइंडर",
     saved_ticket_reminders: "सहेजे गए टिकट ड्रा रिमाइंडर",
-    saved_ticket_reminders_desc: "आपकी व्यक्तिगत रिमाइंडर सूची में जोड़े गए टिकटों के लिए अलर्ट",
+    saved_ticket_reminders_desc:
+      "आपकी व्यक्तिगत रिमाइंडर सूची में जोड़े गए टिकटों के लिए अलर्ट",
     favorites_only_mode: "केवल पसंदीदा लॉटरी मोड",
-    favorites_only_mode_desc: "केवल स्टार (⭐) चिह्नित लॉटरी के लिए सूचना भेजें",
+    favorites_only_mode_desc:
+      "केवल स्टार (⭐) चिह्नित लॉटरी के लिए सूचना भेजें",
     os_perm_disabled_title: "सिस्टम सूचनाएं बंद हैं",
-    os_perm_disabled_desc: "ड्रा अलर्ट प्राप्त करने के लिए सिस्टम सेटिंग्स में सूचनाएं चालू करें।",
+    os_perm_disabled_desc:
+      "ड्रा अलर्ट प्राप्त करने के लिए सिस्टम सेटिंग्स में सूचनाएं चालू करें।",
     open_settings_btn: "खोलें",
 
     // AI Voice Assistant & Chat
@@ -1664,29 +1690,40 @@ export const translations = {
     mins_15: "15 நிமிடங்கள்",
     mins_30: "30 நிமிடங்கள்",
     hour_1: "1 மணி நேரம்",
-    high_priority_notif_5m: "🔔 குலுக்கல் தொடங்குவதற்கு 5 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
-    high_priority_notif_15m: "🔔 குலுக்கல் தொடங்குவதற்கு 15 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
-    high_priority_notif_30m: "🔔 குலுக்கல் தொடங்குவதற்கு 30 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
-    high_priority_notif_1h: "🔔 குலுக்கல் தொடங்குவதற்கு 1 மணி நேரத்திற்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
+    high_priority_notif_5m:
+      "🔔 குலுக்கல் தொடங்குவதற்கு 5 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
+    high_priority_notif_15m:
+      "🔔 குலுக்கல் தொடங்குவதற்கு 15 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
+    high_priority_notif_30m:
+      "🔔 குலுக்கல் தொடங்குவதற்கு 30 நிமிடங்களுக்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
+    high_priority_notif_1h:
+      "🔔 குலுக்கல் தொடங்குவதற்கு 1 மணி நேரத்திற்கு முன் உங்களுக்கு புஷ் அறிவிப்பு கிடைக்கும்.",
     quick_presets: "விரைவு தேதிகள்",
     select_draw_date_modal_title: "டிரா தேதியைத் தேர்ந்தெடுக்கவும்",
     update_reminder_btn: "நினைவூட்டலை புதுப்பிக்கவும்",
 
     // Notification Settings Modal
     notification_settings_title: "அறிவிப்பு அமைப்புகள்",
-    notification_settings_sub: "வரைவு விழிப்பூட்டல்கள் மற்றும் நினைவூட்டல்களைத் தனிப்பயனாக்குங்கள்",
+    notification_settings_sub:
+      "வரைவு விழிப்பூட்டல்கள் மற்றும் நினைவூட்டல்களைத் தனிப்பயனாக்குங்கள்",
     allow_push_notifications: "புஷ் அறிவிப்புகளை அனுமதிக்கவும்",
-    allow_push_desc: "வரைவுகள் மற்றும் நினைவூட்டல்களுக்கான உடனடி அறிவிப்புகளைப் பெறுங்கள்",
+    allow_push_desc:
+      "வரைவுகள் மற்றும் நினைவூட்டல்களுக்கான உடனடி அறிவிப்புகளைப் பெறுங்கள்",
     daily_3pm_draw_reminder: "3:00 PM தினசரி வரைவு நினைவூட்டல்",
-    daily_3pm_draw_reminder_desc: "3:00 PM தினசரி லாட்டரி வரைவுக்கு முன் நினைவூட்டல்",
+    daily_3pm_draw_reminder_desc:
+      "3:00 PM தினசரி லாட்டரி வரைவுக்கு முன் நினைவூட்டல்",
     bumper_2pm_draw_reminder: "2:00 PM பம்பர் வரைவு நினைவூட்டல்",
-    bumper_2pm_draw_reminder_desc: "2:00 PM பம்பர் லாட்டரி வரைவுகளுக்கு முன் சிறப்பு நினைவூட்டல்",
+    bumper_2pm_draw_reminder_desc:
+      "2:00 PM பம்பர் லாட்டரி வரைவுகளுக்கு முன் சிறப்பு நினைவூட்டல்",
     saved_ticket_reminders: "சேமிக்கப்பட்ட டிக்கெட் வரைவு நினைவூட்டல்கள்",
-    saved_ticket_reminders_desc: "உங்கள் தனிப்பட்ட நினைவூட்டல் பட்டியலில் சேர்க்கப்பட்ட டிக்கெட்டுகளுக்கான விழிப்பூட்டல்கள்",
+    saved_ticket_reminders_desc:
+      "உங்கள் தனிப்பட்ட நினைவூட்டல் பட்டியலில் சேர்க்கப்பட்ட டிக்கெட்டுகளுக்கான விழிப்பூட்டல்கள்",
     favorites_only_mode: "விருப்பமான லாட்டரிகள் மட்டும் பயன்முறை",
-    favorites_only_mode_desc: "நட்சத்திரம் (⭐) குறியிடப்பட்ட லாட்டரிகளுக்கு மட்டுமே அறிவிக்கவும்",
+    favorites_only_mode_desc:
+      "நட்சத்திரம் (⭐) குறியிடப்பட்ட லாட்டரிகளுக்கு மட்டுமே அறிவிக்கவும்",
     os_perm_disabled_title: "கணினி அறிவிப்புகள் முடக்கப்பட்டுள்ளன",
-    os_perm_disabled_desc: "வரைவு அறிவிப்புகளைப் பெற கணினி அமைப்புகளில் அறிவிப்புகளை இயக்கவும்.",
+    os_perm_disabled_desc:
+      "வரைவு அறிவிப்புகளைப் பெற கணினி அமைப்புகளில் அறிவிப்புகளை இயக்கவும்.",
     open_settings_btn: "திறக்க",
 
     // AI Voice Assistant & Chat
@@ -2097,29 +2134,39 @@ export const translations = {
     mins_15: "15 ನಿಮಿಷಗಳು",
     mins_30: "30 ನಿಮಿಷಗಳು",
     hour_1: "1 ಗಂಟೆ",
-    high_priority_notif_5m: "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 5 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
-    high_priority_notif_15m: "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 15 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
-    high_priority_notif_30m: "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 30 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
-    high_priority_notif_1h: "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 1 ಗಂಟೆ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
+    high_priority_notif_5m:
+      "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 5 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
+    high_priority_notif_15m:
+      "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 15 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
+    high_priority_notif_30m:
+      "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 30 ನಿಮಿಷಗಳ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
+    high_priority_notif_1h:
+      "🔔 ಡ್ರಾ ಪ್ರಾರಂಭವಾಗುವ 1 ಗಂಟೆ ಮೊದಲು ನೀವು ಹೈ-ಪ್ರಯಾರಿಟಿ ಪುಶ್ ಅಧಿಸೂಚನೆಯನ್ನು ಪಡೆಯುತ್ತೀರಿ.",
     quick_presets: "ತ್ವರಿತ ದಿನಾಂಕಗಳು",
     select_draw_date_modal_title: "ಡ್ರಾ ದಿನಾಂಕವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
     update_reminder_btn: "ಜ್ಞಾಪನೆಯನ್ನು ನವೀಕರಿಸಿ",
 
     // Notification Settings Modal
     notification_settings_title: "ಅಧಿಸೂಚನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
-    notification_settings_sub: "ಡ್ರಾ ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಜ್ಞಾಪನೆಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
+    notification_settings_sub:
+      "ಡ್ರಾ ಎಚ್ಚರಿಕೆಗಳು ಮತ್ತು ಜ್ಞಾಪನೆಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
     allow_push_notifications: "ಪುಶ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಅನುಮತಿಸಿ",
-    allow_push_desc: "ಡ್ರಾಗಳು ಮತ್ತು ಜ್ಞಾಪನೆಗಳಿಗಾಗಿ ತ್ವರಿತ ಅಪ್‌ಡೇಟ್‌ಗಳನ್ನು ಪಡೆಯಿರಿ",
+    allow_push_desc:
+      "ಡ್ರಾಗಳು ಮತ್ತು ಜ್ಞಾಪನೆಗಳಿಗಾಗಿ ತ್ವರಿತ ಅಪ್‌ಡೇಟ್‌ಗಳನ್ನು ಪಡೆಯಿರಿ",
     daily_3pm_draw_reminder: "3:00 PM ದೈನಂದಿನ ಡ್ರಾ ಜ್ಞಾಪನೆ",
-    daily_3pm_draw_reminder_desc: "3:00 PM ದೈನಂದಿನ ಲಾಟರಿ ಡ್ರಾಗೆ ಮುಂಚಿತವಾಗಿ ಜ್ಞಾಪನೆ",
+    daily_3pm_draw_reminder_desc:
+      "3:00 PM ದೈನಂದಿನ ಲಾಟರಿ ಡ್ರಾಗೆ ಮುಂಚಿತವಾಗಿ ಜ್ಞಾಪನೆ",
     bumper_2pm_draw_reminder: "2:00 PM ಬಂಪರ್ ಡ್ರಾ ಜ್ಞಾಪನೆ",
-    bumper_2pm_draw_reminder_desc: "2:00 PM ಬಂಪರ್ ಲಾಟರಿ ಡ್ರಾಗಳಿಗೆ ಮುಂಚಿತವಾಗಿ ವಿಶೇಷ ಜ್ಞಾಪನೆ",
+    bumper_2pm_draw_reminder_desc:
+      "2:00 PM ಬಂಪರ್ ಲಾಟರಿ ಡ್ರಾಗಳಿಗೆ ಮುಂಚಿತವಾಗಿ ವಿಶೇಷ ಜ್ಞಾಪನೆ",
     saved_ticket_reminders: "ಉಳಿಸಿದ ಟಿಕೆಟ್ ಡ್ರಾ ಜ್ಞಾಪನೆಗಳು",
-    saved_ticket_reminders_desc: "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಜ್ಞಾಪನೆ ಪಟ್ಟಿಗೆ ಸೇರಿಸಲಾದ ಟಿಕೆಟ್‌ಗಳಿಗಾಗಿ ಎಚ್ಚರಿಕೆಗಳು",
+    saved_ticket_reminders_desc:
+      "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಜ್ಞಾಪನೆ ಪಟ್ಟಿಗೆ ಸೇರಿಸಲಾದ ಟಿಕೆಟ್‌ಗಳಿಗಾಗಿ ಎಚ್ಚರಿಕೆಗಳು",
     favorites_only_mode: "ನೆಚ್ಚಿನ ಲಾಟರಿಗಳು ಮಾತ್ರ ಮೋಡ್",
     favorites_only_mode_desc: "ನಕ್ಷತ್ರ (⭐) ಗುರುತಿಸಲಾದ ಲಾಟರಿಗಳಿಗೆ ಮಾತ್ರ ಸೂಚಿಸಿ",
     os_perm_disabled_title: "ಸಿಸ್ಟಮ್ ಅಧಿಸೂಚನೆಗಳು ನಿಷ್ಕ್ರಿಯಗೊಂಡಿವೆ",
-    os_perm_disabled_desc: "ಡ್ರಾ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪಡೆಯಲು ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅಧಿಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.",
+    os_perm_disabled_desc:
+      "ಡ್ರಾ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪಡೆಯಲು ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅಧಿಸೂಚನೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.",
     open_settings_btn: "ತೆರೆಯಿರಿ",
 
     // AI Voice Assistant & Chat
@@ -2530,10 +2577,14 @@ export const translations = {
     mins_15: "15 నిమిషాలు",
     mins_30: "30 నిమిషాలు",
     hour_1: "1 గంట",
-    high_priority_notif_5m: "🔔 డ్రా ప్రారంభమయ్యే 5 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
-    high_priority_notif_15m: "🔔 డ్రా ప్రారంభమయ్యే 15 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
-    high_priority_notif_30m: "🔔 డ్రా ప్రారంభమయ్యే 30 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
-    high_priority_notif_1h: "🔔 డ్రా ప్రారంభమయ్యే 1 గంట ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
+    high_priority_notif_5m:
+      "🔔 డ్రా ప్రారంభమయ్యే 5 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
+    high_priority_notif_15m:
+      "🔔 డ్రా ప్రారంభమయ్యే 15 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
+    high_priority_notif_30m:
+      "🔔 డ్రా ప్రారంభమయ్యే 30 నిమిషాల ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
+    high_priority_notif_1h:
+      "🔔 డ్రా ప్రారంభమయ్యే 1 గంట ముందు మీరు హై-ప్రయారిటీ పుష్ నోటిఫికేషన్ అందుకుంటారు.",
     quick_presets: "శీఘ్ర తేదీలు",
     select_draw_date_modal_title: "డ్రా తేదీని ఎంచుకోండి",
     update_reminder_btn: "రిమైండర్‌ను అప్‌డేట్ చేయండి",
@@ -2544,15 +2595,20 @@ export const translations = {
     allow_push_notifications: "పుష్ నోటిఫికేషన్‌లను అనుమతించండి",
     allow_push_desc: "డ్రాలు మరియు రిమైండర్‌ల కోసం తక్షణ అప్‌డేట్‌లను పొందండి",
     daily_3pm_draw_reminder: "3:00 PM రోజువారీ డ్రా రిమైండర్",
-    daily_3pm_draw_reminder_desc: "3:00 PM రోజువారీ లాటరీ డ్రాకు ముందు రిమైండర్",
+    daily_3pm_draw_reminder_desc:
+      "3:00 PM రోజువారీ లాటరీ డ్రాకు ముందు రిమైండర్",
     bumper_2pm_draw_reminder: "2:00 PM బంపర్ డ్రా రిమైండర్",
-    bumper_2pm_draw_reminder_desc: "2:00 PM బంపర్ లాటరీ డ్రాలకు ముందు ప్రత్యేక రిమైండర్",
+    bumper_2pm_draw_reminder_desc:
+      "2:00 PM బంపర్ లాటరీ డ్రాలకు ముందు ప్రత్యేక రిమైండర్",
     saved_ticket_reminders: "సేవ్ చేసిన టికెట్ డ్రా రిమైండర్‌లు",
-    saved_ticket_reminders_desc: "మీ వ్యక్తిగత రిమైండర్ జాబితాకు జోడించిన టిక్కెట్‌ల కోసం హెచ్చరికలు",
+    saved_ticket_reminders_desc:
+      "మీ వ్యక్తిగత రిమైండర్ జాబితాకు జోడించిన టిక్కెట్‌ల కోసం హెచ్చరికలు",
     favorites_only_mode: "ఇష్టమైన లాటరీలు మాత్రమే మోడ్",
-    favorites_only_mode_desc: "స్టార్ (⭐) గుర్తు ఉన్న లాటరీలకు మాత్రమే తెలియజేయండి",
+    favorites_only_mode_desc:
+      "స్టార్ (⭐) గుర్తు ఉన్న లాటరీలకు మాత్రమే తెలియజేయండి",
     os_perm_disabled_title: "సిస్టమ్ నోటిఫికేషన్‌లు నిలిపివేయబడ్డాయి",
-    os_perm_disabled_desc: "డ్రా హెచ్చరికలను స్వీకరించడానికి సిస్టమ్ సెట్టింగ్‌లలో నోటిಫికేషన్‌లను ప్రారంభించండి.",
+    os_perm_disabled_desc:
+      "డ్రా హెచ్చరికలను స్వీకరించడానికి సిస్టమ్ సెట్టింగ్‌లలో నోటిಫికేషన్‌లను ప్రారంభించండి.",
     open_settings_btn: "తెరవండి",
 
     // AI Voice Assistant & Chat
