@@ -8,7 +8,8 @@ import {
 } from "./reminderStorage";
 import { getNotificationSettings } from "./notificationSettingsStorage";
 import { isLotteryFavorite } from "./favorites";
-import { getLotteryMalayalamName, ALL_LOTTERIES } from "../constants/lotteries";
+import { getLotteryMalayalamName, ALL_LOTTERIES, WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
+import { checkIsDatePostponed, fetchBumperLotteries, fetchLotteriesFromDb } from "../api/lotteryApi";
 
 export type NotificationPermissionState = {
   granted: boolean;
@@ -53,8 +54,23 @@ export async function openNotificationSettings(): Promise<void> {
   }
 }
 
+function getTodayIST(): { dateStr: string; dayName: string } {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + 5.5 * 3600000);
+  const year = ist.getFullYear();
+  const month = String(ist.getMonth() + 1).padStart(2, "0");
+  const day = String(ist.getDate()).padStart(2, "0");
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return {
+    dateStr: `${year}-${month}-${day}`,
+    dayName: days[ist.getDay()],
+  };
+}
+
 /**
- * Schedule a user ticket reminder with configurable lead time
+ * Schedule a user ticket reminder with configurable lead time,
+ * verifying that the draw date is valid and not postponed/cancelled.
  */
 export async function scheduleReminderNotification(
   reminder: LotteryReminder,
@@ -63,6 +79,14 @@ export async function scheduleReminderNotification(
   try {
     const settings = await getNotificationSettings();
     if (!settings.masterEnabled || !settings.ticketReminders) return null;
+
+    // Verify the lottery draw hasn't been cancelled or postponed for this date
+    try {
+      const postponed = await checkIsDatePostponed(reminder.drawDate, reminder.lotteryName);
+      if (postponed && (postponed.status === "postponed" || postponed.status === "holiday" || postponed.status === "cancelled")) {
+        return null;
+      }
+    } catch {}
 
     const granted = await requestNotificationPermission();
     if (!granted) return null;
@@ -481,3 +505,230 @@ export async function sendTestNotification(): Promise<boolean> {
     return false;
   }
 }
+
+export const DAILY_3PM_NOTIF_ID = "kerala_lottery_daily_3pm_reminder";
+export const BUMPER_2PM_NOTIF_ID = "kerala_lottery_bumper_2pm_reminder";
+
+export function convertTo24h(timeStr?: string, defaultTime: string = "15:00"): string {
+  if (!timeStr) return defaultTime;
+  const clean = timeStr.trim().toUpperCase();
+  const isPM = clean.includes("PM");
+  const isAM = clean.includes("AM");
+  const digits = clean.replace(/[^0-9:]/g, "").split(":");
+  if (digits.length < 2) return defaultTime;
+  let h = parseInt(digits[0], 10) || 0;
+  const m = parseInt(digits[1], 10) || 0;
+  if (isPM && h < 12) h += 12;
+  if (isAM && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Synchronize and schedule the Daily Draw Reminder:
+ * - Reads exact draw_time configured by admin in Supabase DB
+ * - Only schedules if dailyDraw3pmReminder is enabled
+ * - Checks if today has a valid regular draw
+ * - Verifies the draw is NOT cancelled, postponed, or marked holiday in DB
+ * - Verifies favoritesOnly setting
+ * - Triggers 10 minutes before the database draw time
+ */
+export async function syncDaily3pmDrawNotification(): Promise<void> {
+  try {
+    if (Platform.OS === "web") return;
+    const settings = await getNotificationSettings();
+
+    if (!settings.masterEnabled || !settings.dailyDraw3pmReminder) {
+      await Notifications.cancelScheduledNotificationAsync(DAILY_3PM_NOTIF_ID).catch(() => {});
+      return;
+    }
+
+    const { granted } = await getNotificationPermissionStatus();
+    if (!granted) return;
+
+    const { dateStr, dayName } = getTodayIST();
+
+    // Query database lotteries to get admin-scheduled draw_time
+    let todayLottery: LotteryMeta | undefined;
+    try {
+      const { weekly } = await fetchLotteriesFromDb();
+      todayLottery = weekly.find((l) => l.day.toLowerCase() === dayName.toLowerCase());
+    } catch {}
+
+    if (!todayLottery) {
+      todayLottery = WEEKLY_LOTTERIES.find(
+        (l) => l.day.toLowerCase() === dayName.toLowerCase()
+      );
+    }
+    if (!todayLottery) return;
+
+    // Check if today's draw is postponed, cancelled, or holiday in DB
+    try {
+      const postponed = await checkIsDatePostponed(dateStr, todayLottery.code);
+      if (
+        postponed &&
+        (postponed.status === "postponed" ||
+          postponed.status === "holiday" ||
+          postponed.status === "cancelled")
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(DAILY_3PM_NOTIF_ID).catch(() => {});
+        return;
+      }
+    } catch {}
+
+    // Check Favorites Only mode
+    if (settings.favoritesOnly) {
+      const isFav = await isLotteryFavorite(todayLottery.code);
+      if (!isFav) {
+        await Notifications.cancelScheduledNotificationAsync(DAILY_3PM_NOTIF_ID).catch(() => {});
+        return;
+      }
+    }
+
+    // Use admin-configured draw_time from DB
+    const drawTimeFormatted = todayLottery.drawTime || "3:00 PM";
+    const drawTime24 = convertTo24h(drawTimeFormatted, "15:00");
+
+    // 10 minutes before the database draw time
+    const triggerDate = getNotificationDate(dateStr, drawTime24, 10);
+    if (triggerDate.getTime() <= Date.now()) {
+      return; // Already past today's draw reminder trigger
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_3PM_NOTIF_ID,
+      content: {
+        title: `🕒 ${drawTimeFormatted} Draw: ${todayLottery.name}`,
+        body: `Today's ${todayLottery.name} (${todayLottery.code}) draw begins at ${drawTimeFormatted}. Live results will be published shortly!`,
+        sound: settings.soundEnabled,
+        vibrate: settings.vibrateEnabled ? [0, 250, 250, 250] : undefined,
+        data: {
+          type: "daily_3pm_draw",
+          code: todayLottery.code,
+          date: dateStr,
+          drawTime: drawTimeFormatted,
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+      },
+    });
+  } catch (err) {
+    console.warn("syncDaily3pmDrawNotification error:", err);
+  }
+}
+
+/**
+ * Synchronize and schedule the Bumper Draw Reminder:
+ * - Bumper draws only happen on rare dates scheduled by admin
+ * - ONLY schedules if TODAY is an active announced Bumper draw date in DB
+ * - Reads exact draw_time configured by admin in Supabase DB
+ * - Verifies the bumper draw is NOT cancelled, postponed, or marked holiday in DB
+ * - Verifies favoritesOnly setting
+ * - Triggers 15 minutes before the database bumper draw time
+ */
+export async function syncBumper2pmDrawNotification(): Promise<void> {
+  try {
+    if (Platform.OS === "web") return;
+    const settings = await getNotificationSettings();
+
+    if (!settings.masterEnabled || !settings.bumper2pmReminder) {
+      await Notifications.cancelScheduledNotificationAsync(BUMPER_2PM_NOTIF_ID).catch(() => {});
+      return;
+    }
+
+    const { granted } = await getNotificationPermissionStatus();
+    if (!granted) return;
+
+    const { dateStr } = getTodayIST();
+
+    // Fetch bumper lotteries from database
+    let allBumpers = BUMPER_LOTTERIES;
+    try {
+      const dynamicBumpers = await fetchBumperLotteries();
+      if (dynamicBumpers && dynamicBumpers.length > 0) {
+        allBumpers = dynamicBumpers;
+      }
+    } catch {}
+
+    const todayBumper = allBumpers.find((b: any) => b.draw_date === dateStr);
+
+    // If today is NOT a bumper draw date in DB, cancel any scheduled reminder and exit
+    if (!todayBumper) {
+      await Notifications.cancelScheduledNotificationAsync(BUMPER_2PM_NOTIF_ID).catch(() => {});
+      return;
+    }
+
+    // Check if the bumper draw is postponed, cancelled, or holiday in DB
+    try {
+      const postponed = await checkIsDatePostponed(dateStr, todayBumper.code);
+      if (
+        postponed &&
+        (postponed.status === "postponed" ||
+          postponed.status === "holiday" ||
+          postponed.status === "cancelled")
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(BUMPER_2PM_NOTIF_ID).catch(() => {});
+        return;
+      }
+    } catch {}
+
+    // Check Favorites Only mode
+    if (settings.favoritesOnly) {
+      const isFav = await isLotteryFavorite(todayBumper.code);
+      if (!isFav) {
+        await Notifications.cancelScheduledNotificationAsync(BUMPER_2PM_NOTIF_ID).catch(() => {});
+        return;
+      }
+    }
+
+    // Use admin-configured draw_time from DB
+    const bumperDrawTimeFormatted = todayBumper.drawTime || "2:00 PM";
+    const bumperDrawTime24 = convertTo24h(bumperDrawTimeFormatted, "14:00");
+
+    // 15 minutes before the database bumper draw time
+    const triggerDate = getNotificationDate(dateStr, bumperDrawTime24, 15);
+    if (triggerDate.getTime() <= Date.now()) {
+      return; // Already past reminder trigger for today
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      identifier: BUMPER_2PM_NOTIF_ID,
+      content: {
+        title: `👑 ${bumperDrawTimeFormatted} BUMPER DRAW: ${todayBumper.name}`,
+        body: `Special ${todayBumper.name} (${todayBumper.code}) live bumper draw starts at ${bumperDrawTimeFormatted} today!`,
+        sound: settings.soundEnabled,
+        vibrate: settings.vibrateEnabled ? [0, 500, 200, 500] : undefined,
+        data: {
+          type: "bumper_2pm_draw",
+          code: todayBumper.code,
+          date: dateStr,
+          drawTime: bumperDrawTimeFormatted,
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: triggerDate,
+      },
+    });
+  } catch (err) {
+    console.warn("syncBumper2pmDrawNotification error:", err);
+  }
+}
+
+/**
+ * Master notification synchronizer:
+ * Validates today's draw schedules, bumper calendar, and cancellations,
+ * ensuring reminders fire ONLY when an actual draw takes place.
+ */
+export async function syncAllDrawNotifications(): Promise<void> {
+  try {
+    await Promise.all([
+      syncDaily3pmDrawNotification(),
+      syncBumper2pmDrawNotification(),
+    ]);
+  } catch (err) {
+    console.warn("syncAllDrawNotifications error:", err);
+  }
+}
+

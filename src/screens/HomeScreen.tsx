@@ -63,6 +63,7 @@ import {
   sendFullResultPublishedNotification,
   checkSavedTicketsAndSendWinAlert,
   sendDistrictWinnerNotification,
+  syncAllDrawNotifications,
 } from "../utils/notificationScheduler";
 import {
   getFavoriteLotteries,
@@ -254,6 +255,7 @@ export default function HomeScreen({ navigation }: any) {
       } else {
         setTodayPostponement(postponement);
       }
+      syncAllDrawNotifications().catch(() => {});
     } catch {
       if (allDraws.length === 0) setAllDraws([]);
     } finally {

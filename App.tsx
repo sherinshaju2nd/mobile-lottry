@@ -27,6 +27,7 @@ import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
+import { syncAllDrawNotifications } from "./src/utils/notificationScheduler";
 import { LogBox } from "react-native";
 import { COLORS } from "./src/constants/colors";
 import { triggerLightHaptic } from "./src/utils/haptics";
@@ -508,6 +509,7 @@ function AppContent() {
         ]);
         const accepted = await AsyncStorage.getItem("privacy_consent_accepted");
         setIsPrivacyAccepted(accepted === "true");
+        syncAllDrawNotifications().catch(() => {});
       } catch (e) {
         console.warn("Asset caching/privacy load error:", e);
         setIsPrivacyAccepted(false);

@@ -456,14 +456,14 @@ export default function AddReminderModal({
                   </TouchableOpacity>
 
                   <Text style={[styles.label, { marginTop: 12 }]}>
-                    {isMl ? "ഓർമ്മപ്പെടുത്തൽ സമയം" : "Reminder Alert Timing"}
+                    {t("reminder_alert_timing")}
                   </Text>
                   <View style={styles.leadTimeChipsRow}>
                     {[
-                      { mins: 5, label: isMl ? "5 മിനിറ്റ്" : "5 mins" },
-                      { mins: 15, label: isMl ? "15 മിനിറ്റ്" : "15 mins" },
-                      { mins: 30, label: isMl ? "30 മിനിറ്റ്" : "30 mins" },
-                      { mins: 60, label: isMl ? "1 മണിക്കൂർ" : "1 hour" },
+                      { mins: 5, label: t("mins_5") },
+                      { mins: 15, label: t("mins_15") },
+                      { mins: 30, label: t("mins_30") },
+                      { mins: 60, label: t("hour_1") },
                     ].map((chip) => {
                       const isSelected = leadMinutes === chip.mins;
                       return (
@@ -495,9 +495,13 @@ export default function AddReminderModal({
 
                   <View style={styles.notifInfo}>
                     <Text style={styles.notifInfoText}>
-                      🔔 {isMl
-                        ? `നറുക്കെടുപ്പ് ആരംഭിക്കുന്നതിന് ${leadMinutes >= 60 ? "1 മണിക്കൂർ" : `${leadMinutes} മിനിറ്റ്`} മുൻപ് ഹൈ-പ്രയോരിറ്റി നോട്ടിഫിക്കേഷൻ ലഭിക്കുന്നതാണ്.`
-                        : `You'll receive a high-priority push notification ${leadMinutes >= 60 ? "1 hour" : `${leadMinutes} minutes`} before the draw begins.`}
+                      {leadMinutes === 60
+                        ? t("high_priority_notif_1h")
+                        : leadMinutes === 30
+                        ? t("high_priority_notif_30m")
+                        : leadMinutes === 15
+                        ? t("high_priority_notif_15m")
+                        : t("high_priority_notif_5m")}
                     </Text>
                   </View>
 
@@ -511,7 +515,7 @@ export default function AddReminderModal({
                       {saving
                         ? t("loading")
                         : editReminder
-                        ? (isMl ? "മാറ്റം വരുത്തുക" : "Update Reminder")
+                        ? t("update_reminder_btn")
                         : t("save_reminder_btn")}
                     </Text>
                   </TouchableOpacity>
@@ -593,7 +597,7 @@ export default function AddReminderModal({
                 <View style={styles.header}>
                   <View style={styles.headerLeft}>
                     <Calendar size={20} color={COLORS.primary} />
-                    <Text style={styles.headerTitle}>{isMl ? "തീയതി തിരഞ്ഞെടുക്കുക" : "Select Draw Date"}</Text>
+                    <Text style={styles.headerTitle}>{t("select_draw_date_modal_title")}</Text>
                   </View>
                   <TouchableOpacity
                     onPress={() => setActiveSheet("form")}
@@ -668,7 +672,7 @@ export default function AddReminderModal({
                   </View>
 
                   <Text style={[styles.label, { marginTop: 20 }]}>
-                    {isMl ? "ദ്രുത തീയതികൾ" : "Quick Presets"}
+                    {t("quick_presets")}
                   </Text>
                   <View style={styles.presetsRow}>
                     <TouchableOpacity

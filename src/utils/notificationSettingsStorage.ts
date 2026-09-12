@@ -18,44 +18,44 @@ export const KERALA_DISTRICTS = [
 ];
 
 export interface NotificationSettings {
-  masterEnabled: boolean;
-  preDrawAlert: boolean; // 5-minute pre-draw heads up (default: false per user preference)
-  drawStartAlert: boolean; // 3:00 PM draw start
-  firstPrizeAlert: boolean; // Instant 1st prize winner alert
-  fullResultAlert: boolean; // Complete official breakdown published
-  bumperAlerts: boolean; // Bumper lottery mega jackpot alerts
-  favoritesOnly: boolean; // Only send alerts for starred favorite lotteries
-  ticketReminders: boolean; // Saved ticket check reminders
-  autoWinAlerts: boolean; // Auto check saved tickets and send celebration alert if won
-  reminderLeadTimeMinutes: number; // 5, 15, 30, 60 minutes
-  morningPurchaseReminder: boolean; // 10:00 AM daily reminder about today's lottery
-  districtAlertsEnabled: boolean; // Alert when 1st prize is won in user's district
-  userDistrict?: string; // Selected Kerala district
-  claimExpiryAlerts: boolean; // 30-day prize claim deadline tracking
-  soundEnabled: boolean;
-  vibrateEnabled: boolean;
+  masterEnabled: boolean; // Master toggle for all notifications
+  dailyDraw3pmReminder: boolean; // 3:00 PM daily draw reminder before draw
+  bumper2pmReminder: boolean; // 2:00 PM bumper draw reminder before draw
+  ticketReminders: boolean; // Saved ticket draw reminders
+  favoritesOnly: boolean; // Only notify for favorite lotteries
+  // Compatibility fields
+  drawStartAlert?: boolean;
+  firstPrizeAlert?: boolean;
+  fullResultAlert?: boolean;
+  bumperAlerts?: boolean;
+  preDrawAlert?: boolean;
+  autoWinAlerts?: boolean;
+  reminderLeadTimeMinutes?: number;
+  morningPurchaseReminder?: boolean;
+  districtAlertsEnabled?: boolean;
+  userDistrict?: string;
+  claimExpiryAlerts?: boolean;
+  soundEnabled?: boolean;
+  vibrateEnabled?: boolean;
 }
 
 export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   masterEnabled: true,
-  preDrawAlert: false, // Initially OFF by default
+  dailyDraw3pmReminder: true,
+  bumper2pmReminder: true,
+  ticketReminders: true,
+  favoritesOnly: false,
+  // Compatibility defaults
   drawStartAlert: true,
   firstPrizeAlert: true,
   fullResultAlert: true,
   bumperAlerts: true,
-  favoritesOnly: false,
-  ticketReminders: true,
-  autoWinAlerts: true,
-  reminderLeadTimeMinutes: 5,
-  morningPurchaseReminder: false,
-  districtAlertsEnabled: false,
-  userDistrict: "",
-  claimExpiryAlerts: true,
+  preDrawAlert: true,
   soundEnabled: true,
   vibrateEnabled: true,
 };
 
-const STORAGE_KEY = "@kerala_lottery_notification_settings_v1";
+const STORAGE_KEY = "@kerala_lottery_notification_settings_v2";
 
 export async function getNotificationSettings(): Promise<NotificationSettings> {
   try {
