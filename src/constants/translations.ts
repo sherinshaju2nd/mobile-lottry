@@ -312,6 +312,9 @@ export const translations = {
     just_miss_btn: "Just Miss",
     change_date_btn: "Change Date",
     or_divider_text: "OR",
+    ai_photo_scan_btn: "Can't scan barcode? Use AI Scan",
+    ai_analyzing_ticket: "AI Analyzing Ticket Photo...",
+    ai_scan_hint: "Takes full ticket photo to detect number automatically",
 
     // Reminders Screen & Modal
     reminders_title: "Ticket Reminders",
@@ -700,6 +703,9 @@ export const translations = {
     just_miss_btn: "ജസ്റ്റ് മിസ്സ്",
     change_date_btn: "തീയതി മാറ്റുക",
     or_divider_text: "അല്ലെങ്കിൽ",
+    ai_photo_scan_btn: "ബാർകോഡ് സ്‌കാൻ ആകുന്നില്ലേ? AI സ്‌കാൻ ഉപയോഗിക്കുക 📸",
+    ai_analyzing_ticket: "AI ടിക്കറ്റ് പരിശോധിക്കുന്നു...",
+    ai_scan_hint: "മുഴുവൻ ടിക്കറ്റിന്റെയും ഫോട്ടോ എടുത്ത് നമ്പർ കണ്ടെത്തുക",
 
     // Reminders Screen & Modal
     reminders_title: "ടിക്കറ്റ് റിമൈൻഡറുകൾ",
@@ -1083,6 +1089,9 @@ export const translations = {
     just_miss_btn: "जस्ट मिस",
     change_date_btn: "तिथि बदलें",
     or_divider_text: "या",
+    ai_photo_scan_btn: "बारकोड स्कैन नहीं हो रहा? AI स्कैन करें 📸",
+    ai_analyzing_ticket: "AI टिकट फोटो का विश्लेषण कर रहा है...",
+    ai_scan_hint: "पूरे टिकट का फोटो लेकर AI से नंबर पहचानें",
 
     // Reminders Screen & Modal
     reminders_title: "टिकट रिमाइंडर",
@@ -1472,6 +1481,9 @@ export const translations = {
     just_miss_btn: "ஜஸ்ட் மிஸ்",
     change_date_btn: "தேதியை மாற்றுக",
     or_divider_text: "அல்லது",
+    ai_photo_scan_btn: "பார்கோடு ஸ்கேன் ஆகவில்லையா? AI ஸ்கேன் செய்க 📸",
+    ai_analyzing_ticket: "AI டிக்கெட் புகைப்படத்தை ஆய்வு செய்கிறது...",
+    ai_scan_hint: "முழு டிக்கெட் புகைப்படத்தின் மூலம் எண்ணைக் கண்டறியவும்",
 
     // Reminders Screen & Modal
     reminders_title: "டிக்கெட் நினைவூட்டல்",
@@ -1857,6 +1869,9 @@ export const translations = {
     just_miss_btn: "ಜಸ್ಟ್ ಮಿಸ್",
     change_date_btn: "ದಿನಾಂಕ ಬದಲಾಯಿಸಿ",
     or_divider_text: "ಅಥವಾ",
+    ai_photo_scan_btn: "ಬಾರ್‌ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿಲ್ಲವೇ? AI ಸ್ಕ್ಯಾನ್ ಬಳಸಿ 📸",
+    ai_analyzing_ticket: "AI ಟಿಕೆಟ್ ಫೋಟೋ ವಿಶ್ಲೇಷಿಸುತ್ತಿದೆ...",
+    ai_scan_hint: "ಸಂಪೂರ್ಣ ಟಿಕೆಟ್ ಫೋಟೋ ತೆಗೆದು AI ಮೂಲಕ ಸಂಖ್ಯೆ ಗುರುತಿಸಿ",
 
     // Reminders Screen & Modal
     reminders_title: "ಟಿಕೆಟ್ ಜ್ಞಾಪನೆಗಳು",
@@ -2241,6 +2256,9 @@ export const translations = {
     just_miss_btn: "జస్ట్ మిస్",
     change_date_btn: "తేదీ మార్చండి",
     or_divider_text: "లేదా",
+    ai_photo_scan_btn: "బార్‌కోడ్ స్కాన్ అవ్వడం లేదా? AI స్కాన్ ఉపయోగించండి 📸",
+    ai_analyzing_ticket: "AI టిక్కెట్ ఫోటోను విశ్లేషిస్తోంది...",
+    ai_scan_hint: "పూర్తి టిక్కెట్ ఫోటో తీసి AI ద్వారా సంఖ్యను గుర్తించండి",
 
     // Reminders Screen & Modal
     reminders_title: "టిక్కెట్ రిమైండర్‌లు",
