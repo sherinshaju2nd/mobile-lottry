@@ -39,6 +39,7 @@ import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
 import { triggerLightHaptic } from "../utils/haptics";
 import ShimmerSkeleton from "../components/ShimmerSkeleton";
+import AiLotteryPatternPredictor from "../components/AiLotteryPatternPredictor";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -675,6 +676,9 @@ export default function AnalyticsScreen({ navigation }: any) {
           </View>
         ) : activeTab === "numbers" ? (
           <>
+            {/* 1. Top Card: Gemini AI Pattern & Digit Predictor */}
+            <AiLotteryPatternPredictor allDraws={draws} lang={language} />
+
             {/* Instant Number Explorer Card */}
             <View style={styles.sectionCard}>
               <View style={styles.cardHeaderRow}>

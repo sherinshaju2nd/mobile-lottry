@@ -1162,5 +1162,519 @@ Return ONLY JSON:
   };
 }
 
+// ---------------------------------------------------------------------------
+// Gemini AI Pattern & Digit Predictor Interfaces & Functions
+// ---------------------------------------------------------------------------
+
+export interface LotteryAiPatternAnalysis {
+  lottery_name: string;
+  lottery_code: string;
+  sample_draws_count: number;
+  summary: string;
+  summary_ml: string;
+  hot_digits: {
+    overall: Array<{ digit: number; frequency_pct: number; label: string }>;
+    positional: {
+      first_pos: number[];
+      second_pos: number[];
+      third_pos: number[];
+      last_pos: number[];
+    };
+  };
+  double_patterns: Array<{
+    pattern: string;
+    type: string;
+    description: string;
+    historical_frequency: string;
+    recommended_examples: string[];
+  }>;
+  high_value_analysis: {
+    recommended_sum_range: string;
+    even_odd_ratio: string;
+    high_low_ratio: string;
+    insight: string;
+  };
+  prize_focus_patterns: {
+    second_prize_strategies: string[];
+    sixth_prize_strategies: string[];
+    key_patterns: Array<{
+      title: string;
+      probability_rank: number;
+      pattern_structure: string;
+      predicted_numbers: string[];
+      reasoning: string;
+    }>;
+  };
+  top_predicted_numbers: Array<{
+    number: string;
+    category: "Hot 4-Digit" | "Double Pattern" | "Balanced Sum" | "2nd/6th Target";
+    confidence_score: number;
+    rationale: string;
+  }>;
+  disclaimer: string;
+}
+
+export interface CachedAiPatternRecord {
+  id?: number;
+  lottery_code: string;
+  lottery_name: string;
+  draws_count: number;
+  latest_draw_date?: string;
+  analysis: LotteryAiPatternAnalysis;
+  updated_at?: string;
+}
+
+/**
+ * Fetch cached AI pattern prediction from Supabase for Mobile
+ * Tries `ai_pattern_predictions` table first, falls back to `app_config` table
+ */
+export async function getCachedAiPatternPrediction(
+  lotteryCode: string
+): Promise<CachedAiPatternRecord | null> {
+  const code = (lotteryCode || "ALL").toUpperCase();
+
+  // 1. Try dedicated ai_pattern_predictions table
+  try {
+    const { data, error } = await supabase
+      .from("ai_pattern_predictions")
+      .select("*")
+      .eq("lottery_code", code)
+      .maybeSingle();
+
+    if (data && !error && data.analysis) {
+      return data as CachedAiPatternRecord;
+    }
+  } catch (err) {
+    console.warn("Mobile ai_pattern_predictions table check note:", err);
+  }
+
+  // 2. Fallback to app_config table
+  try {
+    const { data } = await supabase
+      .from("app_config")
+      .select("value, updated_at")
+      .eq("key", `ai_pred_${code}`)
+      .maybeSingle();
+
+    if (data?.value) {
+      const parsed = typeof data.value === "string" ? JSON.parse(data.value) : data.value;
+      return {
+        ...parsed,
+        updated_at: data.updated_at || parsed.updated_at,
+      } as CachedAiPatternRecord;
+    }
+  } catch (err) {
+    console.warn("Mobile app_config AI cache fallback note:", err);
+  }
+
+  return null;
+}
+
+/**
+ * Save or update AI pattern prediction in Supabase from Mobile
+ */
+export async function saveAiPatternPrediction(
+  record: CachedAiPatternRecord
+): Promise<boolean> {
+  const code = (record.lottery_code || "ALL").toUpperCase();
+  const now = new Date().toISOString();
+  let saved = false;
+
+  // 1. Try upserting to ai_pattern_predictions table
+  try {
+    const { error } = await supabase
+      .from("ai_pattern_predictions")
+      .upsert(
+        {
+          lottery_code: code,
+          lottery_name: record.lottery_name,
+          draws_count: record.draws_count,
+          latest_draw_date: record.latest_draw_date || null,
+          analysis: record.analysis,
+          updated_at: now,
+        },
+        { onConflict: "lottery_code" }
+      );
+
+    if (!error) {
+      saved = true;
+    }
+  } catch (err) {
+    console.warn("Mobile ai_pattern_predictions upsert note:", err);
+  }
+
+  // 2. Backup copy in app_config
+  try {
+    await supabase.from("app_config").upsert(
+      {
+        key: `ai_pred_${code}`,
+        value: JSON.stringify({
+          ...record,
+          updated_at: now,
+        }),
+        updated_at: now,
+      },
+      { onConflict: "key" }
+    );
+    saved = true;
+  } catch (err) {
+    console.warn("Mobile app_config fallback upsert note:", err);
+  }
+
+  return saved;
+}
+
+/**
+ * Direct Gemini client call for Lottery Pattern Analysis on mobile
+ */
+export async function analyzeLotteryPatternsWithGeminiMobile(
+  lotteryName: string,
+  lotteryCode: string,
+  draws: DrawResult[],
+  lang: string = "en"
+): Promise<LotteryAiPatternAnalysis> {
+  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+
+  if (!GEMINI_API_KEY) {
+    throw new Error("EXPO_PUBLIC_GEMINI_API_KEY is not configured.");
+  }
+
+  const formattedDraws = draws.slice(0, 40).map((d, index) => {
+    const p = d.prizes || {};
+    return {
+      draw_index: index + 1,
+      draw_date: d.draw_date,
+      lottery_name: d.draw_name,
+      lottery_code: d.draw_code || d.lottery_code,
+      first_prize: d.first?.ticket || "N/A",
+      second_prize: p["2nd"] || [],
+      third_prize: p["3rd"] || [],
+      fourth_prize: p["4th"] || [],
+      fifth_prize: p["5th"] || [],
+      sixth_prize: p["6th"] || [],
+      seventh_prize: p["7th"] || [],
+      eighth_prize: p["8th"] || [],
+      ninth_prize: p["9th"] || [],
+    };
+  });
+
+  const prompt = `
+### Role & Objective:
+Act as an expert statistical data analyst specializing in numerical pattern recognition and probability distribution for Kerala State Lotteries.
+Analyze the provided multi-week historical lottery results for "${lotteryName}" (${lotteryCode === "ALL" ? "All Weekly Lotteries Collective Analysis" : `Lottery Code: ${lotteryCode}`}) containing ${draws.length} historical draw records.
+
+Each draw record includes winning ticket numbers across **all available prize tiers from 1st Prize through 9th Prize** (1st, 2nd, 3rd, 4th, 5th, 6th, 7th, 8th, and 9th prizes; consolation prizes excluded).
+
+### Analysis Tasks Across ALL 1st to 9th Prize Records:
+1. **Hot & Cold Digit Frequency Analysis (1st to 9th Prizes):**
+   - Aggregate digit occurrences across all 1st through 9th prize numbers in the dataset to identify the most frequent "Hot Digits" (0-9) overall and by positional column (1st, 2nd, 3rd, 4th positions).
+   - Compute frequency percentages based on the full 1st to 9th prize dataset.
+
+2. **Double & Repeating Pattern Detection:**
+   - Detect repeated pairs, double numbers (consecutive pairs like AA, mirrors ABBA, center doubles XYYX, double endings XX) across all 1st through 9th prize numbers.
+   - Suggest 4-digit double examples.
+
+3. **High-Value & Sum Range Analysis:**
+   - Compute the most frequent 4-digit sum ranges (e.g., 14-22), even/odd parity balance, and high (5-9) vs low (0-4) ratio.
+
+4. **Prize Tier Specific Strategies (including 2nd & 6th Prize Targets):**
+   - Specifically evaluate the distributions and patterns across 2nd Prize, 6th Prize, and other major tiers.
+   - Formulate 4 to 5 distinct high-probability number patterns / templates.
+
+5. **Top Concrete Predicted / Strategy Numbers:**
+   - Provide concrete 4-digit number recommendations based on the findings with confidence scores and rationale.
+
+### Historical Dataset:
+${JSON.stringify(formattedDraws)}
+
+### Output Requirements:
+Return strictly a valid JSON object matching this exact schema without markdown code blocks:
+{
+  "lottery_name": "${lotteryName}",
+  "lottery_code": "${lotteryCode}",
+  "sample_draws_count": ${draws.length},
+  "summary": "English executive summary detailing key statistical trends, anomalies, and repeating patterns.",
+  "summary_ml": "മലയാളത്തിൽ പ്രധാന പാറ്റേണുകളുടെയും ട്രെൻഡുകളുടെയും സമഗ്രമായ വിവരണം.",
+  "hot_digits": {
+    "overall": [
+      { "digit": 7, "frequency_pct": 82, "label": "Very Hot" },
+      { "digit": 3, "frequency_pct": 74, "label": "Hot" },
+      { "digit": 9, "frequency_pct": 68, "label": "Hot" },
+      { "digit": 2, "frequency_pct": 61, "label": "Warm" },
+      { "digit": 5, "frequency_pct": 58, "label": "Warm" }
+    ],
+    "positional": {
+      "first_pos": [7, 3, 5],
+      "second_pos": [2, 9, 8],
+      "third_pos": [3, 6, 1],
+      "last_pos": [9, 7, 4]
+    }
+  },
+  "double_patterns": [
+    {
+      "pattern": "Consecutive Pairs (e.g. 55XX or XX77)",
+      "type": "Consecutive Pair",
+      "description": "Double identical digits appearing in adjacent positions.",
+      "historical_frequency": "Appeared in 64% of recent draws",
+      "recommended_examples": ["5593", "7724", "3884", "9912"]
+    },
+    {
+      "pattern": "Mirror Patterns (ABBA)",
+      "type": "Mirror Reflection",
+      "description": "Symmetrical reflection digit pairs matching across edges.",
+      "historical_frequency": "High occurrence in 6th prize",
+      "recommended_examples": ["4884", "2772", "9119", "5335"]
+    }
+  ],
+  "high_value_analysis": {
+    "recommended_sum_range": "16 - 24",
+    "even_odd_ratio": "2 Even : 2 Odd (54% occurrence)",
+    "high_low_ratio": "2 High (5-9) : 2 Low (0-4)",
+    "insight": "Winning 4-digit tickets lean towards balanced odd/even parity with sum clusters centered around 18-22."
+  },
+  "prize_focus_patterns": {
+    "second_prize_strategies": [
+      "Concentrate on 6-digit tickets where middle digits form consecutive hot pairs.",
+      "Watch for repeating series patterns matching previous draw weeks."
+    ],
+    "sixth_prize_strategies": [
+      "Last 4 digits heavily favor consecutive twin combinations.",
+      "Balanced sum between 14 and 22 shows highest historical hit rate."
+    ],
+    "key_patterns": [
+      {
+        "title": "Strategy 1: Hot Positional Vector Template",
+        "probability_rank": 1,
+        "pattern_structure": "[Hot 1st Pos] + [Hot 2nd Pos] + [Hot 3rd Pos] + [Hot Last Pos]",
+        "predicted_numbers": ["7239", "3967", "5814", "7964"],
+        "reasoning": "Constructed by joining the highest frequency individual digit per positional column."
+      },
+      {
+        "title": "Strategy 2: High Probability Consecutive Double",
+        "probability_rank": 2,
+        "pattern_structure": "[Double Pair AA] + [Hot Positional YZ]",
+        "predicted_numbers": ["5593", "7724", "9912", "3384"],
+        "reasoning": "Leverages the strong double-pair recurrence observed in 6th & 7th prize historical prize structures."
+      },
+      {
+        "title": "Strategy 3: 2nd Prize Target Mirror Reflection",
+        "probability_rank": 3,
+        "pattern_structure": "[Digit A] + [Double Pair BB] + [Digit A]",
+        "predicted_numbers": ["4884", "2772", "9119", "3663"],
+        "reasoning": "Symmetrical patterns have historically shown above-average clustering in 2nd prize outcomes."
+      },
+      {
+        "title": "Strategy 4: Balanced Sum Cluster",
+        "probability_rank": 4,
+        "pattern_structure": "Sum(D1..D4) in range 16-24 with 2E:2O",
+        "predicted_numbers": ["2749", "5866", "8712", "8860"],
+        "reasoning": "Maintains golden mathematical parity ratio of 2 odd and 2 even digits with optimal sum."
+      }
+    ]
+  },
+  "top_predicted_numbers": [
+    {
+      "number": "5593",
+      "category": "Double Pattern",
+      "confidence_score": 94,
+      "rationale": "Consecutive double 55 in 1st/2nd position with hot ending 93."
+    },
+    {
+      "number": "7239",
+      "category": "Hot 4-Digit",
+      "confidence_score": 91,
+      "rationale": "Combines #1 hot digits across all 4 positional index slots."
+    },
+    {
+      "number": "4884",
+      "category": "2nd/6th Target",
+      "confidence_score": 88,
+      "rationale": "High-probability ABBA mirror pattern targeted for 2nd & 6th prize structures."
+    },
+    {
+      "number": "2749",
+      "category": "Balanced Sum",
+      "confidence_score": 86,
+      "rationale": "Sum=22, 2 Even/2 Odd, 2 High/2 Low optimal balance distribution."
+    },
+    {
+      "number": "5866",
+      "category": "Double Pattern",
+      "confidence_score": 84,
+      "rationale": "Ending double 66 with high frequency initial pair 58."
+    },
+    {
+      "number": "9924",
+      "category": "Double Pattern",
+      "confidence_score": 82,
+      "rationale": "Leading double 99 combined with warm ending pair 24."
+    }
+  ],
+  "disclaimer": "These patterns and predictions are generated using mathematical statistical frequency analysis and Google Gemini AI pattern recognition on historical Kerala Lottery results for informational and research purposes only. Lottery outcomes are games of chance."
+}
+`;
+
+  const models = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.1-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+  ];
+
+  let lastError: any = null;
+
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.2,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+        const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+        return JSON.parse(cleaned);
+      } else {
+        const errText = await response.text();
+        console.warn(`Mobile Gemini Pattern model ${model} HTTP ${response.status}:`, errText);
+      }
+    } catch (e) {
+      lastError = e;
+      console.warn(`Mobile Pattern model ${model} error:`, e);
+    }
+  }
+
+  throw lastError || new Error("Failed to analyze lottery patterns with Gemini AI.");
+}
+
+/**
+ * Intelligent fetch for Gemini AI Pattern Prediction on Mobile:
+ * 1. Database Cache check (0 Gemini calls)
+ * 2. Backend POST API attempt
+ * 3. Direct Gemini client fallback + Supabase persistence
+ * 4. Stale cache fallback if unavailable
+ */
+export async function fetchAiPatternPredictionMobile(
+  lotteryName: string = "All Kerala Lotteries",
+  lotteryCode: string = "ALL",
+  draws: DrawResult[] = [],
+  lang: string = "en",
+  forceRefresh: boolean = false
+): Promise<{
+  success: boolean;
+  analysis: LotteryAiPatternAnalysis;
+  cached: boolean;
+  warning?: string;
+  drawsCount: number;
+}> {
+  const code = (lotteryCode || "ALL").toUpperCase();
+  const currentDrawCount = draws.length;
+  const latestDrawDate = draws[0]?.draw_date;
+
+  // --- STEP 1: Check Database Cache ---
+  let cachedRecord: CachedAiPatternRecord | null = null;
+  try {
+    cachedRecord = await getCachedAiPatternPrediction(code);
+  } catch (e) {
+    console.warn("Mobile DB cache check note:", e);
+  }
+
+  if (!forceRefresh && cachedRecord && cachedRecord.analysis) {
+    if (cachedRecord.draws_count === currentDrawCount || currentDrawCount === 0) {
+      return {
+        success: true,
+        analysis: cachedRecord.analysis,
+        cached: true,
+        drawsCount: cachedRecord.draws_count,
+      };
+    }
+  }
+
+  // --- STEP 2: Try Backend API ---
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/pattern-predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lotteryName,
+        lotteryCode: code,
+        draws,
+        lang,
+        forceRefresh,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.analysis) {
+        return {
+          success: true,
+          analysis: data.analysis,
+          cached: Boolean(data.cached),
+          warning: data.warning,
+          drawsCount: data.drawsCount || currentDrawCount,
+        };
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend pattern predict failed, trying direct Gemini:", backendErr);
+  }
+
+  // --- STEP 3: Direct Gemini Client Call ---
+  try {
+    const freshAnalysis = await analyzeLotteryPatternsWithGeminiMobile(
+      lotteryName,
+      code,
+      draws,
+      lang
+    );
+
+    // Save to Supabase cache asynchronously
+    saveAiPatternPrediction({
+      lottery_code: code,
+      lottery_name: lotteryName,
+      draws_count: currentDrawCount,
+      latest_draw_date: latestDrawDate,
+      analysis: freshAnalysis,
+    }).catch((saveErr) => console.warn("Failed to persist to Supabase:", saveErr));
+
+    return {
+      success: true,
+      analysis: freshAnalysis,
+      cached: false,
+      drawsCount: currentDrawCount,
+    };
+  } catch (geminiErr: any) {
+    console.error("Direct Gemini pattern analysis error:", geminiErr);
+
+    // --- STEP 4: Fallback to existing cached analysis if available ---
+    if (cachedRecord && cachedRecord.analysis) {
+      return {
+        success: true,
+        analysis: cachedRecord.analysis,
+        cached: true,
+        drawsCount: cachedRecord.draws_count,
+        warning: "Showing previous AI pattern analysis as network generation is temporarily congested.",
+      };
+    }
+
+    throw geminiErr;
+  }
+}
+
+
 
 
