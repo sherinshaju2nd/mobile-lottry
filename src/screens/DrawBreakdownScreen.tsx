@@ -519,9 +519,13 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 }}
                 activeOpacity={0.8}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                onPress={() => {
-                  triggerLightHaptic();
-                  shareDrawResultToWhatsApp(drawResult, language);
+                onPress={async () => {
+                  try {
+                    triggerLightHaptic();
+                    await shareDrawResultToWhatsApp(drawResult, language);
+                  } catch (e) {
+                    console.warn("Share button error:", e);
+                  }
                 }}
               >
                 <Share2 size={16} color="#FFFFFF" />
@@ -1618,14 +1622,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   numberChipText: {
-    fontSize: 14.5,
+    fontSize: 16,
     fontWeight: "900",
     color: "#0F172A",
     letterSpacing: 0.5,
     textAlign: "center",
   },
   numberChipText3Col: {
-    fontSize: 13.5,
+    fontSize: 16,
     letterSpacing: 0.3,
   },
   emptyContainer: { alignItems: "center", marginTop: 40 },

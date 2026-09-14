@@ -99,23 +99,13 @@ export async function shareDrawResultToWhatsApp(
     `━━━━━━━━━━━━━━━━━━━\n` +
     `${footerCta}`;
 
-  const encoded = encodeURIComponent(message);
-  const whatsappUrl = `whatsapp://send?text=${encoded}`;
-
   try {
-    const supported = await Linking.canOpenURL(whatsappUrl);
-    if (supported) {
-      await Linking.openURL(whatsappUrl);
-    } else {
-      await universalShare({
-        message,
-        title: `${draw.draw_name} Kerala Lottery Result`,
-      });
-    }
-  } catch {
+    // Directly use universalShare for reliable cross-app sharing (WhatsApp, Telegram, SMS, etc.)
     await universalShare({
       message,
-      title: `${draw.draw_name} Kerala Lottery Result`,
+      title: `${drawTitle} - Kerala Lottery Result`,
     });
+  } catch (err) {
+    console.warn("Error sharing draw result:", err);
   }
 }

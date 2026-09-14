@@ -13,6 +13,7 @@ import {
 import { X, Sparkles, Share2, MessageCircle, Send } from "lucide-react-native";
 import { useLanguage } from "../context/LanguageContext";
 import { generateSocialMediaDigestsMobile, MobileSocialDigest } from "../api/lotteryApi";
+import { universalShare } from "../utils/shareHelper";
 
 interface AiSocialDigestModalProps {
   visible: boolean;
@@ -70,32 +71,26 @@ export default function AiSocialDigestModal({
   const handleShareToWhatsApp = async () => {
     const text = getCurrentText();
     if (!text) return;
-    const url = `whatsapp://send?text=${encodeURIComponent(text)}`;
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        await Share.share({ message: text });
-      }
-    } catch {
-      await Share.share({ message: text });
+      await universalShare({
+        message: text,
+        title: "Kerala Lottery AI Digest",
+      });
+    } catch (e) {
+      console.warn("Error sharing to WhatsApp:", e);
     }
   };
 
   const handleShareToTelegram = async () => {
     const text = getCurrentText();
     if (!text) return;
-    const url = `tg://msg?text=${encodeURIComponent(text)}`;
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        await Share.share({ message: text });
-      }
-    } catch {
-      await Share.share({ message: text });
+      await universalShare({
+        message: text,
+        title: "Kerala Lottery AI Digest",
+      });
+    } catch (e) {
+      console.warn("Error sharing to Telegram:", e);
     }
   };
 
@@ -103,8 +98,13 @@ export default function AiSocialDigestModal({
     const text = getCurrentText();
     if (!text) return;
     try {
-      await Share.share({ message: text });
-    } catch {}
+      await universalShare({
+        message: text,
+        title: "Kerala Lottery AI Digest",
+      });
+    } catch (e) {
+      console.warn("Error in general share:", e);
+    }
   };
 
   return (

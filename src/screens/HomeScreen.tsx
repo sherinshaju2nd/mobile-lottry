@@ -1043,9 +1043,13 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={styles.heroShareBtn}
                     activeOpacity={0.8}
-                    onPress={() => {
-                      triggerLightHaptic();
-                      shareDrawResultToWhatsApp(todayDraw, language);
+                    onPress={async () => {
+                      try {
+                        triggerLightHaptic();
+                        await shareDrawResultToWhatsApp(todayDraw, language);
+                      } catch (e) {
+                        console.warn("Share today draw error:", e);
+                      }
                     }}
                   >
                     <Share2 size={15} color="#FFFFFF" />
@@ -1730,9 +1734,13 @@ export default function HomeScreen({ navigation }: any) {
                   <TouchableOpacity
                     style={styles.heroShareBtn}
                     activeOpacity={0.8}
-                    onPress={() => {
-                      triggerLightHaptic();
-                      shareDrawResultToWhatsApp(previousDraw, language);
+                    onPress={async () => {
+                      try {
+                        triggerLightHaptic();
+                        await shareDrawResultToWhatsApp(previousDraw, language);
+                      } catch (e) {
+                        console.warn("Share previous draw error:", e);
+                      }
                     }}
                   >
                     <Share2 size={15} color="#FFFFFF" />

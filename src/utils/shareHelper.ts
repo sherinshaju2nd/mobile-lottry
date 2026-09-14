@@ -16,86 +16,91 @@ export interface UniversalShareOptions {
  * Handles iOS, Android, and Web smoothly without crashes or broken share sheets.
  */
 export async function universalShare(options: UniversalShareOptions): Promise<boolean> {
-  const title = options.title || "Kerala Lottery Results";
-  const url = options.url || PLAY_STORE_URL;
-  const message = options.message.includes("http")
-    ? options.message
-    : `${options.message}\n\n${url}`;
+  try {
+    const title = options.title || "Kerala Lottery Results";
+    const url = options.url || PLAY_STORE_URL;
+    const baseMessage = (options.message || "").trim();
+    const finalMessage = baseMessage.includes("http")
+      ? baseMessage
+      : `${baseMessage}\n\n📲 Download App:\n${url}`;
 
-  // 1. Web Platform (Browser)
-  if (Platform.OS === "web") {
-    try {
-      if (typeof navigator !== "undefined" && (navigator as any).share) {
-        await (navigator as any).share({
-          title,
-          text: options.message,
-          url,
-        });
-        return true;
-      }
-    } catch {
-      // User cancelled or unsupported
-    }
-
-    // Web Clipboard Fallback
-    try {
-      await Clipboard.setStringAsync(`${options.message}\n${url}`);
-      Alert.alert(
-        "Link Copied!",
-        "Kerala Lottery download link copied to clipboard. You can now paste and share it anywhere."
-      );
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // 2. iOS Native
-  if (Platform.OS === "ios") {
-    try {
-      const result = await Share.share(
-        {
-          message: options.message,
-          url,
-          title,
-        },
-        {
-          subject: title,
-        }
-      );
-      return result.action === Share.sharedAction;
-    } catch {
-      // Fallback: try sharing combined text
+    // 1. Web Platform (Browser)
+    if (Platform.OS === "web") {
       try {
-        await Share.share({ message: `${options.message}\n\n${url}` });
+        if (typeof navigator !== "undefined" && (navigator as any).share) {
+          await (navigator as any).share({
+            title,
+            text: baseMessage,
+            url,
+          });
+          return true;
+        }
+      } catch {
+        // User cancelled or unsupported
+      }
+
+      // Web Clipboard Fallback
+      try {
+        await Clipboard.setStringAsync(finalMessage);
+        Alert.alert(
+          "Link Copied!",
+          "Kerala Lottery link copied to clipboard. You can now paste and share it anywhere."
+        );
         return true;
       } catch {
         return false;
       }
     }
-  }
 
-  // 3. Android Native
-  try {
-    const result = await Share.share(
-      {
-        message: `${options.message}\n\n📲 Download on Google Play:\n${url}`,
-        title,
-      },
-      {
-        dialogTitle: `Share ${title}`,
+    // 2. iOS Native
+    if (Platform.OS === "ios") {
+      try {
+        const result = await Share.share(
+          {
+            message: finalMessage,
+            url,
+            title,
+          },
+          {
+            subject: title,
+          }
+        );
+        return result.action === Share.sharedAction;
+      } catch {
+        try {
+          await Share.share({ message: finalMessage });
+          return true;
+        } catch {
+          return false;
+        }
       }
-    );
-    return result.action === Share.sharedAction;
-  } catch {
-    // If native share fails, copy to clipboard
-    try {
-      await Clipboard.setStringAsync(`${options.message}\n${url}`);
-      Alert.alert("Copied", "Share link copied to clipboard.");
-      return true;
-    } catch {
-      return false;
     }
+
+    // 3. Android Native
+    try {
+      const result = await Share.share(
+        {
+          message: finalMessage,
+          title,
+        },
+        {
+          dialogTitle: `Share ${title}`,
+        }
+      );
+      return result.action === Share.sharedAction;
+    } catch (androidErr) {
+      console.warn("Android native share fallback:", androidErr);
+      try {
+        await Clipboard.setStringAsync(finalMessage);
+        Alert.alert("Copied", "Share details copied to clipboard. You can paste and share it anywhere.");
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  } catch (err) {
+    console.warn("Universal share error:", err);
+    return false;
   }
 }
 

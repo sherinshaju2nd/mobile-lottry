@@ -11,7 +11,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 
 SplashScreen.preventAutoHideAsync();
 
-import HomeScreen from "./src/screens/HomeScreen";
+import HomeScreen from "./src/screens/HomeScreen2";
 import LotteriesScreen from "./src/screens/LotteriesScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
