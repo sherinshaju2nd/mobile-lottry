@@ -90,10 +90,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "Home",
-    tab_lotteries: "Lotteries",
+    tab_search: "Search",
     tab_scan: "Scan",
+    tab_lotteries: "Lotteries",
+    tab_statistics: "Statistics",
     tab_checker: "Checker",
-    tab_analytics: "Analytics",
+    tab_analytics: "Statistics",
     tab_archives: "Archives",
     tab_date: "Date",
 
@@ -458,8 +460,8 @@ export const translations = {
     prize_claim_guide: "Prize Claim Guide",
     faq: "Frequently Asked (FAQ)",
 
-    // Analytics & Trends Screen
-    analytics_title: "Analytics & Trends",
+    // Statistics & Trends Screen
+    analytics_title: "Statistics & Trends",
     analytics_sub_prefix: "Deep trends across",
     analytics_sub_suffix: "recent draws",
     last_30_draws: "Last 30 Draws",
@@ -530,10 +532,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "ഹോം",
-    tab_lotteries: "ലോട്ടറികൾ",
+    tab_search: "തിരയുക",
     tab_scan: "സ്‌കാൻ",
+    tab_lotteries: "ലോട്ടറികൾ",
+    tab_statistics: "സ്ഥിതിവിവരം",
     tab_checker: "ചെക്കർ",
-    tab_analytics: "വിശകലനം",
+    tab_analytics: "സ്ഥിതിവിവരം",
     tab_archives: "ആർക്കൈവുകൾ",
     tab_date: "തീയതി",
 
@@ -979,10 +983,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "होम",
-    tab_lotteries: "लॉटरी",
+    tab_search: "खोजें",
     tab_scan: "स्कैन",
+    tab_lotteries: "लॉटरी",
+    tab_statistics: "सांख्यिकी",
     tab_checker: "चेकर",
-    tab_analytics: "विश्लेषण",
+    tab_analytics: "सांख्यिकी",
     tab_archives: "संग्रह",
     tab_date: "तिथि",
 
@@ -1344,8 +1350,8 @@ export const translations = {
     prize_claim_guide: "पुरस्कार दावा गाइड",
     faq: "अक्सर पूछे जाने वाले प्रश्न (FAQ)",
 
-    // Analytics & Trends Screen
-    analytics_title: "विश्लेषण और रुझान",
+    // Statistics & Trends Screen
+    analytics_title: "सांख्यिकी और रुझान",
     analytics_sub_prefix: "पिछले",
     analytics_sub_suffix: "ड्रा के गहरे रुझान",
     last_30_draws: "पिछले 30 ड्रा",
@@ -1417,10 +1423,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "முகப்பு",
-    tab_lotteries: "லாட்டரிகள்",
+    tab_search: "தேடல்",
     tab_scan: "ஸ்கேன்",
+    tab_lotteries: "லாட்டரிகள்",
+    tab_statistics: "புள்ளிவிவரம்",
     tab_checker: "சரிபார்ப்பு",
-    tab_analytics: "பகுப்பாய்வு",
+    tab_analytics: "புள்ளிவிவரம்",
     tab_archives: "காப்பகம்",
     tab_date: "தேதி",
 
@@ -1794,8 +1802,8 @@ export const translations = {
     prize_claim_guide: "பரிசு கோரும் வழிகாட்டி",
     faq: "அடிக்கடி கேட்கப்படும் கேள்விகள் (FAQ)",
 
-    // Analytics & Trends Screen
-    analytics_title: "பகுப்பாய்வு மற்றும் போக்குகள்",
+    // Statistics & Trends Screen
+    analytics_title: "புள்ளிவிவரம் மற்றும் போக்குகள்",
     analytics_sub_prefix: "கடந்த",
     analytics_sub_suffix: "குலுக்கல்களின் பகுப்பாய்வு",
     last_30_draws: "கடந்த 30 குலுக்கல்",
@@ -1867,10 +1875,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "ಮುಖಪುಟ",
-    tab_lotteries: "ಲಾಟರಿಗಳು",
+    tab_search: "ಹುಡುಕಿ",
     tab_scan: "ಸ್ಕ್ಯಾನ್",
+    tab_lotteries: "ಲಾಟರಿಗಳು",
+    tab_statistics: "ಅಂಕಿಅಂಶಗಳು",
     tab_checker: "ಪರಿಶೀಲಕ",
-    tab_analytics: "ವಿಶ್ಲೇಷಣೆ",
+    tab_analytics: "ಅಂಕಿಅಂಶಗಳು",
     tab_archives: "ಸಂಗ್ರಹ",
     tab_date: "ದಿನಾಂಕ",
 
@@ -2238,8 +2248,8 @@ export const translations = {
     prize_claim_guide: "ಬಹುಮಾನ ಕ್ಲೈಮ್ ಮಾರ್ಗದರ್ಶಿ",
     faq: "ಪದೇ ಪದೇ ಕೇಳಲಾಗುವ ಪ್ರಶ್ನೆಗಳು (FAQ)",
 
-    // Analytics & Trends Screen
-    analytics_title: "ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಪ್ರವೃತ್ತಿಗಳು",
+    // Statistics & Trends Screen
+    analytics_title: "ಅಂಕಿಅಂಶಗಳು ಮತ್ತು ಪ್ರವೃತ್ತಿಗಳು",
     analytics_sub_prefix: "ಕಳೆದ",
     analytics_sub_suffix: "ಡ್ರಾಗಳ ವಿಶ್ಲೇಷಣೆ",
     last_30_draws: "ಕಳೆದ 30 ಡ್ರಾಗಳು",
@@ -2310,10 +2320,12 @@ export const translations = {
 
     // Navigation Tabs
     tab_home: "హోమ్",
-    tab_lotteries: "లాటరీలు",
+    tab_search: "శోధించండి",
     tab_scan: "స్కాన్",
+    tab_lotteries: "లాటరీలు",
+    tab_statistics: "గణాంకాలు",
     tab_checker: "చెకర్",
-    tab_analytics: "విశ్లేషణ",
+    tab_analytics: "గణాంకాలు",
     tab_archives: "ఆర్కైవ్స్",
     tab_date: "తేదీ",
 
@@ -2681,8 +2693,8 @@ export const translations = {
     prize_claim_guide: "బహుమతి క్లెయిమ్ గైడ్",
     faq: "తరచుగా అడిగే ప్రశ్నలు (FAQ)",
 
-    // Analytics & Trends Screen
-    analytics_title: "విశ్లేషణ మరియు పోకడలు",
+    // Statistics & Trends Screen
+    analytics_title: "గణాంకాలు మరియు పోకడలు",
     analytics_sub_prefix: "గత",
     analytics_sub_suffix: "డ్రాల లోతైన విశ్లేషణ",
     last_30_draws: "గత 30 డ్రాలు",

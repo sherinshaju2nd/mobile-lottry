@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Home, Ticket, Search as SearchIcon, Calendar as CalendarIcon, Camera, BarChart3 } from "lucide-react-native";
+import { Home, Ticket, Search as SearchIcon, Camera, BarChart3 } from "lucide-react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { Asset } from "expo-asset";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,8 +19,6 @@ import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
 import ContactScreen from "./src/screens/ContactScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsScreen";
-import ModernDatePickerModal from "./src/components/ModernDatePickerModal";
-import { fetchDrawResultByAnyDate } from "./src/api/lotteryApi";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
@@ -71,10 +69,6 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function ScanTabButton() {
-  return null;
-}
-
-function CalendarTabDummy() {
   return null;
 }
 
@@ -249,130 +243,102 @@ function BottomTabNavigator({ navigation }: any) {
   const { openScanner } = useScanner();
   const { t, language } = useLanguage();
   const insets = useSafeAreaInsets();
-  const [isDatePickerOpen, setIsDatePickerOpen] = React.useState(false);
-
-  const handleDateSelected = async (dateStr: string | null) => {
-    setIsDatePickerOpen(false);
-    if (!dateStr) return;
-    try {
-      const draw = await fetchDrawResultByAnyDate(dateStr);
-      const codeToUse = draw?.lottery_code || "BT";
-      navigation.navigate("DrawBreakdown", { code: codeToUse, date: dateStr });
-    } catch {
-      navigation.navigate("DrawBreakdown", { code: "BT", date: dateStr });
-    }
-  };
 
   return (
-    <>
-      <Tab.Navigator
-        screenListeners={{
-          tabPress: () => {
-            triggerLightHaptic();
+    <Tab.Navigator
+      screenListeners={{
+        tabPress: () => {
+          triggerLightHaptic();
+        },
+      }}
+      screenOptions={({ route }: { route: { name: string } }) => {
+        const isIOS = Platform.OS === "ios";
+        return {
+          headerShown: false,
+          tabBarActiveTintColor: COLORS.primary,
+          tabBarInactiveTintColor: isIOS ? "#8E8E93" : "#64748B",
+          tabBarStyle: isIOS
+            ? {
+                backgroundColor: "rgba(255, 255, 255, 0.94)",
+                borderTopColor: "rgba(0, 0, 0, 0.08)",
+                borderTopWidth: 0.5,
+                height: (language === "ml" ? 54 : 58) + (insets.bottom > 0 ? insets.bottom : 20),
+                paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom - 4 : 12),
+                paddingTop: language === "ml" ? 4 : 6,
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: -3 },
+                shadowOpacity: 0.05,
+                shadowRadius: 10,
+              }
+            : {
+                backgroundColor: "#FFFFFF",
+                borderTopColor: "#E2E8F0",
+                borderTopWidth: 1,
+                height: (language === "ml" ? 60 : 66) + (insets.bottom > 0 ? insets.bottom : 6),
+                paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom : 6),
+                paddingTop: language === "ml" ? 5 : 7,
+                elevation: 12,
+              },
+          tabBarLabelStyle: {
+            fontSize: language === "ml" ? (isIOS ? 9 : 9.5) : (isIOS ? 10 : 10.5),
+            fontWeight: isIOS ? "600" : "800",
+            letterSpacing: isIOS ? -0.1 : 0.2,
+            marginTop: isIOS ? 1 : 2,
           },
-        }}
-        screenOptions={({ route }: { route: { name: string } }) => {
-          const isIOS = Platform.OS === "ios";
-          return {
-            headerShown: false,
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: isIOS ? "#8E8E93" : "#64748B",
-            tabBarStyle: isIOS
-              ? {
-                  backgroundColor: "rgba(255, 255, 255, 0.94)",
-                  borderTopColor: "rgba(0, 0, 0, 0.08)",
-                  borderTopWidth: 0.5,
-                  height: (language === "ml" ? 54 : 58) + (insets.bottom > 0 ? insets.bottom : 20),
-                  paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom - 4 : 12),
-                  paddingTop: language === "ml" ? 4 : 6,
-                  shadowColor: "#000000",
-                  shadowOffset: { width: 0, height: -3 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 10,
-                }
-              : {
-                  backgroundColor: "#FFFFFF",
-                  borderTopColor: "#E2E8F0",
-                  borderTopWidth: 1,
-                  height: (language === "ml" ? 60 : 66) + (insets.bottom > 0 ? insets.bottom : 6),
-                  paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom : 6),
-                  paddingTop: language === "ml" ? 5 : 7,
-                  elevation: 12,
-                },
-            tabBarLabelStyle: {
-              fontSize: language === "ml" ? (isIOS ? 9 : 9.5) : (isIOS ? 10 : 10.5),
-              fontWeight: isIOS ? "600" : "800",
-              letterSpacing: isIOS ? -0.1 : 0.2,
-              marginTop: isIOS ? 1 : 2,
-            },
-            tabBarItemStyle: {
-              paddingVertical: 2,
-            },
-            tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => {
-              const iconSize = language === "ml" ? (isIOS ? 18 : 19) : (isIOS ? 21 : 22);
-              let IconComp: any = Home;
-              if (route.name === "HomeTab") IconComp = Home;
-              else if (route.name === "LotteriesTab") IconComp = Ticket;
-              else if (route.name === "AnalyticsTab") IconComp = BarChart3;
-              else if (route.name === "DateTab") IconComp = CalendarIcon;
+          tabBarItemStyle: {
+            paddingVertical: 2,
+          },
+          tabBarIcon: ({ color, focused }: { color: string; focused: boolean }) => {
+            const iconSize = language === "ml" ? (isIOS ? 18 : 19) : (isIOS ? 21 : 22);
+            let IconComp: any = Home;
+            if (route.name === "HomeTab") IconComp = Home;
+            else if (route.name === "SearchTab") IconComp = SearchIcon;
+            else if (route.name === "LotteriesTab") IconComp = Ticket;
+            else if (route.name === "StatisticsTab" || route.name === "AnalyticsTab") IconComp = BarChart3;
 
-              return (
-                <AnimatedTabIcon
-                  IconComponent={IconComp}
-                  color={color}
-                  focused={focused}
-                  size={iconSize}
-                />
-              );
-            },
-          };
-        }}
-      >
-        <Tab.Screen
-          name="HomeTab"
-          component={HomeScreen}
-          options={{ tabBarLabel: t("tab_home") }}
-        />
-        <Tab.Screen
-          name="LotteriesTab"
-          component={LotteriesScreen}
-          options={{ tabBarLabel: t("tab_lotteries") }}
-        />
-        <Tab.Screen
-          name="ScanTab"
-          component={ScanTabButton}
-          options={{
-            tabBarLabel: t("tab_scan"),
-            tabBarButton: () => (
-              <AnimatedScanButton onPress={() => openScanner()} />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="AnalyticsTab"
-          component={AnalyticsScreen}
-          options={{ tabBarLabel: t("tab_analytics") }}
-        />
-        <Tab.Screen
-          name="DateTab"
-          component={CalendarTabDummy}
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setIsDatePickerOpen(true);
-            },
-          }}
-          options={{ tabBarLabel: t("tab_date") }}
-        />
-      </Tab.Navigator>
-
-      <ModernDatePickerModal
-        visible={isDatePickerOpen}
-        selectedDate={null}
-        onClose={() => setIsDatePickerOpen(false)}
-        onSelectDate={handleDateSelected}
+            return (
+              <AnimatedTabIcon
+                IconComponent={IconComp}
+                color={color}
+                focused={focused}
+                size={iconSize}
+              />
+            );
+          },
+        };
+      }}
+    >
+      <Tab.Screen
+        name="HomeTab"
+        component={HomeScreen}
+        options={{ tabBarLabel: t("tab_home") }}
       />
-    </>
+      <Tab.Screen
+        name="SearchTab"
+        component={SearchScreen}
+        options={{ tabBarLabel: t("tab_search") }}
+      />
+      <Tab.Screen
+        name="ScanTab"
+        component={ScanTabButton}
+        options={{
+          tabBarLabel: t("tab_scan"),
+          tabBarButton: () => (
+            <AnimatedScanButton onPress={() => openScanner()} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="LotteriesTab"
+        component={LotteriesScreen}
+        options={{ tabBarLabel: t("tab_lotteries") }}
+      />
+      <Tab.Screen
+        name="StatisticsTab"
+        component={AnalyticsScreen}
+        options={{ tabBarLabel: t("tab_statistics") }}
+      />
+    </Tab.Navigator>
   );
 }
 

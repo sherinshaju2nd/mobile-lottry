@@ -49,6 +49,7 @@ import {
   BarChart3,
   Share2,
   Radio,
+  Menu,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { DrawCardSkeleton } from "../components/ShimmerSkeleton";
@@ -107,6 +108,8 @@ import BarcodeResultModal from "../components/BarcodeResultModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import AiSocialDigestModal from "../components/AiSocialDigestModal";
 import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
+import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
+import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function HomeScreen({ navigation }: any) {
@@ -128,6 +131,9 @@ export default function HomeScreen({ navigation }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isAiDigestOpen, setIsAiDigestOpen] = useState(false);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+  const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] =
+    useState(false);
   const [socketStatus, setSocketStatus] = useState<
     "connecting" | "connected" | "live_updating"
   >("connecting");
@@ -555,42 +561,6 @@ export default function HomeScreen({ navigation }: any) {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <TouchableOpacity
                 style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
-                  backgroundColor: COLORS.primaryLight,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 1,
-                  borderColor: COLORS.primary,
-                }}
-                onPress={() => {
-                  triggerLightHaptic();
-                  navigation.navigate("Search");
-                }}
-                accessibilityLabel="Lottery Ticket Checker"
-              >
-                <Search size={15} color={COLORS.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
-                  backgroundColor: COLORS.primaryLight,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 1,
-                  borderColor: COLORS.primary,
-                }}
-                onPress={() => navigation.navigate("Reminders")}
-              >
-                <Bell size={15} color={COLORS.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{
                   height: 34,
                   borderRadius: 17,
                   backgroundColor: COLORS.primaryLight,
@@ -621,6 +591,23 @@ export default function HomeScreen({ navigation }: any) {
                   {language.toUpperCase()}
                 </Text>
                 <ChevronDown size={11} color={COLORS.primary} strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  padding: 4,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginLeft: 2,
+                }}
+                onPress={() => {
+                  triggerLightHaptic();
+                  setIsSideMenuOpen(true);
+                }}
+                activeOpacity={0.7}
+                accessibilityLabel="Open Menu"
+              >
+                <Menu size={24} color={COLORS.primary} strokeWidth={2.4} />
               </TouchableOpacity>
             </View>
           </View>
@@ -2219,33 +2206,7 @@ export default function HomeScreen({ navigation }: any) {
             today, and the jackpot kerala lottery result today figure right at
             the top of today's card.
           </Text>
-        </View> */}
-
-        <View style={styles.footer}>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/claim").catch(() => {})}>
-            <Text style={styles.footerLink}>{language === "ml" ? "സമ്മാന ക്ലെയിം" : "Claim"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/guide").catch(() => {})}>
-            <Text style={styles.footerLink}>{language === "ml" ? "ഗൈഡ്" : "Guide"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/faq").catch(() => {})}>
-            <Text style={styles.footerLink}>{language === "ml" ? "പതിവ് ചോദ്യങ്ങൾ" : "FAQ"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/terms-conditions").catch(() => {})}>
-            <Text style={styles.footerLink}>{language === "ml" ? "നിബന്ധനകൾ" : "Terms"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => Linking.openURL("https://www.keralalotteryresultstoday.in/privacy-policy").catch(() => {})}>
-            <Text style={styles.footerLink}>{language === "ml" ? "സ്വകാര്യത" : "Privacy"}</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerBullet}>•</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Contact")}>
-            <Text style={styles.footerLink}>{language === "ml" ? "ബന്ധപ്പെടുക" : "Contact"}</Text>
-          </TouchableOpacity>
-        </View>
+        {/* SEO Text Content Section (Optional) */}
       </ScrollView>
     </KeyboardAvoidingView>
 
@@ -2398,6 +2359,20 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Side Menu Drawer Modal */}
+      <SideMenuDrawerModal
+        visible={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        onOpenNotificationSettings={() => setIsNotificationSettingsOpen(true)}
+        navigation={navigation}
+      />
+
+      {/* Direct Notification Settings Modal */}
+      <NotificationSettingsModal
+        visible={isNotificationSettingsOpen}
+        onClose={() => setIsNotificationSettingsOpen(false)}
+      />
     </SafeAreaView>
   );
 }

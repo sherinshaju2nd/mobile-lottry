@@ -1,7 +1,8 @@
-import { Linking, Share } from "react-native";
+import { Linking } from "react-native";
 import { DrawResult } from "../api/lotteryApi";
 import { getLotteryTranslatedName } from "../constants/lotteries";
 import { Language } from "../constants/translations";
+import { universalShare } from "./shareHelper";
 
 export async function shareDrawResultToWhatsApp(
   draw: DrawResult,
@@ -20,7 +21,7 @@ export async function shareDrawResultToWhatsApp(
   let secondPrizeLabel = "2nd Prize:";
   let thirdPrizeLabel = "3rd Prize:";
   let seeInAppText = "See in App";
-  let footerCta = "📲 *Check Full Results & Verify Tickets:* \nDownload Kerala Lottery Results App\n_Please verify with official Kerala Government Gazette._";
+  let footerCta = "📲 *Check Full Results & Verify Tickets:* \nhttps://play.google.com/store/apps/details?id=com.keralalotteryresultstoday.app\n_Please verify with official Kerala Government Gazette._";
 
   switch (language) {
     case "ml":
@@ -32,7 +33,7 @@ export async function shareDrawResultToWhatsApp(
       secondPrizeLabel = "2-ാം സമ്മാനം:";
       thirdPrizeLabel = "3-ാം സമ്മാനം:";
       seeInAppText = "ആപ്പിൽ കാണുക";
-      footerCta = "📲 *പൂർണ്ണ ഫലവും ടിക്കറ്റ് പരിശോധനയും:* \nകേരള ലോട്ടറി ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക\n_ഔദ്യോഗിക ഗസറ്റ് ഫലങ്ങളുമായി ഒത്തുനോക്കുക._";
+      footerCta = "📲 *പൂർണ്ണ ഫലവും ടിക്കറ്റ് പരിശോധനയും:* \nhttps://play.google.com/store/apps/details?id=com.keralalotteryresultstoday.app\n_ഔദ്യോഗിക ഗസറ്റ് ഫലങ്ങളുമായി ഒത്തുനോക്കുക._";
       break;
     case "hi":
       headerTitle = "🌴 *केरल राज्य लॉटरी परिणाम* 🌴";
@@ -106,13 +107,13 @@ export async function shareDrawResultToWhatsApp(
     if (supported) {
       await Linking.openURL(whatsappUrl);
     } else {
-      await Share.share({
+      await universalShare({
         message,
         title: `${draw.draw_name} Kerala Lottery Result`,
       });
     }
   } catch {
-    await Share.share({
+    await universalShare({
       message,
       title: `${draw.draw_name} Kerala Lottery Result`,
     });
