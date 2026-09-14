@@ -11,7 +11,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 
 SplashScreen.preventAutoHideAsync();
 
-import HomeScreen from "./src/screens/HomeScreen2";
+import HomeScreen from "./src/screens/HomeRouterScreen";
 import LotteriesScreen from "./src/screens/LotteriesScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
@@ -21,6 +21,7 @@ import ContactScreen from "./src/screens/ContactScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsScreen";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
+import { HomeUiProvider } from "./src/context/HomeUiContext";
 import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -542,9 +543,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <ScannerProvider>
-          <AppContent />
-        </ScannerProvider>
+        <HomeUiProvider>
+          <ScannerProvider>
+            <AppContent />
+          </ScannerProvider>
+        </HomeUiProvider>
       </LanguageProvider>
     </SafeAreaProvider>
   );

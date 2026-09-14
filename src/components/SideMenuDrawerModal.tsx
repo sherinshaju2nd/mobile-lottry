@@ -25,10 +25,14 @@ import {
   PhoneCall,
   Share2,
   ChevronRight,
+  LayoutGrid,
+  Layers,
+  Check,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
 import { useLanguage } from "../context/LanguageContext";
+import { useHomeUi } from "../context/HomeUiContext";
 import { isIndic } from "../constants/translations";
 import { shareKeralaLotteryApp } from "../utils/shareHelper";
 import packageJson from "../../package.json";
@@ -51,6 +55,7 @@ export default function SideMenuDrawerModal({
   navigation,
 }: SideMenuDrawerModalProps) {
   const { language, t } = useLanguage();
+  const { uiMode, setUiMode } = useHomeUi();
   const isMl = language === "ml";
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -190,6 +195,101 @@ export default function SideMenuDrawerModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
+            {/* UI Theme Selection (Normal vs Modern) */}
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionLabel}>
+                {isMl ? "ഹോം സ്ക്രീൻ ലേഔട്ട്" : "HOME SCREEN UI THEME"}
+              </Text>
+
+              <View style={styles.uiModeRow}>
+                {/* Normal UI (HomeScreen2) */}
+                <TouchableOpacity
+                  style={[
+                    styles.uiModeCard,
+                    uiMode === "normal" && styles.uiModeCardActive,
+                  ]}
+                  onPress={() => {
+                    triggerLightHaptic();
+                    setUiMode("normal");
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.uiModeHeaderRow}>
+                    <View
+                      style={[
+                        styles.uiModeIconBox,
+                        uiMode === "normal" && styles.uiModeIconBoxActive,
+                      ]}
+                    >
+                      <LayoutGrid
+                        size={15}
+                        color={uiMode === "normal" ? COLORS.primary : "#64748B"}
+                      />
+                    </View>
+                    {uiMode === "normal" && (
+                      <View style={styles.uiModeCheckDot}>
+                        <Check size={11} color="#FFFFFF" strokeWidth={3} />
+                      </View>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.uiModeTitle,
+                      uiMode === "normal" && styles.uiModeTitleActive,
+                    ]}
+                  >
+                    {isMl ? "നോർമൽ UI" : "Normal UI"}
+                  </Text>
+                  <Text style={styles.uiModeSub}>
+                    {isMl ? "2-കോളം ഗ്രിഡ്" : "2-Column Grid"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Modern UI (HomeScreen - Old Dashboard) */}
+                <TouchableOpacity
+                  style={[
+                    styles.uiModeCard,
+                    uiMode === "modern" && styles.uiModeCardActive,
+                  ]}
+                  onPress={() => {
+                    triggerLightHaptic();
+                    setUiMode("modern");
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.uiModeHeaderRow}>
+                    <View
+                      style={[
+                        styles.uiModeIconBox,
+                        uiMode === "modern" && styles.uiModeIconBoxActive,
+                      ]}
+                    >
+                      <Layers
+                        size={15}
+                        color={uiMode === "modern" ? COLORS.primary : "#64748B"}
+                      />
+                    </View>
+                    {uiMode === "modern" && (
+                      <View style={styles.uiModeCheckDot}>
+                        <Check size={11} color="#FFFFFF" strokeWidth={3} />
+                      </View>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.uiModeTitle,
+                      uiMode === "modern" && styles.uiModeTitleActive,
+                    ]}
+                  >
+                    {isMl ? "മോഡേൺ UI" : "Modern UI"}
+                  </Text>
+                  <Text style={styles.uiModeSub}>
+                    {isMl ? "ഡാഷ്‌ബോർഡ്" : "Full Dashboard"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Preferences & Settings */}
             <View style={styles.sectionCard}>
               <Text style={styles.sectionLabel}>
@@ -547,6 +647,65 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 6,
     paddingHorizontal: 4,
+  },
+  uiModeRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginVertical: 4,
+  },
+  uiModeCard: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 10,
+  },
+  uiModeCardActive: {
+    backgroundColor: "#EFF6FF",
+    borderColor: COLORS.primary,
+  },
+  uiModeHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  uiModeIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  uiModeIconBoxActive: {
+    backgroundColor: "#DBEAFE",
+    borderColor: "#BFDBFE",
+  },
+  uiModeCheckDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  uiModeTitle: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  uiModeTitleActive: {
+    color: COLORS.primary,
+    fontWeight: "800",
+  },
+  uiModeSub: {
+    fontSize: 10,
+    color: "#64748B",
+    marginTop: 2,
   },
   menuItem: {
     flexDirection: "row",

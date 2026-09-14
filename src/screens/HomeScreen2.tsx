@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   Dimensions,
+  Animated,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -22,6 +23,7 @@ import {
   Trophy,
   Clock,
   Zap,
+  Radio,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -53,6 +55,12 @@ import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import AiSocialDigestModal from "../components/AiSocialDigestModal";
 
+import {
+  getIsAfterDrawTime,
+  getDrawTimeDisplay,
+  LOTTERY_TIMING_CONFIG,
+} from "../constants/lotteryConfig";
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2; // 2 columns with 16px outer padding and 12px gap
 
@@ -78,17 +86,52 @@ function formatDrawCodeBadge(draw: { lottery_code?: string; draw_code?: string }
   return `${code}-${num}`;
 }
 
-// Check if current IST time is after 12:00 PM
-function getIsAfter12PMIST(): boolean {
-  try {
-    const now = new Date();
-    const utcHours = now.getUTCHours();
-    const utcMinutes = now.getUTCMinutes();
-    const istTotalMinutes = (utcHours * 60 + utcMinutes + 330) % (24 * 60);
-    return istTotalMinutes >= 12 * 60; // 12:00 PM IST = 720 mins
-  } catch {
-    return true;
+// Check if a lottery code/draw is a Bumper Lottery (draws @ 2:00 PM)
+export function checkIsBumperLottery(
+  code?: string,
+  bumperList: LotteryMeta[] = BUMPER_LOTTERIES
+): boolean {
+  if (!code) return false;
+  const cleanCode = code.toUpperCase().trim();
+  return (
+    bumperList.some((b) => b.code.toUpperCase() === cleanCode) ||
+    BUMPER_LOTTERIES.some((b) => b.code.toUpperCase() === cleanCode) ||
+    cleanCode.startsWith("BR") ||
+    cleanCode.startsWith("XR") ||
+    cleanCode.startsWith("ON") ||
+    cleanCode.startsWith("PO") ||
+    cleanCode.startsWith("TH") ||
+    cleanCode.startsWith("SU")
+  );
+}
+
+// Check if draw has reached 9th prize or full final completion
+export function isDrawCompletedWith9th(draw: DrawResult | null | undefined): boolean {
+  if (!draw || !draw.prizes) return false;
+  
+  // 1. 9th prize is present
+  const has9th = Array.isArray(draw.prizes["9th"]) && draw.prizes["9th"].length > 0;
+  if (has9th) return true;
+
+  // 2. 8th prize is present along with valid 1st prize
+  const has8th = Array.isArray(draw.prizes["8th"]) && draw.prizes["8th"].length > 0;
+  const has1st = !!(
+    draw.first?.ticket &&
+    draw.first.ticket.trim().length > 3 &&
+    draw.first.ticket.toLowerCase() !== "pending" &&
+    draw.first.ticket.toLowerCase() !== "n/a"
+  );
+
+  if (has8th && has1st) {
+    // If no 9th prize tier defined in draw amounts, 8th is the final tier
+    const has9thAmount = !!draw.prizes.amounts?.["9th"];
+    if (!has9thAmount) return true;
+    const has7th = Array.isArray(draw.prizes["7th"]) && draw.prizes["7th"].length > 0;
+    const has6th = Array.isArray(draw.prizes["6th"]) && draw.prizes["6th"].length > 0;
+    if (has7th && has6th) return true;
   }
+
+  return false;
 }
 
 export default function HomeScreen2({ navigation }: any) {
@@ -115,9 +158,31 @@ export default function HomeScreen2({ navigation }: any) {
   const [isAiDigestOpen, setIsAiDigestOpen] = useState(false);
 
   // Time & Today Draw State
-  const [isAfter12PM, setIsAfter12PM] = useState<boolean>(getIsAfter12PMIST());
+  const [timeTick, setTimeTick] = useState<number>(Date.now());
   const todayISTDate = getSafeTodayISTDate();
   const todayDayName = getSafeTodayISTDayName();
+
+  // Pulsing Live Indicator Animation
+  const livePulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(livePulseAnim, {
+          toValue: 0.35,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(livePulseAnim, {
+          toValue: 1,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [livePulseAnim]);
 
   // Load Data
   const loadData = useCallback(async () => {
@@ -154,12 +219,12 @@ export default function HomeScreen2({ navigation }: any) {
   useEffect(() => {
     loadData();
 
-    // Check 12 PM shift periodically
+    // Periodic check for draw time changes (2:00 PM Bumper / 3:00 PM Weekly)
     const interval = setInterval(() => {
-      setIsAfter12PM(getIsAfter12PMIST());
-    }, 60000);
+      setTimeTick(Date.now());
+    }, 15000);
 
-    // Supabase realtime subscription for instant 3 PM live draw updates
+    // Supabase realtime subscription for instant live draw updates
     const channel = supabase
       .channel("realtime-draws-homescreen2")
       .on(
@@ -186,7 +251,11 @@ export default function HomeScreen2({ navigation }: any) {
     loadData();
   };
 
-  // Find today's draw or build current featured top card
+  // Find today's draw or build current featured top card (swaps at midnight automatically)
+  const todayBumperMeta = useMemo(() => {
+    return bumperLotteries.find((b) => b.draw_date === todayISTDate);
+  }, [bumperLotteries, todayISTDate]);
+
   const todayWeeklyMeta = useMemo(() => {
     return lotteriesList.find((l) => l.day.toLowerCase() === todayDayName.toLowerCase()) || WEEKLY_LOTTERIES[0];
   }, [lotteriesList, todayDayName]);
@@ -195,31 +264,69 @@ export default function HomeScreen2({ navigation }: any) {
     return allDraws.find((d) => d.draw_date === todayISTDate);
   }, [allDraws, todayISTDate]);
 
-  // Top Card Item Data
+  // Top Card is always Today's Draw from 12:00 Midnight IST (Bumper prioritized if today is bumper draw)
   const topFeaturedDraw = useMemo(() => {
-    if (isAfter12PM) {
-      // After 12 PM: Featured card is Today's draw
-      if (todayDbDraw) return todayDbDraw;
+    if (todayDbDraw) return todayDbDraw;
+    if (todayBumperMeta) {
       return {
         draw_date: todayISTDate,
-        draw_name: todayWeeklyMeta.name,
-        draw_code: todayWeeklyMeta.code,
-        lottery_code: todayWeeklyMeta.code,
+        draw_name: todayBumperMeta.name,
+        draw_code: todayBumperMeta.code,
+        lottery_code: todayBumperMeta.code,
         first: undefined,
         prizes: undefined,
       } as DrawResult;
-    } else {
-      // Before 12 PM: Featured card is Yesterday's latest completed draw
-      return allDraws[0] || {
-        draw_date: todayISTDate,
-        draw_name: todayWeeklyMeta.name,
-        draw_code: todayWeeklyMeta.code,
-        lottery_code: todayWeeklyMeta.code,
-      };
     }
-  }, [isAfter12PM, todayDbDraw, todayISTDate, todayWeeklyMeta, allDraws]);
+    return {
+      draw_date: todayISTDate,
+      draw_name: todayWeeklyMeta.name,
+      draw_code: todayWeeklyMeta.code,
+      lottery_code: todayWeeklyMeta.code,
+      first: undefined,
+      prizes: undefined,
+    } as DrawResult;
+  }, [todayDbDraw, todayBumperMeta, todayISTDate, todayWeeklyMeta]);
 
-  // List of other past draws (excluding the top featured card to avoid duplicate)
+  // Check if top lottery is a Bumper (2:00 PM) or Weekly (3:00 PM)
+  const isTopBumper = useMemo(() => {
+    return checkIsBumperLottery(
+      topFeaturedDraw?.lottery_code || topFeaturedDraw?.draw_code,
+      bumperLotteries
+    );
+  }, [topFeaturedDraw, bumperLotteries]);
+
+  const topDrawTimeDisplay = useMemo(() => {
+    return getDrawTimeDisplay(isTopBumper);
+  }, [isTopBumper]);
+
+  const isAfterTopDrawTime = useMemo(() => {
+    return getIsAfterDrawTime(isTopBumper);
+  }, [isTopBumper, timeTick]);
+
+  // Draw stage evaluations
+  const isTopCompleted = useMemo(() => {
+    return isDrawCompletedWith9th(topFeaturedDraw);
+  }, [topFeaturedDraw]);
+
+  const hasTopFirstPrize = useMemo(() => {
+    return !!(
+      topFeaturedDraw?.first?.ticket &&
+      topFeaturedDraw.first.ticket.trim().length > 3 &&
+      topFeaturedDraw.first.ticket.toLowerCase() !== "pending" &&
+      topFeaturedDraw.first.ticket.toLowerCase() !== "n/a"
+    );
+  }, [topFeaturedDraw]);
+
+  const isTopLive = useMemo(() => {
+    if (topFeaturedDraw?.draw_date !== todayISTDate || isTopCompleted) return false;
+    return isAfterTopDrawTime || hasAnyDrawResult(topFeaturedDraw);
+  }, [topFeaturedDraw?.draw_date, todayISTDate, isTopCompleted, isAfterTopDrawTime, topFeaturedDraw]);
+
+  const isTopPreDraw = useMemo(() => {
+    return topFeaturedDraw?.draw_date === todayISTDate && !isTopLive && !isTopCompleted;
+  }, [topFeaturedDraw?.draw_date, todayISTDate, isTopLive, isTopCompleted]);
+
+  // List of other past draws (excluding top featured draw to avoid duplicates)
   const remainingDraws = useMemo(() => {
     if (allDraws.length === 0) return [];
     if (topFeaturedDraw?.draw_date) {
@@ -267,8 +374,8 @@ export default function HomeScreen2({ navigation }: any) {
 
     const formattedDate = formatDDMMYYYY(item.draw_date);
     const badgeCode = formatDrawCodeBadge(item);
-    // Show NEW ribbon on the most recent completed draw in the grid if top card is not published
-    const isLatestGridDraw = index === 0 && !hasAnyDrawResult(topFeaturedDraw);
+    // Show NEW ribbon on the most recent completed draw in grid only if today is not completed
+    const isLatestGridDraw = index === 0 && !isTopCompleted;
 
     return (
       <TouchableOpacity
@@ -323,7 +430,6 @@ export default function HomeScreen2({ navigation }: any) {
 
     const formattedDate = formatDDMMYYYY(topFeaturedDraw.draw_date);
     const badgeCode = formatDrawCodeBadge(topFeaturedDraw);
-    const isPublished = hasAnyDrawResult(topFeaturedDraw);
 
     return (
       <View style={styles.topSectionContainer}>
@@ -334,19 +440,27 @@ export default function HomeScreen2({ navigation }: any) {
         >
           {/* Top Blue Header */}
           <View style={styles.topCardBlue}>
-            {/* Diagonal Red Ribbon in Top-Left Corner */}
-            <View style={styles.topCornerRibbonContainer}>
-              <View
-                style={[
-                  styles.topCornerRibbon,
-                  isPublished ? styles.ribbonPublished : styles.ribbonPending,
-                ]}
-              >
-                <Text style={styles.topCornerRibbonText}>
-                  {isPublished ? "NEW" : isAfter12PM ? "TODAY" : "NEW"}
-                </Text>
+            {/* 1. Live Badge when lottery is live (2:00 PM for Bumper, 3:00 PM for Weekly until 9th prize) */}
+            {isTopLive && (
+              <View style={styles.topLiveBadge}>
+                <Animated.View
+                  style={[
+                    styles.liveDot,
+                    { opacity: livePulseAnim },
+                  ]}
+                />
+                <Text style={styles.topLiveBadgeText}>LIVE</Text>
               </View>
-            </View>
+            )}
+
+            {/* 2. Diagonal Red NEW Ribbon when draw is completed (9th prize received) */}
+            {isTopCompleted && (
+              <View style={styles.topCornerRibbonContainer}>
+                <View style={styles.topCornerRibbon}>
+                  <Text style={styles.topCornerRibbonText}>NEW</Text>
+                </View>
+              </View>
+            )}
 
             {/* Code Badge in Top-Right */}
             <View style={[styles.codeBadge, styles.topCodeBadge]}>
@@ -363,6 +477,37 @@ export default function HomeScreen2({ navigation }: any) {
             >
               {displayName.toUpperCase()}
             </Text>
+
+            {/* Status info under lottery name */}
+            {hasTopFirstPrize ? (
+              // When 1st prize is drawn, show 1st prize ticket clearly
+              <View style={styles.topPrizePill}>
+                <Trophy size={13} color="#FDE047" strokeWidth={2.4} />
+                <Text style={styles.topPrizePillText}>
+                  1st Prize: {topFeaturedDraw.first?.ticket}
+                </Text>
+              </View>
+            ) : isTopLive ? (
+              // Live drawing in progress before 1st prize
+              <View style={styles.topStatusPill}>
+                <Zap size={13} color="#FDE047" strokeWidth={2.4} />
+                <Text style={styles.topStatusPillText}>
+                  {language === "ml"
+                    ? `തത്സമയം നറുക്കെടുപ്പ് (${topDrawTimeDisplay})`
+                    : `Live Draw in Progress @ ${topDrawTimeDisplay}`}
+                </Text>
+              </View>
+            ) : isTopPreDraw ? (
+              // Pre-draw (Midnight to Draw Time) - show accurate draw time (2:00 PM for bumper, 3:00 PM for weekly)
+              <View style={styles.topStatusPill}>
+                <Clock size={13} color="#BAE6FD" strokeWidth={2.4} />
+                <Text style={styles.topStatusPillText}>
+                  {language === "ml"
+                    ? `നറുക്കെടുപ്പ്: ${topDrawTimeDisplay}`
+                    : `Draw @ ${topDrawTimeDisplay}`}
+                </Text>
+              </View>
+            ) : null}
           </View>
 
           {/* Bottom White Date Section */}
@@ -705,32 +850,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    width: 62,
-    height: 62,
+    width: 52,
+    height: 52,
     overflow: "hidden",
     zIndex: 10,
     borderTopLeftRadius: 12,
   },
   topCornerRibbon: {
     position: "absolute",
-    top: 10,
+    top: 9,
     left: -22,
-    width: 82,
+    width: 76,
+    height: 20,
+    backgroundColor: "#DC2626",
     transform: [{ rotate: "-45deg" }],
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2.5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 3,
-    elevation: 4,
-  },
-  ribbonPublished: {
-    backgroundColor: "#DC2626",
-  },
-  ribbonPending: {
-    backgroundColor: "#DC2626",
+    elevation: 3,
   },
   topCornerRibbonText: {
     color: "#FFFFFF",
@@ -744,8 +884,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    width: 50,
-    height: 50,
+    width: 44,
+    height: 44,
     overflow: "hidden",
     zIndex: 10,
     borderTopLeftRadius: 12,
@@ -754,23 +894,94 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 7,
     left: -19,
-    width: 64,
+    width: 66,
+    height: 17,
     backgroundColor: "#DC2626",
     transform: [{ rotate: "-45deg" }],
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.2,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 2.5,
   },
   gridCornerRibbonText: {
     color: "#FFFFFF",
     fontSize: 7.5,
     fontWeight: "900",
     letterSpacing: 0.6,
+  },
+
+  // Top Card Live Badge (3:00 PM Live Draw)
+  topLiveBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "#DC2626",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+  },
+  topLiveBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9.5,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+  },
+
+  // Status & Prize Pills under Top Card Lottery Name
+  topPrizePill: {
+    marginTop: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.22)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(253, 224, 71, 0.4)",
+  },
+  topPrizePillText: {
+    color: "#FFFFFF",
+    fontSize: 12.5,
+    fontWeight: "800",
+    letterSpacing: 0.4,
+  },
+  topStatusPill: {
+    marginTop: 7,
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 13,
+    paddingVertical: 4.5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+  },
+  topStatusPillText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
   topCodeBadge: {
     position: "absolute",
