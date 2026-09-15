@@ -376,12 +376,12 @@ export const translations = {
     notification_settings_sub: "Customize draw alerts & reminders",
     allow_push_notifications: "Allow Push Notifications",
     allow_push_desc: "Receive instant updates for draws and reminders",
-    daily_3pm_draw_reminder: "3:00 PM Daily Draw Reminder",
+    daily_3pm_draw_reminder: "3:00 PM Daily Draw Alert",
     daily_3pm_draw_reminder_desc:
-      "Heads-up reminder before the 3:00 PM daily lottery draw",
-    bumper_2pm_draw_reminder: "2:00 PM Bumper Draw Reminder",
+      "Sharp 3:00 PM alert when the weekly lottery draw begins (app open or closed)",
+    bumper_2pm_draw_reminder: "2:00 PM Bumper Draw Alert",
     bumper_2pm_draw_reminder_desc:
-      "Special reminder before the 2:00 PM bumper lottery draws",
+      "Sharp 2:00 PM alert on bumper lottery draw dates (app open or closed)",
     saved_ticket_reminders: "Saved Ticket Draw Reminders",
     saved_ticket_reminders_desc:
       "Alerts for tickets added to your personal reminder list",
@@ -831,10 +831,10 @@ export const translations = {
     allow_push_desc: "തത്സമയ അലേർട്ടുകളും ഫലങ്ങളും തൽക്ഷണം നേടുക",
     daily_3pm_draw_reminder: "3:00 PM പ്രതിദിന നറുക്കെടുപ്പ് അലേർട്ട്",
     daily_3pm_draw_reminder_desc:
-      "പ്രതിദിന നറുക്കെടുപ്പ് തുടങ്ങുന്നതിന് മുൻപ് ഓർമ്മപ്പെടുത്തൽ",
+      "പ്രതിദിന ലോട്ടറി നറുക്കെടുപ്പ് 3:00 PM ന് കൃത്യമായി ഓർമ്മിപ്പിക്കുന്നു (ആപ്പ് തുറന്നിരുന്നാലും അടച്ചിരുന്നാലും)",
     bumper_2pm_draw_reminder: "2:00 PM ബംപർ നറുക്കെടുപ്പ് അലേർട്ട്",
     bumper_2pm_draw_reminder_desc:
-      "ബംപർ നറുക്കെടുപ്പുകൾക്ക് മുൻപുള്ള പ്രത്യേക അലേർട്ട്",
+      "ബംപർ നറുക്കെടുപ്പ് തീയതികളിൽ 2:00 PM ന് കൃത്യമായി ഓർമ്മിപ്പിക്കുന്നു (ആപ്പ് തുറന്നിരുന്നാലും അടച്ചിരുന്നാലും)",
     saved_ticket_reminders: "സേവ് ചെയ്ത ടിക്കറ്റ് ഓർമ്മപ്പെടുത്തൽ",
     saved_ticket_reminders_desc:
       "നിങ്ങൾ ആപ്പിൽ ചേർത്ത ടിക്കറ്റുകളുടെ ഓർമ്മപ്പെടുത്തൽ",

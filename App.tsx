@@ -26,8 +26,8 @@ import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
-import { syncAllDrawNotifications } from "./src/utils/notificationScheduler";
-import { LogBox } from "react-native";
+import { syncAllDrawNotifications, ensureNotificationChannels } from "./src/utils/notificationScheduler";
+import { LogBox, AppState } from "react-native";
 import { COLORS } from "./src/constants/colors";
 import { triggerLightHaptic } from "./src/utils/haptics";
 // Suppress benign Expo Go development sandbox notices from terminal output and UI
@@ -437,21 +437,12 @@ function AppContent() {
   useEffect(() => {
     let responseSub: any = null;
     let receiveSub: any = null;
+    let appStateSub: any = null;
 
     try {
-      // Request notification permission early
+      // Request notification permission early and ensure high-importance OS channels
       Notifications.requestPermissionsAsync().catch(() => {});
-
-      // Setup Android Notification Channel (Required for Android 8.0+)
-      if (Platform.OS === "android") {
-        Notifications.setNotificationChannelAsync("default", {
-          name: "Lottery Draw Alerts",
-          importance: Notifications.AndroidImportance.HIGH,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: "#0B3C5D",
-          sound: "default",
-        }).catch(() => {});
-      }
+      ensureNotificationChannels().catch(() => {});
 
       // Handle tapping a notification from system tray → go to Reminders
       responseSub = Notifications.addNotificationResponseReceivedListener(() => {
@@ -465,6 +456,13 @@ function AppContent() {
           title: notification.request.content.title || "🎰 Kerala Lottery Update",
           body: notification.request.content.body || "New draw alert!",
         });
+      });
+
+      // Synchronize advance notification alarms whenever app becomes active
+      appStateSub = AppState.addEventListener("change", (nextAppState) => {
+        if (nextAppState === "active") {
+          syncAllDrawNotifications().catch(() => {});
+        }
       });
     } catch {}
 
@@ -491,6 +489,7 @@ function AppContent() {
     return () => {
       responseSub?.remove?.();
       receiveSub?.remove?.();
+      appStateSub?.remove?.();
     };
   }, []);
 
