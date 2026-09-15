@@ -7,28 +7,18 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
-  Dimensions,
-  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ChevronLeft,
-  ChevronUp,
-  ChevronDown,
   ChevronRight,
   Flame,
   Snowflake,
   MapPin,
   BarChart3,
-  Trophy,
-  Sparkles,
-  Info,
-  Calendar,
   Search,
-  X,
-  Dices,
   Zap,
-  Activity,
+  Info,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
@@ -38,14 +28,13 @@ import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
 import { triggerLightHaptic } from "../utils/haptics";
 import ShimmerSkeleton from "../components/ShimmerSkeleton";
-import AiLotteryPatternPredictor from "../components/AiLotteryPatternPredictor";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BRAND_BLUE = COLORS.primary;
 
 const QUICK_PICKS = [
-  { num: "5593", bg: "#EEF2FF", text: "#2563EB", border: "#C7D2FE" },
+  { num: "5593", bg: "#EEF2FF", text: "#4F46E5", border: "#E0E7FF" },
   { num: "5866", bg: "#FEE2E2", text: "#DC2626", border: "#FECACA" },
-  { num: "2749", bg: "#DCFCE7", text: "#16A34A", border: "#BBF7D0" },
+  { num: "2749", bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
   { num: "9924", bg: "#F3E8FF", text: "#9333EA", border: "#E9D5FF" },
   { num: "8712", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
   { num: "8860", bg: "#CCFBF1", text: "#0D9488", border: "#99F6E4" },
@@ -68,7 +57,6 @@ function SingleDigitWheel({
   const scrollRef = useRef<ScrollView>(null);
   const lastIndexRef = useRef(value);
 
-  // Sync scroll position when value changes externally (e.g. Quick Picks)
   useEffect(() => {
     if (lastIndexRef.current !== value) {
       lastIndexRef.current = value;
@@ -79,7 +67,6 @@ function SingleDigitWheel({
     }
   }, [value]);
 
-  // Initial scroll position
   useEffect(() => {
     const timer = setTimeout(() => {
       scrollRef.current?.scrollTo({
@@ -112,9 +99,7 @@ function SingleDigitWheel({
 
   return (
     <View style={styles.wheelCol}>
-      {/* Center active highlight lens */}
       <View style={styles.wheelActiveLens} pointerEvents="none" />
-
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -168,19 +153,23 @@ function SingleDigitWheel({
   );
 }
 
-// Kerala State Lottery - Analytics & Frequency Statistics
-export default function AnalyticsScreen({ navigation }: any) {
+function chunkPairs<T>(arr: T[]): [T, T | undefined][] {
+  const chunks: [T, T | undefined][] = [];
+  for (let i = 0; i < arr.length; i += 2) {
+    chunks.push([arr[i], arr[i + 1]]);
+  }
+  return chunks;
+}
+
+// Normal / Classic UI Statistics Screen
+export default function AnalyticsScreen2({ navigation }: any) {
   const { t, language } = useLanguage();
-  const isMl = language === "ml";
 
   const [draws, setDraws] = useState<DrawResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [horizon, setHorizon] = useState<"30" | "90" | "all">("90");
-  const [activeTab, setActiveTab] = useState<"numbers" | "districts">(
-    "numbers",
-  );
-  const [digits, setDigits] = useState<[number, number, number, number]>([0, 0, 9, 6]);
+  const [digits, setDigits] = useState<[number, number, number, number]>([0, 0, 4, 1]);
   const [submittedQuery, setSubmittedQuery] = useState<string | null>(null);
 
   const handleDigitChange = (colIndex: number, newVal: number) => {
@@ -255,49 +244,25 @@ export default function AnalyticsScreen({ navigation }: any) {
     return draws.slice(0, limit);
   }, [draws, horizon]);
 
-  // Compute 4-digit and 2-digit ending frequencies
+  // Compute 4-digit draw occurrence statistics (count of distinct draws containing each number)
   const numberStats = useMemo(() => {
-    const ending4Map: Record<string, number> = {};
-    const ending2Map: Record<string, number> = {};
-    const singleDigitMap: Record<number, number> = {
-      0: 0,
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-      6: 0,
-      7: 0,
-      8: 0,
-      9: 0,
-    };
-
+    const ending4DrawMap: Record<string, number> = {};
     let totalPrizesCounted = 0;
 
-    const ending4DrawMap: Record<string, { drawWins: number; prizeWins: number }> = {};
-
     filteredDraws.forEach((draw) => {
-      const drawnInThisDraw = new Set<string>();
+      const drawEnding4Set = new Set<string>();
 
       // 1st Prize
       if (draw.first?.ticket && draw.first.ticket !== "N/A") {
         const digits = draw.first.ticket.replace(/\D/g, "");
         if (digits.length >= 4) {
           const e4 = digits.slice(-4);
-          drawnInThisDraw.add(e4);
-          if (!ending4DrawMap[e4]) ending4DrawMap[e4] = { drawWins: 0, prizeWins: 0 };
-          ending4DrawMap[e4].prizeWins++;
+          drawEnding4Set.add(e4);
         }
-        if (digits.length >= 2) {
-          const e2 = digits.slice(-2);
-          ending2Map[e2] = (ending2Map[e2] || 0) + 1;
-        }
-        const lastD = parseInt(digits.slice(-1), 10);
-        if (!isNaN(lastD)) singleDigitMap[lastD]++;
         totalPrizesCounted++;
       }
 
-      // Other Prizes (2nd through 9th) — Note: Consolation is excluded as it shares identical 6 digits with 1st Prize
+      // Other Prizes (2nd through 9th)
       if (draw.prizes) {
         const tiers = [
           "2nd",
@@ -309,62 +274,51 @@ export default function AnalyticsScreen({ navigation }: any) {
           "8th",
           "9th",
         ] as const;
-        tiers.forEach((t) => {
-          const nums = draw.prizes![t];
+        tiers.forEach((tier) => {
+          const nums = draw.prizes![tier];
           if (Array.isArray(nums)) {
             nums.forEach((num) => {
-              const digits = num.replace(/\D/g, "");
+              const digits = String(num).replace(/\D/g, "");
               if (digits.length >= 4) {
                 const e4 = digits.slice(-4);
-                drawnInThisDraw.add(e4);
-                if (!ending4DrawMap[e4]) ending4DrawMap[e4] = { drawWins: 0, prizeWins: 0 };
-                ending4DrawMap[e4].prizeWins++;
+                drawEnding4Set.add(e4);
               }
-              if (digits.length >= 2) {
-                const e2 = digits.slice(-2);
-                ending2Map[e2] = (ending2Map[e2] || 0) + 1;
-              }
-              const lastD = parseInt(digits.slice(-1), 10);
-              if (!isNaN(lastD)) singleDigitMap[lastD]++;
               totalPrizesCounted++;
             });
           }
         });
       }
 
-      drawnInThisDraw.forEach((e4) => {
-        ending4DrawMap[e4].drawWins++;
+      // Count each unique 4-digit number once per draw
+      drawEnding4Set.forEach((e4) => {
+        ending4DrawMap[e4] = (ending4DrawMap[e4] || 0) + 1;
       });
     });
 
-    // Top 8 Hot 4-digit numbers
+    // Top 8 Hot 4-digit numbers (Repeated 4-Digit Numbers by draw count)
     const hot4 = Object.entries(ending4DrawMap)
-      .map(([num, data]) => [num, data.drawWins] as [string, number])
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
 
-    // Top 8 Hot 2-digit numbers
-    const hot2 = Object.entries(ending2Map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-
-    // Least frequent / Non-Repeated 4-digit numbers
+    // Least frequent 8 Hot 4-digit numbers (Non-Repeated 4-Digit Numbers by draw count)
     const cold4 = Object.entries(ending4DrawMap)
-      .map(([num, data]) => [num, data.drawWins] as [string, number])
       .sort((a, b) => a[1] - b[1])
       .slice(0, 8);
 
-    return { hot4, hot2, cold4, singleDigitMap, totalPrizesCounted };
+    const maxHot4Count = hot4[0]?.[1] || 1;
+    const maxCold4Count = cold4[cold4.length - 1]?.[1] || 1;
+
+    return { hot4, cold4, maxHot4Count, maxCold4Count, totalPrizesCounted };
   }, [filteredDraws]);
 
-  // Compute District Heatmap Leaderboard
+  // Compute District Leaderboard (Top 5 Lucky Locations)
   const districtStats = useMemo(() => {
     const distCounts: Record<
       string,
-      { count: number; totalWonStr: string; lotteries: string[] }
+      { count: number; lotteries: string[] }
     > = {};
     KERALA_DISTRICTS.forEach((d) => {
-      distCounts[d] = { count: 0, totalWonStr: "", lotteries: [] };
+      distCounts[d] = { count: 0, lotteries: [] };
     });
 
     let totalJackpotDraws = 0;
@@ -391,9 +345,10 @@ export default function AnalyticsScreen({ navigation }: any) {
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.count - a.count);
 
-    const maxCount = Math.max(...ranked.map((r) => r.count), 1);
+    const top5 = ranked.slice(0, 5);
+    const maxCount = Math.max(...top5.map((r) => r.count), 1);
 
-    return { ranked, maxCount, totalJackpotDraws };
+    return { top5, ranked, maxCount, totalJackpotDraws };
   }, [filteredDraws, language]);
 
   // Interactive custom number lookup (evaluated on Check History or Quick Pick)
@@ -424,13 +379,13 @@ export default function AnalyticsScreen({ navigation }: any) {
               (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
               draw.draw_name ||
               draw.lottery_code,
-            tier: t("tier_1st"),
+            tier: t("tier_1st") || "1st Prize",
             fullTicket: draw.first.ticket,
           });
         }
       }
 
-      // Other Prizes (2nd through 9th) — Consolation excluded since 1st prize is already evaluated
+      // Other Prizes (2nd through 9th)
       if (draw.prizes) {
         const tiers = [
           "2nd",
@@ -449,7 +404,7 @@ export default function AnalyticsScreen({ navigation }: any) {
               const d = String(num).replace(/\D/g, "");
               if (d.endsWith(query) || d === query) {
                 totalMatches++;
-                const tierName = t(`tier_${tierKey}` as any);
+                const tierName = t(`tier_${tierKey}` as any) || `${tierKey} Prize`;
                 tierBreakdown[tierName] = (tierBreakdown[tierName] || 0) + 1;
                 matchedDraws.push({
                   date: draw.draw_date,
@@ -481,63 +436,12 @@ export default function AnalyticsScreen({ navigation }: any) {
     };
   }, [submittedQuery, filteredDraws, language, t]);
 
-  // Live Odd/Even & High/Low Pattern Balance Indicator
-  const digitBalance = useMemo(() => {
-    let odd = 0;
-    let even = 0;
-    let low = 0; // 0-4
-    let high = 0; // 5-9
-    let sum = 0;
-
-    digits.forEach((d) => {
-      if (d % 2 === 0) even++;
-      else odd++;
-      if (d >= 5) high++;
-      else low++;
-      sum += d;
-    });
-
-    let balanceScore = 50;
-    if (odd === 2 && even === 2) balanceScore += 24;
-    else if (odd === 3 || odd === 1) balanceScore += 14;
-    else balanceScore += 4;
-
-    if (high === 2 && low === 2) balanceScore += 24;
-    else if (high === 3 || high === 1) balanceScore += 14;
-    else balanceScore += 4;
-
-    if (sum >= 12 && sum <= 24) balanceScore = Math.min(99, balanceScore + 2);
-
-    let statusText = t("pattern_highly_balanced");
-    let statusColor = "#16A34A";
-    let bgTint = "#F0FDF4";
-    let borderTint = "#BBF7D0";
-
-    if (balanceScore < 70) {
-      statusText = t("pattern_skewed");
-      statusColor = "#D97706";
-      bgTint = "#FFFBEB";
-      borderTint = "#FDE68A";
-    } else if (balanceScore < 85) {
-      statusText = t("pattern_moderately_balanced");
-      statusColor = "#2563EB";
-      bgTint = "#EFF6FF";
-      borderTint = "#BFDBFE";
+  const getDrawCountLabel = (count: number) => {
+    if (language === "en") {
+      return `${count} ${count === 1 ? "Draw" : "Draws"}`;
     }
-
-    return {
-      odd,
-      even,
-      low,
-      high,
-      sum,
-      balanceScore,
-      statusText,
-      statusColor,
-      bgTint,
-      borderTint,
-    };
-  }, [digits]);
+    return `${count} ${t("draws_count_suffix")}`;
+  };
 
   return (
     <SafeAreaView
@@ -554,26 +458,26 @@ export default function AnalyticsScreen({ navigation }: any) {
             onPress={() => navigation.goBack()}
             activeOpacity={0.8}
           >
-            <ChevronLeft size={24} color={COLORS.primary} />
+            <ChevronLeft size={24} color={BRAND_BLUE} />
           </TouchableOpacity>
         ) : null}
 
         <View style={styles.headerTitleCol}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <BarChart3 size={17} color={COLORS.primary} />
+            <BarChart3 size={18} color={BRAND_BLUE} />
             <Text
               style={[
                 styles.headerTitle,
-                isIndic(language) && { fontSize: 14.5, lineHeight: 20 },
+                isIndic(language) && { fontSize: 15, lineHeight: 21 },
               ]}
             >
-              {t("analytics_title")}
+              {t("tab_statistics")}
             </Text>
           </View>
           <Text
             style={[
               styles.headerSub,
-              isIndic(language) && { fontSize: 10, lineHeight: 14 },
+              isIndic(language) && { fontSize: 10.5, lineHeight: 14 },
             ]}
           >
             {`${t("analytics_sub_prefix")} ${filteredDraws.length} ${t("analytics_sub_suffix")}`.trim()}
@@ -581,7 +485,7 @@ export default function AnalyticsScreen({ navigation }: any) {
         </View>
       </View>
 
-      {/* Horizon Selector (30 Days / 90 Days / All) */}
+      {/* Horizon Selector (30 Draws / 90 Draws / All) */}
       <View style={styles.horizonBar}>
         {[
           { key: "30", label: t("last_30_draws") },
@@ -614,63 +518,6 @@ export default function AnalyticsScreen({ navigation }: any) {
         })}
       </View>
 
-      {/* Main Tab Switcher (Numbers vs Districts) */}
-      <View style={styles.tabSwitcher}>
-        <TouchableOpacity
-          style={[
-            styles.tabBtn,
-            activeTab === "numbers" && styles.tabBtnActive,
-          ]}
-          onPress={() => {
-            triggerLightHaptic();
-            setActiveTab("numbers");
-          }}
-          activeOpacity={0.8}
-        >
-          <Flame
-            size={15}
-            color={activeTab === "numbers" ? "#EA580C" : "#64748B"}
-          />
-          <Text
-            style={[
-              styles.tabBtnText,
-              activeTab === "numbers" && styles.tabBtnTextActive,
-              isIndic(language) && { fontSize: 11, lineHeight: 15 },
-            ]}
-            numberOfLines={1}
-          >
-            {t("tab_number_trends")}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tabBtn,
-            activeTab === "districts" && styles.tabBtnActive,
-          ]}
-          onPress={() => {
-            triggerLightHaptic();
-            setActiveTab("districts");
-          }}
-          activeOpacity={0.8}
-        >
-          <MapPin
-            size={15}
-            color={activeTab === "districts" ? "#DC2626" : "#64748B"}
-          />
-          <Text
-            style={[
-              styles.tabBtnText,
-              activeTab === "districts" && styles.tabBtnTextActive,
-              isIndic(language) && { fontSize: 11, lineHeight: 15 },
-            ]}
-            numberOfLines={1}
-          >
-            {t("tab_lucky_locations")}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -678,39 +525,37 @@ export default function AnalyticsScreen({ navigation }: any) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[COLORS.primary]}
+            colors={[BRAND_BLUE]}
           />
         }
       >
         {loading ? (
           <View style={{ gap: 14 }}>
-            <ShimmerSkeleton width="100%" height={160} borderRadius={20} />
-            <ShimmerSkeleton width="100%" height={220} borderRadius={20} />
+            <ShimmerSkeleton width="100%" height={220} borderRadius={18} />
+            <ShimmerSkeleton width="100%" height={220} borderRadius={18} />
+            <ShimmerSkeleton width="100%" height={180} borderRadius={18} />
           </View>
-        ) : activeTab === "numbers" ? (
+        ) : (
           <>
-            {/* 1. Top Card: Gemini AI Pattern & Digit Predictor */}
-            <AiLotteryPatternPredictor allDraws={draws} lang={language} />
-
-            {/* Instant Number Explorer Card */}
-            <View style={styles.sectionCard}>
+            {/* 4 Digit History Card */}
+            <View style={styles.mainCard}>
               <View style={styles.cardHeaderRow}>
-                <View style={styles.iconBoxBlue}>
-                  <Search size={18} color="#2563EB" />
+                <View style={styles.brandIconCircle}>
+                  <Search size={18} color={BRAND_BLUE} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[
-                      styles.cardTitle,
-                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
+                      styles.mainCardTitle,
+                      isIndic(language) && { fontSize: 14, lineHeight: 19 },
                     ]}
                   >
                     {t("analytics_4digit_history")}
                   </Text>
                   <Text
                     style={[
-                      styles.cardSub,
-                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
+                      styles.mainCardSub,
+                      isIndic(language) && { fontSize: 10.5, lineHeight: 14 },
                     ]}
                   >
                     {t("analytics_4digit_desc")}
@@ -727,69 +572,6 @@ export default function AnalyticsScreen({ navigation }: any) {
                     onChange={(newVal) => handleDigitChange(colIdx, newVal)}
                   />
                 ))}
-              </View>
-
-              {/* Live Pattern & Balance Indicator */}
-              <View
-                style={[
-                  styles.balanceCard,
-                  {
-                    backgroundColor: digitBalance.bgTint,
-                    borderColor: digitBalance.borderTint,
-                  },
-                ]}
-              >
-                <View style={styles.balanceHeaderRow}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Activity size={15} color={digitBalance.statusColor} />
-                    <Text
-                      style={[
-                        styles.balanceScoreText,
-                        { color: digitBalance.statusColor },
-                      ]}
-                    >
-                      {digitBalance.balanceScore}% {digitBalance.statusText}
-                    </Text>
-                  </View>
-                  <View style={styles.balancePill}>
-                    <Text style={styles.balancePillText}>
-                      {t("sum_label")}: {digitBalance.sum}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Progress Bar */}
-                <View style={styles.balanceProgressTrack}>
-                  <View
-                    style={[
-                      styles.balanceProgressFill,
-                      {
-                        width: `${digitBalance.balanceScore}%`,
-                        backgroundColor: digitBalance.statusColor,
-                      },
-                    ]}
-                  />
-                </View>
-
-                {/* Live Metric Pills */}
-                <View style={styles.balanceTagsRow}>
-                  <View style={styles.balanceTag}>
-                    <Text style={styles.balanceTagLabel}>
-                      {digitBalance.odd} {t("odd_label")} : {digitBalance.even} {t("even_label")}
-                    </Text>
-                  </View>
-                  <View style={styles.balanceTag}>
-                    <Text style={styles.balanceTagLabel}>
-                      {digitBalance.high} {t("high_label")} : {digitBalance.low} {t("low_label")}
-                    </Text>
-                  </View>
-                </View>
               </View>
 
               {/* Check History Action Button with Brand Color */}
@@ -855,8 +637,9 @@ export default function AnalyticsScreen({ navigation }: any) {
                 })}
               </ScrollView>
 
-              {searchResult ? (
-                <View style={{ marginTop: 12, gap: 10 }}>
+              {/* Search Result Display (When a query is checked or selected) */}
+              {searchResult && (
+                <View style={{ marginTop: 14, gap: 10 }}>
                   {/* Hero Stat Box */}
                   <View style={styles.searchHeroBox}>
                     <View
@@ -954,37 +737,28 @@ export default function AnalyticsScreen({ navigation }: any) {
                     </View>
                   )}
                 </View>
-              ) : (
-                <View style={styles.searchIdleBox}>
-                  <Sparkles size={18} color="#2563EB" />
-                  <Text
-                    style={[styles.searchIdleText, isIndic(language) && { fontSize: 10.5 }]}
-                  >
-                    {t("analytics_idle_hint")}
-                  </Text>
-                </View>
               )}
             </View>
 
-            {/* Hot 4-Digit Endings */}
-            <View style={styles.sectionCard}>
+            {/* 1. Repeated 4-Digit Numbers Card (2-Column Row Layout) */}
+            <View style={styles.mainCard}>
               <View style={styles.cardHeaderRow}>
-                <View style={styles.iconBoxOrange}>
-                  <Flame size={18} color="#EA580C" />
+                <View style={styles.brandIconCircle}>
+                  <Flame size={18} color={BRAND_BLUE} fill={BRAND_BLUE} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[
-                      styles.cardTitle,
-                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
+                      styles.mainCardTitle,
+                      isIndic(language) && { fontSize: 14, lineHeight: 19 },
                     ]}
                   >
                     {t("repeated_4digit_title")}
                   </Text>
                   <Text
                     style={[
-                      styles.cardSub,
-                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
+                      styles.mainCardSub,
+                      isIndic(language) && { fontSize: 10.5, lineHeight: 14 },
                     ]}
                   >
                     {t("repeated_4digit_sub")}
@@ -992,59 +766,86 @@ export default function AnalyticsScreen({ navigation }: any) {
                 </View>
               </View>
 
-              <View style={styles.grid2Col}>
-                {numberStats.hot4.map(([num, count], i) => {
-                  const maxHot4 = numberStats.hot4[0]?.[1] || 1;
-                  const barPct = Math.round((count / maxHot4) * 100);
-                  const isSelected = submittedQuery === num;
+              {/* 2-Column Pairs */}
+              <View style={styles.gridContainer}>
+                {chunkPairs(numberStats.hot4).map(([item1, item2], rowIdx) => {
+                  const idx1 = rowIdx * 2;
+                  const idx2 = rowIdx * 2 + 1;
+                  const barPct1 = Math.max(
+                    12,
+                    Math.round((item1[1] / numberStats.maxHot4Count) * 100),
+                  );
+                  const barPct2 = item2
+                    ? Math.max(
+                        12,
+                        Math.round((item2[1] / numberStats.maxHot4Count) * 100),
+                      )
+                    : 0;
+
                   return (
-                    <TouchableOpacity
-                      key={num}
-                      activeOpacity={0.75}
-                      onPress={() => handleSelectQuickPick(num)}
-                      style={[
-                        styles.numChip,
-                        isSelected && { borderColor: "#EA580C", borderWidth: 1.5 },
-                      ]}
-                    >
-                      <View style={styles.numChipHeader}>
-                        <Text style={styles.rankBadge}>#{i + 1}</Text>
-                        <Text style={styles.numChipNumber}>{num}</Text>
-                        <Text style={styles.numChipCount}>{count}x</Text>
+                    <View key={`row-hot-${rowIdx}`} style={styles.twoColumnRow}>
+                      {/* Left Column Item */}
+                      <View style={styles.statGridItem}>
+                        <View style={styles.statItemTopRow}>
+                          <Text style={styles.rankBrandText}>#{idx1 + 1}</Text>
+                          <Text style={styles.statNumberText}>{item1[0]}</Text>
+                          <Text style={styles.countBrandText}>{getDrawCountLabel(item1[1])}</Text>
+                        </View>
+                        <View style={styles.barTrack}>
+                          <View
+                            style={[
+                              styles.barFillBrand,
+                              { width: `${barPct1}%` },
+                            ]}
+                          />
+                        </View>
                       </View>
-                      <View style={styles.barTrack}>
-                        <View
-                          style={[
-                            styles.barFillOrange,
-                            { width: `${barPct}%` },
-                          ]}
-                        />
-                      </View>
-                    </TouchableOpacity>
+
+                      {/* Right Column Item */}
+                      {item2 ? (
+                        <View style={styles.statGridItem}>
+                          <View style={styles.statItemTopRow}>
+                            <Text style={styles.rankBrandText}>#{idx2 + 1}</Text>
+                            <Text style={styles.statNumberText}>{item2[0]}</Text>
+                            <Text style={styles.countBrandText}>{getDrawCountLabel(item2[1])}</Text>
+                          </View>
+                          <View style={styles.barTrack}>
+                            <View
+                              style={[
+                                styles.barFillBrand,
+                                { width: `${barPct2}%` },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={{ flex: 1 }} />
+                      )}
+                    </View>
                   );
                 })}
               </View>
             </View>
 
-            {/* Cold / Non-Repeated 4-Digit Numbers */}
-            <View style={styles.sectionCard}>
+            {/* 2. Non-Repeated Numbers (4-Digit) Card (2-Column Row Layout) */}
+            <View style={styles.mainCard}>
               <View style={styles.cardHeaderRow}>
-                <View style={styles.iconBoxBlue}>
-                  <Snowflake size={18} color="#2563EB" />
+                <View style={styles.brandIconCircle}>
+                  <Snowflake size={18} color={BRAND_BLUE} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[
-                      styles.cardTitle,
-                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
+                      styles.mainCardTitle,
+                      isIndic(language) && { fontSize: 14, lineHeight: 19 },
                     ]}
                   >
                     {t("cold_4digit_title")}
                   </Text>
                   <Text
                     style={[
-                      styles.cardSub,
-                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
+                      styles.mainCardSub,
+                      isIndic(language) && { fontSize: 10.5, lineHeight: 14 },
                     ]}
                   >
                     {t("cold_4digit_sub")}
@@ -1052,118 +853,141 @@ export default function AnalyticsScreen({ navigation }: any) {
                 </View>
               </View>
 
-              <View style={styles.grid2Col}>
-                {numberStats.cold4.map(([num, count], i) => {
-                  const maxCold4 = numberStats.cold4[numberStats.cold4.length - 1]?.[1] || 1;
-                  const barPct = Math.min(100, Math.max(16, Math.round((count / maxCold4) * 100)));
-                  const isSelected = submittedQuery === num;
+              {/* 2-Column Pairs */}
+              <View style={styles.gridContainer}>
+                {chunkPairs(numberStats.cold4).map(([item1, item2], rowIdx) => {
+                  const idx1 = rowIdx * 2;
+                  const idx2 = rowIdx * 2 + 1;
+                  const barPct1 = Math.min(100, Math.max(16, item1[1] * 25));
+                  const barPct2 = item2
+                    ? Math.min(100, Math.max(16, item2[1] * 25))
+                    : 0;
+
                   return (
-                    <TouchableOpacity
-                      key={num}
-                      activeOpacity={0.75}
-                      onPress={() => handleSelectQuickPick(num)}
-                      style={[
-                        styles.numChipCold,
-                        isSelected && { borderColor: "#2563EB", borderWidth: 1.5 },
-                      ]}
-                    >
-                      <View style={styles.numChipHeader}>
-                        <Text style={styles.rankBadgeBlue}>#{i + 1}</Text>
-                        <Text style={styles.numChipNumber}>{num}</Text>
-                        <Text style={styles.numChipCountBlue}>{count}x</Text>
+                    <View key={`row-cold-${rowIdx}`} style={styles.twoColumnRow}>
+                      {/* Left Column Item */}
+                      <View style={styles.statGridItem}>
+                        <View style={styles.statItemTopRow}>
+                          <Text style={styles.rankBrandText}>#{idx1 + 1}</Text>
+                          <Text style={styles.statNumberText}>{item1[0]}</Text>
+                          <Text style={styles.countBrandText}>{getDrawCountLabel(item1[1])}</Text>
+                        </View>
+                        <View style={styles.barTrack}>
+                          <View
+                            style={[
+                              styles.barFillBrand,
+                              { width: `${barPct1}%` },
+                            ]}
+                          />
+                        </View>
                       </View>
-                      <View style={styles.barTrackBlue}>
-                        <View
-                          style={[
-                            styles.barFillBlue,
-                            { width: `${barPct}%` },
-                          ]}
-                        />
-                      </View>
-                    </TouchableOpacity>
+
+                      {/* Right Column Item */}
+                      {item2 ? (
+                        <View style={styles.statGridItem}>
+                          <View style={styles.statItemTopRow}>
+                            <Text style={styles.rankBrandText}>#{idx2 + 1}</Text>
+                            <Text style={styles.statNumberText}>{item2[0]}</Text>
+                            <Text style={styles.countBrandText}>{getDrawCountLabel(item2[1])}</Text>
+                          </View>
+                          <View style={styles.barTrack}>
+                            <View
+                              style={[
+                                styles.barFillBrand,
+                                { width: `${barPct2}%` },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={{ flex: 1 }} />
+                      )}
+                    </View>
                   );
                 })}
               </View>
             </View>
-          </>
-        ) : (
-          <>
-            {/* District Leaderboard Card */}
-            <View style={styles.sectionCard}>
+
+            {/* 3. Top 5 Locations (Lucky Locations) Card */}
+            <View style={styles.mainCard}>
               <View style={styles.cardHeaderRow}>
-                <View style={styles.iconBoxRed}>
-                  <Trophy size={18} color="#DC2626" />
+                <View style={styles.brandIconCircle}>
+                  <MapPin size={18} color={BRAND_BLUE} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={[
-                      styles.cardTitle,
-                      isIndic(language) && { fontSize: 13.5, lineHeight: 18 },
+                      styles.mainCardTitle,
+                      isIndic(language) && { fontSize: 14, lineHeight: 19 },
                     ]}
                   >
-                    {t("district_leaderboard_title")}
+                    {t("top_5_locations_title")}
                   </Text>
                   <Text
                     style={[
-                      styles.cardSub,
-                      isIndic(language) && { fontSize: 10, lineHeight: 14 },
+                      styles.mainCardSub,
+                      isIndic(language) && { fontSize: 10.5, lineHeight: 14 },
                     ]}
                   >
-                    {t("district_leaderboard_sub")}
+                    {t("top_5_locations_sub")}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.districtList}>
-                {districtStats.ranked.map((dist, idx) => {
+              <View style={styles.locationsList}>
+                {districtStats.top5.map((dist, idx) => {
                   const pct = Math.round(
                     (dist.count / districtStats.maxCount) * 100,
                   );
-                  const isTop3 = idx < 3 && dist.count > 0;
+                  const isTop1 = idx === 0 && dist.count > 0;
                   return (
                     <View
                       key={dist.name}
                       style={[
-                        styles.districtRow,
-                        isTop3 && styles.districtRowTop3,
+                        styles.locationRow,
+                        isTop1 && styles.locationRowTop1,
                       ]}
                     >
-                      <View style={styles.distRankBox}>
+                      <View
+                        style={[
+                          styles.locationRankBadge,
+                          isTop1 && styles.locationRankBadgeTop1,
+                        ]}
+                      >
                         <Text
                           style={[
-                            styles.distRankText,
-                            isTop3 && styles.distRankTextTop3,
+                            styles.locationRankText,
+                            isTop1 && styles.locationRankTextTop1,
                           ]}
                         >
                           #{idx + 1}
                         </Text>
                       </View>
 
-                      <View style={styles.distInfoCol}>
-                        <View style={styles.distNameRow}>
+                      <View style={styles.locationInfoCol}>
+                        <View style={styles.locationNameRow}>
                           <Text
-                            style={[styles.distName, isIndic(language) && { fontSize: 12 }]}
+                            style={[
+                              styles.locationNameText,
+                              isIndic(language) && { fontSize: 12.5 },
+                            ]}
                           >
                             {getDistrictTranslatedName(dist.name, language)}
                           </Text>
-                          <Text
-                            style={[
-                              styles.distJackpotCount,
-                              isIndic(language) && { fontSize: 10.5 },
-                            ]}
-                          >
-                            {dist.count}{" "}
-                            {dist.count === 1
-                              ? t("win_singular")
-                              : t("wins_count")}
-                          </Text>
+                          <View style={styles.winPill}>
+                            <Text style={styles.winPillText}>
+                              {dist.count}{" "}
+                              {dist.count === 1
+                                ? t("win_singular")
+                                : t("wins_count")}
+                            </Text>
+                          </View>
                         </View>
 
-                        <View style={styles.distBarTrack}>
+                        <View style={styles.locationBarTrack}>
                           <View
                             style={[
-                              styles.distBarFill,
-                              isTop3 && styles.distBarFillTop3,
+                              styles.locationBarFill,
                               { width: `${pct}%` },
                             ]}
                           />
@@ -1174,20 +998,23 @@ export default function AnalyticsScreen({ navigation }: any) {
                 })}
               </View>
             </View>
+
+            {/* Disclaimer */}
+            <View style={styles.infoBanner}>
+              <Info size={16} color="#64748B" />
+              <Text
+                style={[
+                  styles.infoText,
+                  isIndic(language) && { fontSize: 10, lineHeight: 15 },
+                ]}
+              >
+                {t("analytics_disclaimer")}
+              </Text>
+            </View>
+
+            <View style={{ height: 28 }} />
           </>
         )}
-
-        {/* Disclaimer Note */}
-        <View style={styles.infoBanner}>
-          <Info size={16} color="#64748B" />
-          <Text
-            style={[styles.infoText, isIndic(language) && { fontSize: 10, lineHeight: 15 }]}
-          >
-            {t("analytics_disclaimer")}
-          </Text>
-        </View>
-
-        <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -1247,7 +1074,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
   },
   horizonChipActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: BRAND_BLUE,
   },
   horizonChipText: {
     fontSize: 11,
@@ -1258,52 +1085,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "800",
   },
-  tabSwitcher: {
-    flexDirection: "row",
-    marginHorizontal: 14,
-    marginTop: 10,
-    backgroundColor: "#E2E8F0",
-    padding: 3,
-    borderRadius: 12,
-    gap: 4,
-  },
-  tabBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 8,
-    borderRadius: 9,
-  },
-  tabBtnActive: {
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#64748B",
-  },
-  tabBtnTextActive: {
-    color: "#0F172A",
-    fontWeight: "800",
-  },
   scrollContent: {
     padding: 14,
     gap: 14,
   },
-  sectionCard: {
+  mainCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    shadowColor: "#000",
+    shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -1312,347 +1104,167 @@ const styles = StyleSheet.create({
   cardHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     marginBottom: 14,
   },
-  iconBoxOrange: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#FFEDD5",
+  brandIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#EBF5FF",
     alignItems: "center",
     justifyContent: "center",
   },
-  iconBoxEmerald: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#D1FAE5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconBoxBlue: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#DBEAFE",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconBoxRed: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#FEE2E2",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardTitle: {
-    fontSize: 14.5,
-    fontWeight: "900",
-    color: "#0F172A",
-  },
-  cardSub: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#64748B",
-    marginTop: 1,
-  },
-  balanceCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 12,
-  },
-  balanceHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  balanceScoreText: {
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  balancePill: {
-    backgroundColor: "rgba(255,255,255,0.85)",
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 6,
-  },
-  balancePillText: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    color: "#475569",
-  },
-  balanceProgressTrack: {
-    height: 5,
-    backgroundColor: "rgba(0,0,0,0.06)",
-    borderRadius: 3,
-    overflow: "hidden",
-    marginBottom: 8,
-  },
-  balanceProgressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  balanceTagsRow: {
-    flexDirection: "row",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  balanceTag: {
-    backgroundColor: "rgba(255,255,255,0.9)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 0.5,
-    borderColor: "rgba(0,0,0,0.08)",
-  },
-  balanceTagLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#334155",
-  },
-  grid2Col: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  numChip: {
-    width: "48.5%",
-    backgroundColor: "#FFF7ED",
-    borderWidth: 1,
-    borderColor: "#FFEDD5",
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
-  },
-  numChipHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  rankBadge: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#EA580C",
-  },
-  numChipNumber: {
+  mainCardTitle: {
     fontSize: 15,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#0F172A",
-    letterSpacing: 1,
   },
-  numChipCount: {
+  mainCardSub: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#64748B",
+    marginTop: 2,
+  },
+  gridContainer: {
+    gap: 8,
+  },
+  twoColumnRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  statGridItem: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  statItemTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 7,
+  },
+  rankBrandText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#EA580C",
+    color: BRAND_BLUE,
+  },
+  statNumberText: {
+    fontSize: 15.5,
+    fontWeight: "900",
+    color: "#0F172A",
+    letterSpacing: 0.5,
+  },
+  countBrandText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: BRAND_BLUE,
   },
   barTrack: {
     height: 4,
-    backgroundColor: "#FED7AA",
     borderRadius: 2,
+    backgroundColor: "#E2E8F0",
     overflow: "hidden",
   },
-  barFillOrange: {
+  barFillBrand: {
     height: "100%",
-    backgroundColor: "#EA580C",
     borderRadius: 2,
+    backgroundColor: BRAND_BLUE,
   },
-  numChipCold: {
-    width: "48.5%",
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#DBEAFE",
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
-  },
-  rankBadgeBlue: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#2563EB",
-  },
-  numChipCountBlue: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#2563EB",
-  },
-  barTrackBlue: {
-    height: 4,
-    backgroundColor: "#DBEAFE",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  barFillBlue: {
-    height: "100%",
-    backgroundColor: "#2563EB",
-    borderRadius: 2,
-  },
-  chipsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  badgeChipGreen: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#ECFDF5",
-    borderWidth: 1,
-    borderColor: "#A7F3D0",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  badgeChipGreenNum: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#065F46",
-    letterSpacing: 0.5,
-  },
-  badgeChipGreenCount: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    color: "#047857",
-  },
-  badgeChipBlue: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  badgeChipBlueNum: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#1E40AF",
-  },
-  badgeChipBlueCount: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    color: "#2563EB",
-  },
-  digitDistributionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    height: 120,
-    marginTop: 14,
-    paddingHorizontal: 4,
-  },
-  digitCol: {
-    alignItems: "center",
-    flex: 1,
-    height: "100%",
-    justifyContent: "flex-end",
-  },
-  digitCountLabel: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: "#94A3B8",
-    marginBottom: 4,
-  },
-  digitColBarTrack: {
-    width: 14,
-    height: 75,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 6,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-  digitColBarFill: {
-    width: "100%",
-    backgroundColor: COLORS.primary,
-    borderRadius: 6,
-  },
-  digitNumberLabel: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#0F172A",
-    marginTop: 6,
-  },
-  districtList: {
-    gap: 8,
-  },
-  districtRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+  locationsList: {
     gap: 10,
   },
-  districtRowTop3: {
-    backgroundColor: "#FEF2F2",
-  },
-  distRankBox: {
-    width: 28,
+  locationRow: {
+    flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 10,
+    gap: 10,
   },
-  distRankText: {
-    fontSize: 12,
+  locationRowTop1: {
+    backgroundColor: "#F0F7FF",
+    borderColor: "#BFDBFE",
+  },
+  locationRankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  locationRankBadgeTop1: {
+    backgroundColor: BRAND_BLUE,
+  },
+  locationRankText: {
+    fontSize: 11,
     fontWeight: "800",
-    color: "#94A3B8",
+    color: "#475569",
   },
-  distRankTextTop3: {
-    color: "#DC2626",
-    fontWeight: "900",
+  locationRankTextTop1: {
+    color: "#FFFFFF",
   },
-  distInfoCol: {
+  locationInfoCol: {
     flex: 1,
   },
-  distNameRow: {
+  locationNameRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  distName: {
+  locationNameText: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#1E293B",
+    color: "#0F172A",
   },
-  distJackpotCount: {
-    fontSize: 11.5,
-    fontWeight: "800",
-    color: "#DC2626",
+  winPill: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
   },
-  distBarTrack: {
+  winPillText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: BRAND_BLUE,
+  },
+  locationBarTrack: {
     height: 5,
+    borderRadius: 3,
     backgroundColor: "#E2E8F0",
-    borderRadius: 2.5,
     overflow: "hidden",
   },
-  distBarFill: {
+  locationBarFill: {
     height: "100%",
-    backgroundColor: "#94A3B8",
-    borderRadius: 2.5,
-  },
-  distBarFillTop3: {
-    backgroundColor: "#DC2626",
+    borderRadius: 3,
+    backgroundColor: BRAND_BLUE,
   },
   infoBanner: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     gap: 8,
-    backgroundColor: "#F1F5F9",
     padding: 12,
     borderRadius: 12,
+    backgroundColor: "#F1F5F9",
   },
   infoText: {
     flex: 1,
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 10.5,
     color: "#64748B",
-    lineHeight: 16,
+    lineHeight: 15,
   },
+
+  // 4-Digit Wheel Explorer Styles
   wheelsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1666,10 +1278,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: "rgba(59, 130, 246, 0.25)",
+    borderColor: "rgba(11, 60, 93, 0.22)",
     overflow: "hidden",
     position: "relative",
-    shadowColor: "#3B82F6",
+    shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
@@ -1681,10 +1293,10 @@ const styles = StyleSheet.create({
     left: 4,
     right: 4,
     height: 46,
-    backgroundColor: "rgba(239, 246, 255, 0.9)",
+    backgroundColor: "rgba(235, 245, 255, 0.9)",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(59, 130, 246, 0.25)",
+    borderColor: "rgba(11, 60, 93, 0.2)",
     zIndex: 0,
   },
   wheelSpacer: {
@@ -1713,11 +1325,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.primary,
+    backgroundColor: BRAND_BLUE,
     paddingVertical: 13,
     paddingHorizontal: 18,
     borderRadius: 25,
-    shadowColor: COLORS.primary,
+    shadowColor: BRAND_BLUE,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -1794,7 +1406,7 @@ const styles = StyleSheet.create({
   searchHeroDigitsTag: {
     fontSize: 9,
     fontWeight: "800",
-    color: "#2563EB",
+    color: BRAND_BLUE,
     letterSpacing: 0.5,
   },
   searchHeroDigits: {
@@ -1805,7 +1417,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   searchHitsBadge: {
-    backgroundColor: "#2563EB",
+    backgroundColor: BRAND_BLUE,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1818,7 +1430,7 @@ const styles = StyleSheet.create({
   searchHitRateText: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#1E40AF",
+    color: BRAND_BLUE,
     marginTop: 3,
   },
   tierBreakdownRow: {
@@ -1828,7 +1440,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "rgba(37, 99, 235, 0.15)",
+    borderTopColor: "rgba(11, 60, 93, 0.15)",
   },
   tierPill: {
     backgroundColor: "#FFFFFF",
@@ -1841,7 +1453,7 @@ const styles = StyleSheet.create({
   tierPillText: {
     fontSize: 9.5,
     fontWeight: "800",
-    color: "#1E40AF",
+    color: BRAND_BLUE,
   },
   recentDrawsLabel: {
     fontSize: 10.5,
@@ -1891,28 +1503,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   noMatchText: {
-    fontSize: 11.5,
-    fontWeight: "700",
-    color: "#64748B",
-    textAlign: "center",
-  },
-  searchIdleBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#F0FDF4",
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#86EFAC",
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 6,
-  },
-  searchIdleText: {
-    flex: 1,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#166534",
-    lineHeight: 15,
+    color: "#64748B",
   },
 });

@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   topCardBlue: {
-    backgroundColor: "#0B539C",
+    backgroundColor: "rgb(11, 60, 93)",
     paddingVertical: 20,
     paddingHorizontal: 16,
     alignItems: "center",
@@ -1034,7 +1034,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   cardTopBlue: {
-    backgroundColor: "#0B539C",
+    backgroundColor: "rgb(11, 60, 93)",
     paddingVertical: 16,
     paddingHorizontal: 8,
     alignItems: "center",

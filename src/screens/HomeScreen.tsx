@@ -2933,7 +2933,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.background,
   },
-  tierTitle: { fontSize: 16, fontWeight: "900", color: "#0F172A" },
+  tierTitle: { fontSize: 17, fontWeight: "900", color: "#0F172A" },
   tierAmount: { fontSize: 16, fontWeight: "900", color: "#B45309" },
   numbersGrid: {
     flexDirection: "row",

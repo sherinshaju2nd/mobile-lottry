@@ -822,7 +822,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                     <Text
                       style={[
                         styles.tierTitle,
-                        language === "ml" && { fontSize: 13.5, lineHeight: 19 },
+                        language === "ml" && { fontSize: 16.5, lineHeight: 22 },
                       ]}
                     >
                       {tier.label}
@@ -1597,7 +1597,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.background,
   },
-  tierTitle: { fontSize: 16, fontWeight: "900", color: "#0F172A" },
+  tierTitle: { fontSize: 17, fontWeight: "900", color: "#0F172A" },
   tierAmount: { fontSize: 16, fontWeight: "900", color: "#B45309" },
   numbersGrid: {
     flexDirection: "row",

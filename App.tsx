@@ -18,7 +18,7 @@ import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
 import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
 import ContactScreen from "./src/screens/ContactScreen";
-import AnalyticsScreen from "./src/screens/AnalyticsScreen";
+import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import { HomeUiProvider } from "./src/context/HomeUiContext";

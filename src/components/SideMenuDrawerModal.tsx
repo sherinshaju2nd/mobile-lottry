@@ -198,7 +198,7 @@ export default function SideMenuDrawerModal({
             {/* UI Theme Selection (Normal vs Modern) */}
             <View style={styles.sectionCard}>
               <Text style={styles.sectionLabel}>
-                {isMl ? "ഹോം സ്ക്രീൻ ലേഔട്ട്" : "HOME SCREEN UI THEME"}
+                {isMl ? "ആപ്പ് ലേഔട്ട് & തീം" : "APP UI THEME & LAYOUT"}
               </Text>
 
               <View style={styles.uiModeRow}>
