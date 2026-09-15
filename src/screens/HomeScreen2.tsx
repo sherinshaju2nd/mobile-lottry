@@ -374,8 +374,8 @@ export default function HomeScreen2({ navigation }: any) {
 
     const formattedDate = formatDDMMYYYY(item.draw_date);
     const badgeCode = formatDrawCodeBadge(item);
-    // Show NEW ribbon on the most recent completed draw in grid only if today is not completed
-    const isLatestGridDraw = index === 0 && !isTopCompleted;
+    // Show NEW ribbon on the most recent completed draw in grid only if today is not live and not completed (pre-draw)
+    const isLatestGridDraw = index === 0 && !isTopLive && !isTopCompleted;
 
     return (
       <TouchableOpacity

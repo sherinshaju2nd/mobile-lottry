@@ -31,17 +31,6 @@ import ShimmerSkeleton from "../components/ShimmerSkeleton";
 
 const BRAND_BLUE = COLORS.primary;
 
-const QUICK_PICKS = [
-  { num: "5593", bg: "#EEF2FF", text: "#4F46E5", border: "#E0E7FF" },
-  { num: "5866", bg: "#FEE2E2", text: "#DC2626", border: "#FECACA" },
-  { num: "2749", bg: "#ECFDF5", text: "#059669", border: "#A7F3D0" },
-  { num: "9924", bg: "#F3E8FF", text: "#9333EA", border: "#E9D5FF" },
-  { num: "8712", bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
-  { num: "8860", bg: "#CCFBF1", text: "#0D9488", border: "#99F6E4" },
-  { num: "0096", bg: "#FDF2F8", text: "#DB2777", border: "#FBCFE8" },
-  { num: "1234", bg: "#EFF6FF", text: "#0284C7", border: "#BAE6FD" },
-];
-
 const ITEM_HEIGHT = 46;
 const DIGITS_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 const SNAP_OFFSETS = DIGITS_LIST.map((d) => d * ITEM_HEIGHT);
@@ -178,20 +167,6 @@ export default function AnalyticsScreen2({ navigation }: any) {
       next[colIndex] = newVal;
       return next;
     });
-  };
-
-  const handleSelectQuickPick = (numStr: string) => {
-    triggerLightHaptic();
-    const clean = numStr.trim().replace(/\D/g, "");
-    const padded = clean.padStart(4, "0").slice(-4);
-    const dArr: [number, number, number, number] = [
-      parseInt(padded[0], 10) || 0,
-      parseInt(padded[1], 10) || 0,
-      parseInt(padded[2], 10) || 0,
-      parseInt(padded[3], 10) || 0,
-    ];
-    setDigits(dArr);
-    setSubmittedQuery(clean);
   };
 
   const handleCheckHistory = () => {
@@ -590,52 +565,6 @@ export default function AnalyticsScreen2({ navigation }: any) {
                   <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
               </TouchableOpacity>
-
-              {/* Quick Picks Header */}
-              <View style={styles.quickPicksHeaderRow}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-                  <Zap size={14} color="#F59E0B" fill="#F59E0B" />
-                  <Text style={styles.quickPicksTitle}>
-                    {t("quick_picks_title")}
-                  </Text>
-                </View>
-                <Text style={styles.quickPicksSub}>
-                  {t("quick_picks_desc")}
-                </Text>
-              </View>
-
-              {/* Quick Picks Scroll */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.quickPicksScrollContent}
-              >
-                {QUICK_PICKS.map((item) => {
-                  const isSelected = submittedQuery === item.num;
-                  return (
-                    <TouchableOpacity
-                      key={item.num}
-                      style={[
-                        styles.quickPickPill,
-                        { backgroundColor: item.bg, borderColor: item.border },
-                        isSelected && styles.quickPickPillActive,
-                      ]}
-                      onPress={() => handleSelectQuickPick(item.num)}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.quickPickPillText,
-                          { color: item.text },
-                          isSelected && { fontWeight: "900" },
-                        ]}
-                      >
-                        {item.num}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
 
               {/* Search Result Display (When a query is checked or selected) */}
               {searchResult && (
@@ -1335,7 +1264,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     position: "relative",
-    marginBottom: 16,
+    marginBottom: 0,
   },
   checkHistoryBtnContent: {
     flexDirection: "row",
@@ -1357,44 +1286,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.22)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  quickPicksHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  quickPicksTitle: {
-    fontSize: 12.5,
-    fontWeight: "900",
-    color: "#0F172A",
-  },
-  quickPicksSub: {
-    fontSize: 10.5,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-  quickPicksScrollContent: {
-    flexDirection: "row",
-    gap: 8,
-    paddingVertical: 3,
-  },
-  quickPickPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  quickPickPillActive: {
-    borderWidth: 2,
-    transform: [{ scale: 1.04 }],
-  },
-  quickPickPillText: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.5,
   },
   searchHeroBox: {
     backgroundColor: "#EFF6FF",
