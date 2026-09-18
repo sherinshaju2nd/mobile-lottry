@@ -8,6 +8,19 @@ const SUPABASE_KEY =
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const DEFAULT_GEMINI_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+];
+
+const PREFERRED_GEMINI_MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL
+  ? [process.env.EXPO_PUBLIC_GEMINI_MODEL]
+  : [];
+export const GEMINI_MODELS = Array.from(
+  new Set([...PREFERRED_GEMINI_MODEL, ...DEFAULT_GEMINI_MODELS]),
+);
+
 export interface WinnerInfo {
   ticket?: string;
   location?: string;
@@ -735,14 +748,7 @@ Return ONLY JSON:
 {"series": "KN", "ticket_number": "482910", "lottery_name": "Karunya Plus", "draw_date": "2026-03-15"}
 `;
 
-  const models = [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-  ];
+  const models = GEMINI_MODELS;
   if (GEMINI_API_KEY) {
     for (const model of models) {
       try {
@@ -871,14 +877,7 @@ ${contextData || "No extra context."}
     },
   ];
 
-  const models = [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-  ];
+  const models = GEMINI_MODELS;
 
   if (GEMINI_API_KEY) {
     for (const model of models) {
@@ -1002,14 +1001,7 @@ ${contextData || "No extra context."}
     },
   ];
 
-  const models = [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-  ];
+  const models = GEMINI_MODELS;
 
   let lastErrorMsg = "";
 
@@ -1095,14 +1087,7 @@ Return ONLY JSON:
 }
 `;
 
-  const models = [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-  ];
+  const models = GEMINI_MODELS;
   if (GEMINI_API_KEY) {
     for (const model of models) {
       try {
@@ -1514,14 +1499,7 @@ Return strictly a valid JSON object matching this exact schema without markdown 
 }
 `;
 
-  const models = [
-    "gemini-3.8-flash",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
-    "gemini-3.1-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-pro",
-  ];
+  const models = GEMINI_MODELS;
 
   let lastError: any = null;
 
