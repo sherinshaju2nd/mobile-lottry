@@ -3,7 +3,7 @@
     "name": "Kerala Lottery Results Today",
     "slug": "kerala-lottery-results",
     "scheme": "keralalottery",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -54,18 +54,8 @@
     },
     "android": {
       "package": "com.keralalotteryresultstoday.app",
-      "versionCode": 12,
+      "versionCode": 14,
       "softwareKeyboardLayoutMode": "resize",
-      "edgeToEdgeEnabled": true,
-      "androidStatusBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#00000000",
-        "translucent": true
-      },
-      "androidNavigationBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#00000000"
-      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
