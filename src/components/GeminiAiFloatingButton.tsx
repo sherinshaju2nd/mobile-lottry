@@ -8,6 +8,8 @@ import {
 } from "react-native";
 import Svg, { Path, Defs, LinearGradient, Stop } from "react-native-svg";
 
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
+
 interface GeminiAiFloatingButtonProps {
   onPress: () => void;
   style?: object;
@@ -17,6 +19,7 @@ export default function GeminiAiFloatingButton({
   onPress,
   style,
 }: GeminiAiFloatingButtonProps) {
+  const { isCompact } = useDeviceAdaptive(true);
   // Pulse & glow animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.4)).current;
@@ -59,6 +62,7 @@ export default function GeminiAiFloatingButton({
     <Animated.View
       style={[
         styles.wrapper,
+        isCompact && { bottom: 16, right: 14 },
         style,
         {
           transform: [{ scale: pulseAnim }],

@@ -27,6 +27,7 @@ import {
 import { isIndic } from "../constants/translations";
 import { fetchLotteriesFromDb } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import {
   formatPrizeAmountSafe,
   getSafeTodayISTDate,
@@ -52,6 +53,7 @@ const LOTTERY_PRIZE_DEFAULTS: Record<string, { prize: string; price: string }> =
 };
 
 export default function LotteriesScreen({ navigation }: any) {
+  const { safeTopInset, isCompact, contentPaddingHorizontal } = useDeviceAdaptive(true);
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<"weekly" | "bumper">("weekly");
   const [weeklyData, setWeeklyData] = useState<LotteryMeta[]>(WEEKLY_LOTTERIES);
@@ -279,8 +281,14 @@ export default function LotteriesScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <View style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
+    >
+      <View style={[styles.container, { paddingHorizontal: contentPaddingHorizontal }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerBadge}>

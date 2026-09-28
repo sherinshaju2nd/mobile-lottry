@@ -8,6 +8,7 @@ import {
   ScrollView,
   StatusBar,
   Linking,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -21,12 +22,14 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 interface PrivacyConsentModalProps {
   onAccept: () => void;
 }
 
 export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalProps) {
+  const { safeTopInset, safeBottomInset } = useDeviceAdaptive(false);
   const { language, setLanguage } = useLanguage();
   const [visible, setVisible] = useState(true);
   const [isAgeConfirmed, setIsAgeConfirmed] = useState(false);
@@ -52,8 +55,13 @@ export default function PrivacyConsentModal({ onAccept }: PrivacyConsentModalPro
       visible={visible}
       statusBarTranslucent
     >
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+        ]}
+        edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+      >
 
         {/* Language Switcher Bar */}
         <View style={styles.langBar}>

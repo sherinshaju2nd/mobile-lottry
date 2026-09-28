@@ -39,6 +39,7 @@ import {
 import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { Language, isIndic } from "../constants/translations";
 
 interface Message {
@@ -125,6 +126,7 @@ export default function AiVoiceAssistantModal({
   visible,
   onClose,
 }: AiVoiceAssistantModalProps) {
+  const { safeBottomInset } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const [selectedLang, setSelectedLang] = useState<Language>(language || "en");
 
@@ -715,7 +717,7 @@ export default function AiVoiceAssistantModal({
           </ScrollView>
 
           {/* WhatsApp-style Voice & Text Dock */}
-          <View style={styles.dock}>
+          <View style={[styles.dock, { paddingBottom: safeBottomInset + 10 }]}>
             {isRecording ? (
               /* WhatsApp Voice Recording Active Bar with Live Waveform Timeline */
               <View style={styles.waRecordingBar}>

@@ -41,6 +41,7 @@ import {
 import { isIndic } from "../constants/translations";
 import { fetchLotteryHistory, DrawResult, supabase } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isLotteryFavorite, toggleFavoriteLottery } from "../utils/favorites";
 import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
 
@@ -51,11 +52,12 @@ import {
 } from "../utils/formatters";
 
 export default function LotteryArchiveScreen({ route, navigation }: any) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { t, language } = useLanguage();
   const rawCode =
-    route.params?.code ||
-    route.params?.lotteryCode ||
-    route.params?.lottery_code ||
+    route?.params?.code ||
+    route?.params?.lotteryCode ||
+    route?.params?.lottery_code ||
     "BT";
   const codeUpper = String(rawCode).trim().toUpperCase();
 
@@ -312,7 +314,13 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+    >
       <View style={styles.container}>
         {/* Top Header Bar */}
         <View style={styles.header}>

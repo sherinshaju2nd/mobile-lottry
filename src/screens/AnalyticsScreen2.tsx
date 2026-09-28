@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -23,6 +24,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic, getDistrictTranslatedName } from "../constants/translations";
 import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
@@ -152,6 +154,7 @@ function chunkPairs<T>(arr: T[]): [T, T | undefined][] {
 
 // Normal / Classic UI Statistics Screen
 export default function AnalyticsScreen2({ navigation }: any) {
+  const { safeTopInset, isCompact } = useDeviceAdaptive(true);
   const { t, language } = useLanguage();
 
   const [draws, setDraws] = useState<DrawResult[]>([]);
@@ -420,11 +423,12 @@ export default function AnalyticsScreen2({ navigation }: any) {
 
   return (
     <SafeAreaView
-      style={styles.safeArea}
-      edges={["top", "left", "right", "bottom"]}
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
       {/* Header */}
       <View style={styles.header}>
         {navigation?.canGoBack && navigation.canGoBack() ? (

@@ -6,14 +6,17 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Globe, Check, Sparkles, X } from "lucide-react-native";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { Language, SUPPORTED_LANGUAGES, getTranslation } from "../constants/translations";
 import { COLORS } from "../constants/colors";
 
 export default function LanguageSelectionModal() {
+  const { safeTopInset, safeBottomInset } = useDeviceAdaptive(false);
   const {
     language,
     setLanguage,
@@ -53,7 +56,13 @@ export default function LanguageSelectionModal() {
       animationType="fade"
       transparent={false}
     >
-      <SafeAreaView style={styles.container} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+        ]}
+        edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+      >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Header Card */}
           <View style={styles.header}>

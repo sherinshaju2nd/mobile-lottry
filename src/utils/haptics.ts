@@ -41,12 +41,16 @@ export const triggerErrorHaptic = async () => {
   }
 };
 
-export const triggerLiveChimeHaptic = async () => {
+export const triggerHeavyHaptic = async () => {
   try {
     if (Platform.OS !== "web") {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
   } catch {
-    Vibration.vibrate(30);
+    Vibration.vibrate(40);
   }
 };
+
+export const triggerLiveChimeHaptic = triggerHeavyHaptic;
+
+

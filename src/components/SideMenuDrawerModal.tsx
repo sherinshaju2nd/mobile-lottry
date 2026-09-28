@@ -33,6 +33,7 @@ import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
 import { useLanguage } from "../context/LanguageContext";
 import { useHomeUi } from "../context/HomeUiContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic } from "../constants/translations";
 import { shareKeralaLotteryApp } from "../utils/shareHelper";
 import packageJson from "../../package.json";
@@ -54,6 +55,7 @@ export default function SideMenuDrawerModal({
   onOpenNotificationSettings,
   navigation,
 }: SideMenuDrawerModalProps) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const { uiMode, setUiMode } = useHomeUi();
   const isMl = language === "ml";
@@ -152,7 +154,12 @@ export default function SideMenuDrawerModal({
           ]}
         >
           {/* Header */}
-          <View style={styles.drawerHeader}>
+          <View
+            style={[
+              styles.drawerHeader,
+              { paddingTop: safeTopInset + 12 },
+            ]}
+          >
             <View style={styles.brandRow}>
               <Image
                 source={require("../../assets/icon.png")}
@@ -193,7 +200,10 @@ export default function SideMenuDrawerModal({
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: safeBottomInset + 28 },
+            ]}
           >
             {/* UI Theme Selection (Normal vs Modern) */}
             <View style={styles.sectionCard}>

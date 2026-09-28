@@ -19,6 +19,10 @@ import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
 import ContactScreen from "./src/screens/ContactScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
+import NotFoundScreen from "./src/screens/NotFoundScreen";
+import ErrorBoundary from "./src/components/ErrorBoundary";
+import OfflineGameModal from "./src/components/OfflineGameModal";
+import { NetworkProvider } from "./src/context/NetworkContext";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
 import { HomeUiProvider } from "./src/context/HomeUiContext";
@@ -240,10 +244,12 @@ function AnimatedTabIcon({
   );
 }
 
+import { useDeviceAdaptive } from "./src/hooks/useDeviceAdaptive";
+
 function BottomTabNavigator({ navigation }: any) {
   const { openScanner } = useScanner();
   const { t, language } = useLanguage();
-  const insets = useSafeAreaInsets();
+  const { isIOS, isAndroid, isCompact, isTablet, bottomNavType, safeBottomInset } = useDeviceAdaptive(true);
 
   return (
     <Tab.Navigator
@@ -253,7 +259,12 @@ function BottomTabNavigator({ navigation }: any) {
         },
       }}
       screenOptions={({ route }: { route: { name: string } }) => {
-        const isIOS = Platform.OS === "ios";
+        // Base bar height
+        const baseHeight = language === "ml" ? (isIOS ? 54 : 60) : (isIOS ? 58 : 64);
+        const extraBottom = safeBottomInset > 0 ? safeBottomInset : (isIOS ? 18 : 6);
+        const totalHeight = baseHeight + extraBottom;
+        const padBottom = (language === "ml" ? 4 : 6) + (safeBottomInset > 0 ? Math.max(0, safeBottomInset - (isIOS ? 6 : 2)) : (isIOS ? 10 : 4));
+
         return {
           headerShown: false,
           tabBarActiveTintColor: COLORS.primary,
@@ -263,8 +274,8 @@ function BottomTabNavigator({ navigation }: any) {
                 backgroundColor: "rgba(255, 255, 255, 0.94)",
                 borderTopColor: "rgba(0, 0, 0, 0.08)",
                 borderTopWidth: 0.5,
-                height: (language === "ml" ? 54 : 58) + (insets.bottom > 0 ? insets.bottom : 20),
-                paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom - 4 : 12),
+                height: totalHeight,
+                paddingBottom: padBottom,
                 paddingTop: language === "ml" ? 4 : 6,
                 shadowColor: "#000000",
                 shadowOffset: { width: 0, height: -3 },
@@ -275,8 +286,8 @@ function BottomTabNavigator({ navigation }: any) {
                 backgroundColor: "#FFFFFF",
                 borderTopColor: "#E2E8F0",
                 borderTopWidth: 1,
-                height: (language === "ml" ? 60 : 66) + (insets.bottom > 0 ? insets.bottom : 6),
-                paddingBottom: (language === "ml" ? 4 : 6) + (insets.bottom > 0 ? insets.bottom : 6),
+                height: totalHeight,
+                paddingBottom: padBottom,
                 paddingTop: language === "ml" ? 5 : 7,
                 elevation: 12,
               },
@@ -518,7 +529,10 @@ function AppContent() {
       />
       <NavigationContainer ref={navigationRef}>
         <StatusBar style="dark" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator
+          initialRouteName="MainTabs"
+          screenOptions={{ headerShown: false }}
+        >
           <Stack.Screen name="MainTabs" component={BottomTabNavigator} />
           <Stack.Screen name="LotteryArchive" component={LotteryArchiveScreen} />
           <Stack.Screen name="DrawBreakdown" component={DrawBreakdownScreen} />
@@ -527,8 +541,11 @@ function AppContent() {
           <Stack.Screen name="Search" component={SearchScreen} />
           <Stack.Screen name="Checker" component={SearchScreen} />
           <Stack.Screen name="Contact" component={ContactScreen} />
+          <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>
+      {/* Offline Mini-game & Network Lost Overlay */}
+      <OfflineGameModal />
       {isPrivacyAccepted ? (
         <LanguageSelectionModal />
       ) : (
@@ -540,14 +557,18 @@ function AppContent() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <LanguageProvider>
-        <HomeUiProvider>
-          <ScannerProvider>
-            <AppContent />
-          </ScannerProvider>
-        </HomeUiProvider>
-      </LanguageProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <NetworkProvider>
+          <LanguageProvider>
+            <HomeUiProvider>
+              <ScannerProvider>
+                <AppContent />
+              </ScannerProvider>
+            </HomeUiProvider>
+          </LanguageProvider>
+        </NetworkProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

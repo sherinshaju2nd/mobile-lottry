@@ -27,6 +27,7 @@ import { searchTicketNumber, SearchMatch, DrawResult } from "../api/lotteryApi";
 import ModernDatePickerModal from "./ModernDatePickerModal";
 import JustMissModal from "./JustMissModal";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic } from "../constants/translations";
 import { triggerLightHaptic } from "../utils/haptics";
 
@@ -56,6 +57,7 @@ export default function BarcodeResultModal({
   onClose,
   onRescan,
 }: BarcodeResultModalProps) {
+  const { safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const isMl = language === "ml";
   const indic = isIndic(language);
@@ -160,7 +162,7 @@ export default function BarcodeResultModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { paddingBottom: safeBottomInset + 16 }]}>
           {/* Top Bar Header */}
           <View style={styles.header}>
             <View style={styles.barcodeChip}>

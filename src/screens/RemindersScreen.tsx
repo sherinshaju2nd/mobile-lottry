@@ -40,6 +40,7 @@ import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { AlertCircle, Settings } from "lucide-react-native";
 
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { getDayTranslated } from "../constants/lotteries";
 
 // Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android and handles 12h/24h)
@@ -73,6 +74,7 @@ function parseDrawDateTime(drawDate?: string, drawTime?: string): number {
 }
 
 export default function RemindersScreen({ navigation }: any) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const isMl = language === "ml";
   const [reminders, setReminders] = useState<LotteryReminder[]>([]);
@@ -283,12 +285,13 @@ export default function RemindersScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#FFFFFF"
-      />
-
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+    >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>

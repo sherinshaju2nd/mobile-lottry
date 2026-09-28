@@ -134,8 +134,10 @@ export function isDrawCompletedWith9th(draw: DrawResult | null | undefined): boo
   return false;
 }
 
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
+
 export default function HomeScreen2({ navigation }: any) {
-  const insets = useSafeAreaInsets();
+  const { safeTopInset, isCompact, isTablet, isTall, contentPaddingHorizontal } = useDeviceAdaptive(true);
   const { t, language, setLanguage } = useLanguage();
   const isMl = language === "ml";
 
@@ -532,7 +534,13 @@ export default function HomeScreen2({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
+    >
       {/* Top Navbar Header */}
       <View style={styles.header}>
         <View style={styles.brandRow}>
@@ -673,7 +681,7 @@ export default function HomeScreen2({ navigation }: any) {
           activeOpacity={1}
           onPress={() => setShowLangDropdown(false)}
         >
-          <View style={[styles.dropdownBox, { marginTop: insets.top + 48 }]}>
+          <View style={[styles.dropdownBox, { marginTop: safeTopInset + 48 }]}>
             <View style={styles.dropdownHeader}>
               <Globe size={13} color={COLORS.textLight} />
               <Text style={styles.dropdownHeaderText}>{t("change_language")}</Text>

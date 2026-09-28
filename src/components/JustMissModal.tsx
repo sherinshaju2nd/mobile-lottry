@@ -23,6 +23,7 @@ import { COLORS } from "../constants/colors";
 import { DrawResult } from "../api/lotteryApi";
 import { triggerLightHaptic } from "../utils/haptics";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -65,6 +66,7 @@ export default function JustMissModal({
   draw,
   onViewResult,
 }: JustMissModalProps) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const isMl = language === "ml";
   const [activeTab, setActiveTab] = useState<"all" | "1_digit" | "shuffled" | "2_digits">("all");
@@ -342,7 +344,7 @@ export default function JustMissModal({
     >
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: safeTopInset + 12 }]}>
           <View style={styles.headerLeft}>
             <View style={styles.headerIconBg}>
               <Target size={20} color="#FFFFFF" />
@@ -472,7 +474,10 @@ export default function JustMissModal({
         {/* Scrollable Results List */}
         <ScrollView
           style={styles.scrollArea}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: safeBottomInset + 24 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {filteredItems.length > 0 ? (

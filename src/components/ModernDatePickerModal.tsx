@@ -17,6 +17,7 @@ import {
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 interface ModernDatePickerModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export default function ModernDatePickerModal({
   onClose,
   onSelectDate,
 }: ModernDatePickerModalProps) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const isMl = language === "ml";
 
@@ -154,7 +156,15 @@ export default function ModernDatePickerModal({
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
+      <View
+        style={[
+          styles.modalOverlay,
+          {
+            paddingTop: safeTopInset + 10,
+            paddingBottom: safeBottomInset + 10,
+          },
+        ]}
+      >
         <View style={styles.modalCard}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
             {/* Header */}

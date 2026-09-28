@@ -33,6 +33,7 @@ import {
 } from "../utils/notificationScheduler";
 import { triggerLightHaptic } from "../utils/haptics";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic } from "../constants/translations";
 
 interface NotificationSettingsModalProps {
@@ -44,6 +45,7 @@ export default function NotificationSettingsModal({
   visible,
   onClose,
 }: NotificationSettingsModalProps) {
+  const { safeBottomInset } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
 
   const [settings, setSettings] = useState<NotificationSettings>(
@@ -87,7 +89,7 @@ export default function NotificationSettingsModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+        <View style={[styles.modalContent, { paddingBottom: safeBottomInset + 16 }]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

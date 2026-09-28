@@ -111,9 +111,10 @@ import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 export default function HomeScreen({ navigation }: any) {
-  const insets = useSafeAreaInsets();
+  const { safeTopInset, isCompact, isTablet, isTall, contentPaddingHorizontal, scaleText } = useDeviceAdaptive(true);
   const { t, language, setLanguage, setShowLanguageModal } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
@@ -486,7 +487,13 @@ export default function HomeScreen({ navigation }: any) {
   });
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -495,7 +502,10 @@ export default function HomeScreen({ navigation }: any) {
         <ScrollView
           ref={scrollViewRef}
           style={styles.container}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingHorizontal: contentPaddingHorizontal },
+          ]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           overScrollMode="never"
@@ -2272,7 +2282,7 @@ export default function HomeScreen({ navigation }: any) {
             backgroundColor: "rgba(0,0,0,0.3)",
             justifyContent: "flex-start",
             alignItems: "flex-end",
-            paddingTop: insets.top + 48,
+            paddingTop: safeTopInset + 48,
             paddingRight: 16,
           }}
           activeOpacity={1}

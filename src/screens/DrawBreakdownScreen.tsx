@@ -56,12 +56,14 @@ import BarcodeResultModal from "../components/BarcodeResultModal";
 import ConfettiCelebration from "../components/ConfettiCelebration";
 import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import {
   getSafeTodayISTDate,
   formatSafeDateDisplay,
 } from "../utils/formatters";
 
 export default function DrawBreakdownScreen({ route, navigation }: any) {
+  const { safeTopInset, safeBottomInset, isCompact, contentPaddingHorizontal } = useDeviceAdaptive(false);
   const { t, language } = useLanguage();
   const todayISTDate = getSafeTodayISTDate();
 
@@ -468,11 +470,20 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   ] as const;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingHorizontal: contentPaddingHorizontal },
+        ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         overScrollMode="never"

@@ -10,7 +10,7 @@ import {
 import { Radio, ChevronRight, Trophy, X } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 interface FloatingLiveBannerProps {
   visible: boolean;
@@ -31,7 +31,7 @@ export default function FloatingLiveBanner({
   onPress,
   onDismiss,
 }: FloatingLiveBannerProps) {
-  const insets = useSafeAreaInsets();
+  const { safeTopInset } = useDeviceAdaptive(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -73,7 +73,7 @@ export default function FloatingLiveBanner({
 
   if (!visible) return null;
 
-  const topOffset = Math.max(insets.top, Platform.OS === "android" ? 10 : 12);
+  const topOffset = safeTopInset + 6;
 
   return (
     <Animated.View

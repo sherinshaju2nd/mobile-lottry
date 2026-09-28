@@ -9,6 +9,7 @@ import {
   StatusBar,
   Dimensions,
   TextInput,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -33,6 +34,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { fetchAllDraws, DrawResult } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic, getDistrictTranslatedName } from "../constants/translations";
 import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
@@ -170,6 +172,7 @@ function SingleDigitWheel({
 
 // Kerala State Lottery - Analytics & Frequency Statistics
 export default function AnalyticsScreen({ navigation }: any) {
+  const { safeTopInset, isCompact } = useDeviceAdaptive(true);
   const { t, language } = useLanguage();
   const isMl = language === "ml";
 
@@ -541,11 +544,12 @@ export default function AnalyticsScreen({ navigation }: any) {
 
   return (
     <SafeAreaView
-      style={styles.safeArea}
-      edges={["top", "left", "right", "bottom"]}
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
       {/* Header */}
       <View style={styles.header}>
         {navigation?.canGoBack && navigation.canGoBack() ? (

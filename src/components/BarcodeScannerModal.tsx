@@ -32,6 +32,7 @@ import {
 import { COLORS } from "../constants/colors";
 import { scanTicketWithGeminiVision } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic } from "../constants/translations";
 import { triggerSuccessHaptic, triggerLightHaptic } from "../utils/haptics";
 
@@ -46,6 +47,7 @@ export default function BarcodeScannerModal({
   onClose,
   onBarcodeScanned,
 }: BarcodeScannerModalProps) {
+  const { safeTopInset, safeBottomInset, isCompact } = useDeviceAdaptive(false);
   const { language, t } = useLanguage();
   const isMl = language === "ml";
   const indic = isIndic(language);
@@ -155,7 +157,15 @@ export default function BarcodeScannerModal({
     >
       <View style={styles.container}>
         {/* Top Header Overlay */}
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            {
+              paddingTop: safeTopInset + 6,
+              height: safeTopInset + 56,
+            },
+          ]}
+        >
           {/* Close Button (Circular Translucent) */}
           <TouchableOpacity
             style={styles.circleHeaderBtn}
@@ -402,7 +412,12 @@ export default function BarcodeScannerModal({
             </View>
 
             {/* Bottom Controls Area */}
-            <View style={styles.overlayBottom}>
+            <View
+              style={[
+                styles.overlayBottom,
+                { paddingBottom: safeBottomInset + 16 },
+              ]}
+            >
               {/* 1. Translucent Hint Pill */}
               <View style={styles.instructionPill}>
                 <Text

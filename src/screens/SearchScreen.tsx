@@ -73,6 +73,7 @@ import ModernDatePickerModal from "../components/ModernDatePickerModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import JustMissModal from "../components/JustMissModal";
 import { useLanguage } from "../context/LanguageContext";
+import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
 function formatDisplayDate(dateStr?: string | null) {
   if (!dateStr) return "";
@@ -84,6 +85,7 @@ function formatDisplayDate(dateStr?: string | null) {
 }
 
 export default function SearchScreen({ navigation }: any) {
+  const { safeTopInset, isCompact, contentPaddingHorizontal } = useDeviceAdaptive(true);
   const { t, language } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
@@ -330,7 +332,13 @@ export default function SearchScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      style={[
+        styles.safeArea,
+        Platform.OS === "android" && { paddingTop: safeTopInset },
+      ]}
+      edges={Platform.OS === "ios" ? ["top", "left", "right"] : ["left", "right"]}
+    >
       <ConfettiEffect active={showConfetti} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -340,7 +348,10 @@ export default function SearchScreen({ navigation }: any) {
         <ScrollView
           ref={scrollViewRef}
           style={styles.container}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingHorizontal: contentPaddingHorizontal },
+          ]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           overScrollMode="never"
