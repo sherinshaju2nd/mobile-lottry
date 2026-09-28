@@ -1,7 +1,15 @@
-const { withAndroidManifest, withGradleProperties } = require('@expo/config-plugins');
+const {
+  withAndroidManifest,
+  withAndroidStyles,
+  withGradleProperties,
+} = require('@expo/config-plugins');
 
 const withPlayStoreOptimizations = (config) => {
-  // 1. Android Manifest optimizations: Large screen support, resizability, orientation unlocking
+  // 1. Android Manifest optimizations:
+  // - Large screen support & resizability (Tablets, Foldables, Chromebooks)
+  // - Orientation unlocking
+  // - Picture-in-Picture (PiP) support
+  // - Window compatibility properties for Android 12L / 13 / 14 / 15
   config = withAndroidManifest(config, async (config) => {
     const androidManifest = config.modResults.manifest;
 
@@ -19,23 +27,90 @@ const withPlayStoreOptimizations = (config) => {
       },
     ];
 
-    // Set resizeableActivity="true" on application
+    // Declare optional hardware features so app runs seamlessly on Tablets and Chromebooks
+    if (!androidManifest['uses-feature']) {
+      androidManifest['uses-feature'] = [];
+    }
+    const optionalFeatures = [
+      'android.hardware.screen.portrait',
+      'android.hardware.screen.landscape',
+      'android.hardware.camera',
+      'android.hardware.camera.autofocus',
+      'android.hardware.microphone',
+      'android.hardware.touchscreen',
+    ];
+    optionalFeatures.forEach((feat) => {
+      const existing = androidManifest['uses-feature'].find(
+        (f) => f.$ && f.$['android:name'] === feat
+      );
+      if (!existing) {
+        androidManifest['uses-feature'].push({
+          $: {
+            'android:name': feat,
+            'android:required': 'false',
+          },
+        });
+      }
+    });
+
+    // Configure application & activities
     if (androidManifest.application && androidManifest.application[0]) {
       const app = androidManifest.application[0];
       app.$ = app.$ || {};
       app.$['android:resizeableActivity'] = 'true';
+      app.$['android:allowBackup'] = 'true';
 
-      // Set resizeableActivity="true" and remove fixed orientation locks on activities
+      // Large screen window compatibility properties
+      if (!app.property) {
+        app.property = [];
+      }
+      const appProperties = [
+        {
+          name: 'android.window.PROPERTY_COMPAT_ALLOW_IGNORING_ORIENTATION_CONSTRAINTS',
+          value: 'true',
+        },
+        {
+          name: 'android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES',
+          value: 'true',
+        },
+        {
+          name: 'android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE',
+          value: 'true',
+        },
+      ];
+
+      appProperties.forEach((prop) => {
+        const found = app.property.find((p) => p.$ && p.$['android:name'] === prop.name);
+        if (!found) {
+          app.property.push({
+            $: {
+              'android:name': prop.name,
+              'android:value': prop.value,
+            },
+          });
+        }
+      });
+
+      // Activity-level optimizations: PiP, resizability, configChanges, orientation
       if (app.activity && Array.isArray(app.activity)) {
         app.activity.forEach((activity) => {
           activity.$ = activity.$ || {};
           activity.$['android:resizeableActivity'] = 'true';
+          activity.$['android:supportsPictureInPicture'] = 'true';
+          activity.$['android:windowSoftInputMode'] = 'adjustResize';
+
+          // Ensure orientation is unspecified so large screen devices / tablets can freely rotate
           if (
             activity.$['android:screenOrientation'] === 'portrait' ||
             activity.$['android:screenOrientation'] === 'landscape'
           ) {
             activity.$['android:screenOrientation'] = 'unspecified';
           }
+
+          // Ensure all responsive configuration changes are handled
+          const baseConfig =
+            'keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode';
+          activity.$['android:configChanges'] = baseConfig;
         });
       }
     }
@@ -43,22 +118,80 @@ const withPlayStoreOptimizations = (config) => {
     return config;
   });
 
-  // 2. Gradle Properties: Enable R8 Full Mode for maximum bytecode shrinking and optimization
+  // 2. Android Styles: Modern Edge-to-Edge compliance (Android 15+ compatible, zero deprecated APIs)
+  config = withAndroidStyles(config, async (config) => {
+    const styles = config.modResults.resources.style;
+    if (styles && Array.isArray(styles)) {
+      const appTheme = styles.find(
+        (s) => s.$ && (s.$.name === 'AppTheme' || s.$.name === 'Theme.App.SplashScreen')
+      );
+
+      if (appTheme && Array.isArray(appTheme.item)) {
+        // Remove deprecated translucent status/nav attributes if present
+        appTheme.item = appTheme.item.filter(
+          (item) =>
+            item.$ &&
+            item.$.name !== 'android:windowTranslucentStatus' &&
+            item.$.name !== 'android:windowTranslucentNavigation'
+        );
+
+        // Define edge-to-edge items
+        const edgeToEdgeItems = [
+          { name: 'android:windowOptOutEdgeToEdgeEnforcement', value: 'false' },
+          { name: 'android:navigationBarColor', value: '@android:color/transparent' },
+          { name: 'android:statusBarColor', value: '@android:color/transparent' },
+          { name: 'android:windowLightStatusBar', value: 'true' },
+          { name: 'android:windowLightNavigationBar', value: 'true' },
+          { name: 'android:enforceNavigationBarContrast', value: 'false' },
+          { name: 'android:enforceStatusBarContrast', value: 'false' },
+          { name: 'android:windowLayoutInDisplayCutoutMode', value: 'shortEdges' },
+        ];
+
+        edgeToEdgeItems.forEach((edgeItem) => {
+          const idx = appTheme.item.findIndex(
+            (it) => it.$ && it.$.name === edgeItem.name
+          );
+          if (idx >= 0) {
+            appTheme.item[idx]._ = edgeItem.value;
+          } else {
+            appTheme.item.push({
+              $: { name: edgeItem.name },
+              _: edgeItem.value,
+            });
+          }
+        });
+      }
+    }
+    return config;
+  });
+
+  // 3. Gradle Properties: R8 Full Mode, resource optimizations, AAPT2, Dex optimizations
   config = withGradleProperties(config, (config) => {
     const properties = config.modResults;
-    const r8Index = properties.findIndex(
-      (item) => item.type === 'property' && item.key === 'android.enableR8.fullMode'
-    );
 
-    if (r8Index >= 0) {
-      properties[r8Index].value = 'true';
-    } else {
-      properties.push({
-        type: 'property',
-        key: 'android.enableR8.fullMode',
-        value: 'true',
-      });
-    }
+    const setOrAddProperty = (key, value) => {
+      const index = properties.findIndex(
+        (item) => item.type === 'property' && item.key === key
+      );
+      if (index >= 0) {
+        properties[index].value = value;
+      } else {
+        properties.push({
+          type: 'property',
+          key,
+          value,
+        });
+      }
+    };
+
+    // R8 Full Mode & Bytecode optimizations
+    setOrAddProperty('android.enableR8.fullMode', 'true');
+    setOrAddProperty('android.enableDexingArtifactTransform', 'true');
+    setOrAddProperty('android.enableResourceOptimizations', 'true');
+    setOrAddProperty('android.enableAapt2Jni', 'true');
+    setOrAddProperty('android.bundle.enableUncompressedNativeLibs', 'false');
+    setOrAddProperty('android.useAndroidX', 'true');
+    setOrAddProperty('android.enableJetifier', 'true');
 
     return config;
   });

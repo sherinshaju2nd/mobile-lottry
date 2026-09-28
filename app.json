@@ -8,7 +8,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
-      "**/*"
+      "assets/icon.png",
+      "assets/adaptive-icon.png",
+      "assets/splash.png",
+      "assets/notification-icon.png",
+      "assets/favicon.png",
+      "assets/barcode_hint.png"
     ],
     "ios": {
       "supportsTablet": true,
@@ -40,6 +45,16 @@
       "package": "com.keralalotteryresultstoday.app",
       "versionCode": 12,
       "softwareKeyboardLayoutMode": "resize",
+      "edgeToEdgeEnabled": true,
+      "androidStatusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#00000000",
+        "translucent": true
+      },
+      "androidNavigationBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#00000000"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
@@ -92,7 +107,7 @@
             "kotlinVersion": "2.1.20",
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "-keep public class com.horcrux.svg.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-dontwarn com.facebook.react.turbomodule.**\n-keepattributes *Annotation*\n-keepattributes Signature\n-keepattributes EnclosingMethod\n-dontwarn sun.misc.**\n-dontwarn javax.annotation.**\n-keep class com.facebook.react.** { *; }"
+            "extraProguardRules": "-optimizationpasses 5\n-allowaccessmodification\n-dontpreverify\n-mergeinterfacesaggressively\n-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*\n-assumenosideeffects class android.util.Log {\n    public static boolean isLoggable(java.lang.String, int);\n    public static int v(...);\n    public static int d(...);\n}\n-keep public class com.horcrux.svg.** { *; }\n-keep class com.facebook.react.turbomodule.** { *; }\n-dontwarn com.facebook.react.turbomodule.**\n-keepattributes *Annotation*\n-keepattributes Signature\n-keepattributes EnclosingMethod\n-dontwarn sun.misc.**\n-dontwarn javax.annotation.**\n-keep class com.facebook.react.** { *; }"
           },
           "ios": {
             "deploymentTarget": "16.4"
