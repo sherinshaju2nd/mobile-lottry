@@ -28,7 +28,7 @@ import {
   LayoutGrid,
   Layers,
   Check,
-  Coffee,
+  Heart,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -304,7 +304,7 @@ export default function SideMenuDrawerModal({
             {/* Preferences & Settings */}
             <View style={styles.sectionCard}>
               <Text style={styles.sectionLabel}>
-                {isMl ? "ക്രമീകരണങ്ങൾ" : "PREFERENCES & ALERTS"}
+                {isMl ? "ക്രമീകരണങ്ങളും സഹായവും" : "PREFERENCES & SUPPORT"}
               </Text>
 
               {/* Notification Settings */}
@@ -345,6 +345,53 @@ export default function SideMenuDrawerModal({
                   </Text>
                 </View>
                 <ChevronRight size={16} color="#94A3B8" />
+              </TouchableOpacity>
+
+              {/* Support Us (UPI / GPay) - Right below Notification Settings */}
+              <TouchableOpacity
+                style={[
+                  styles.menuItem,
+                  {
+                    backgroundColor: "#F0FDF4",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "#BBF7D0",
+                    marginTop: 8,
+                  },
+                ]}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("Support");
+                }}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: "#DCFCE7", borderColor: "#86EFAC" },
+                  ]}
+                >
+                  <Heart size={18} color="#16A34A" fill="#16A34A" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Text style={[styles.menuTitle, { color: "#166534", fontWeight: "800" }]}>
+                      {isMl ? "പിന്തുണയ്ക്കുക" : "Support Us"}
+                    </Text>
+                    <View style={[styles.badgePill, { backgroundColor: "#16A34A" }]}>
+                      <Text style={[styles.badgeText, { color: "#FFFFFF" }]}>
+                        UPI
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.menuSub, { color: "#15803D" }]}>
+                    {isMl
+                      ? "Google Pay / UPI വഴി പിന്തുണ നൽകൂ"
+                      : "Support development via GPay & UPI"}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color="#16A34A" />
               </TouchableOpacity>
             </View>
 
@@ -441,37 +488,6 @@ export default function SideMenuDrawerModal({
               <Text style={styles.sectionLabel}>
                 {isMl ? "സഹായവും നയങ്ങളും" : "SUPPORT & LEGAL"}
               </Text>
-
-              {/* Buy Me a Coffee / Support */}
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: "#FFFBEB", borderRadius: 12, borderWidth: 1, borderColor: "#FDE68A", marginBottom: 6 }]}
-                onPress={() => {
-                  triggerLightHaptic();
-                  handleClose();
-                  navigation?.navigate("Support");
-                }}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[
-                    styles.iconBox,
-                    { backgroundColor: "#FEF3C7", borderColor: "#F59E0B" },
-                  ]}
-                >
-                  <Coffee size={18} color="#D97706" />
-                </View>
-                <View style={styles.menuTextCol}>
-                  <Text style={[styles.menuTitle, { color: "#92400E", fontWeight: "800" }]}>
-                    {isMl ? "പിന്തുണയ്ക്കുക (Buy Coffee)" : "Support Us ☕"}
-                  </Text>
-                  <Text style={[styles.menuSub, { color: "#B45309" }]}>
-                    {isMl
-                      ? "ആപ്പ് വികസനത്തിന് പിന്തുണ നൽകൂ"
-                      : "Buy a coffee & support future development"}
-                  </Text>
-                </View>
-                <ChevronRight size={16} color="#D97706" />
-              </TouchableOpacity>
 
               {/* Contact & Helplines */}
               <TouchableOpacity

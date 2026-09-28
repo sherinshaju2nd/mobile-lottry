@@ -439,6 +439,7 @@ import InAppNotificationToast from "./src/components/InAppNotificationToast";
 import { navigationRef } from "./src/utils/navigationRef";
 
 function AppContent() {
+  const [appIsReady, setAppIsReady] = useState(false);
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
   const [inAppNotif, setInAppNotif] = useState<{
     visible: boolean;
@@ -478,7 +479,7 @@ function AppContent() {
       });
     } catch {}
 
-    async function loadAssetsAndCheckPrivacy() {
+    async function prepareApp() {
       try {
         await Asset.loadAsync([
           require("./assets/icon.png"),
@@ -491,12 +492,10 @@ function AppContent() {
         console.warn("Asset caching/privacy load error:", e);
         setIsPrivacyAccepted(false);
       } finally {
-        try {
-          await SplashScreen.hideAsync();
-        } catch {}
+        setAppIsReady(true);
       }
     }
-    loadAssetsAndCheckPrivacy();
+    prepareApp();
 
     return () => {
       responseSub?.remove?.();
@@ -504,6 +503,16 @@ function AppContent() {
       appStateSub?.remove?.();
     };
   }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      try {
+        await SplashScreen.hideAsync();
+      } catch {
+        // Silently catch in case activity is paused or surface is transitioning
+      }
+    }
+  }, [appIsReady]);
 
   const handleAcceptPrivacy = async () => {
     try {
@@ -515,12 +524,17 @@ function AppContent() {
     }
   };
 
-  if (isPrivacyAccepted === null) {
-    return null;
+  if (!appIsReady || isPrivacyAccepted === null) {
+    return (
+      <View
+        style={{ flex: 1, backgroundColor: "#0B3C5D" }}
+        onLayout={onLayoutRootView}
+      />
+    );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <InAppNotificationToast
         visible={inAppNotif.visible}
         title={inAppNotif.title}
