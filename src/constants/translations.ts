@@ -127,6 +127,8 @@ export const translations = {
     verified: "Checked",
 
     // Home Screen - Hero & Draw Status
+    weekly_schedule: "Weekly Draw Schedule",
+    weekly_schedule_sub: "Official weekly timetable of Kerala state lotteries",
     latest_draws: "Latest Lottery Results",
     today_draw: "Today's Draw",
     yesterday_result: "Yesterday's Result",
@@ -463,25 +465,31 @@ export const translations = {
     support_title: "Support Us",
     support_subtitle: "Buy us a coffee & support future development",
     support_hero_badge: "SUPPORT DEVELOPMENT",
-    support_hero_title: "Buy Us a Coffee ☕",
+    support_hero_title: "Buy Us a Coffee",
     support_hero_desc:
       "Your contribution directly funds high-speed live draw servers, AI scanner accuracy upgrades, and keeps the platform 100% free and ad-free.",
     support_btn_text: "Support on Buy Me a Coffee",
     support_why_title: "Why Your Support Matters",
     support_why_server_title: "Lightning-Fast 3 PM Draw Servers",
-    support_why_server_desc: "Ensures zero delay during peak 3:00 PM live draw sync traffic.",
+    support_why_server_desc:
+      "Ensures zero delay during peak 3:00 PM live draw sync traffic.",
     support_why_scanner_title: "AI Ticket Scanner Upgrades",
-    support_why_scanner_desc: "Continuous accuracy and speed improvements for live ticket scanning.",
+    support_why_scanner_desc:
+      "Continuous accuracy and speed improvements for live ticket scanning.",
     support_why_adfree_title: "100% Free & Privacy First",
-    support_why_adfree_desc: "No intrusive ads, no paywalls, and complete data privacy for everyone.",
+    support_why_adfree_desc:
+      "No intrusive ads, no paywalls, and complete data privacy for everyone.",
     support_why_features_title: "Future Features & Roadmaps",
-    support_why_features_desc: "Voice search, offline games, deeper historical trends, and smart reminders.",
+    support_why_features_desc:
+      "Voice search, offline games, deeper historical trends, and smart reminders.",
     support_share_title: "Share with Friends",
-    support_share_desc: "Help spread the word to keep this project growing and thriving!",
+    support_share_desc:
+      "Help spread the word to keep this project growing and thriving!",
     support_share_btn: "Share Support Link",
     support_copy_link: "Copy Link",
     support_thank_you_title: "Heartfelt Thanks!",
-    support_thank_you_desc: "Every contribution fuels our passion to build the best lottery tools for you.",
+    support_thank_you_desc:
+      "Every contribution fuels our passion to build the best lottery tools for you.",
 
     // Statistics & Trends Screen
     analytics_title: "Statistics & Trends",
@@ -943,25 +951,31 @@ export const translations = {
     support_title: "പിന്തുണയ്ക്കുക",
     support_subtitle: "ഞങ്ങൾക്ക് ഒരു കോഫി വാങ്ങി നൽകി വികസനത്തെ പിന്തുണയ്ക്കൂ",
     support_hero_badge: "തുടർ വികസനത്തിന് പിന്തുണ",
-    support_hero_title: "ഞങ്ങൾക്ക് ഒരു കോഫി നൽകൂ ☕",
+    support_hero_title: "ഞങ്ങൾക്ക് ഒരു കോഫി നൽകൂ",
     support_hero_desc:
       "വേഗതയേറിയ ലൈവ് സെർവറുകൾ നിലനിർത്താനും, പുതിയ ഫീച്ചറുകൾ വികസിപ്പിക്കാനും, ആപ്പ് പരസ്യങ്ങളില്ലാതെ സൗജന്യമായി നൽകാനും നിങ്ങളുടെ പിന്തുണ സഹായിക്കുന്നു.",
     support_btn_text: "Buy Me a Coffee വഴി പിന്തുണയ്ക്കുക",
     support_why_title: "നിങ്ങളുടെ പിന്തുണയുടെ പ്രാധാന്യം",
     support_why_server_title: "അതിവേഗ 3 PM സെർവറുകൾ",
-    support_why_server_desc: "3 മണിക്ക് ഒരേസമയം ലക്ഷക്കണക്കിന് ആളുകൾ ഫലം പരിശോധിക്കുമ്പോൾ തടസ്സമില്ലാത്ത വേഗത.",
+    support_why_server_desc:
+      "3 മണിക്ക് ഒരേസമയം ലക്ഷക്കണക്കിന് ആളുകൾ ഫലം പരിശോധിക്കുമ്പോൾ തടസ്സമില്ലാത്ത വേഗത.",
     support_why_scanner_title: "AI ടിക്കറ്റ് സ്കാനർ വികസനം",
-    support_why_scanner_desc: "ടിക്കറ്റുകൾ കൂടുതൽ കൃത്യതയോടെയും വേഗത്തിലും സ്കാൻ ചെയ്യാനുള്ള സാങ്കേതിക മുന്നേറ്റം.",
+    support_why_scanner_desc:
+      "ടിക്കറ്റുകൾ കൂടുതൽ കൃത്യതയോടെയും വേഗത്തിലും സ്കാൻ ചെയ്യാനുള്ള സാങ്കേതിക മുന്നേറ്റം.",
     support_why_adfree_title: "100% സൗജന്യവും പരസ്യരഹിതവും",
-    support_why_adfree_desc: "ഉപയോക്താക്കൾക്ക് തടസ്സമില്ലാത്തതും സുരക്ഷിതവുമായ സൗജന്യ അനുഭവം.",
+    support_why_adfree_desc:
+      "ഉപയോക്താക്കൾക്ക് തടസ്സമില്ലാത്തതും സുരക്ഷിതവുമായ സൗജന്യ അനുഭവം.",
     support_why_features_title: "ഭാവിയിലെ പുതിയ ഫീച്ചറുകൾ",
-    support_why_features_desc: "വോയ്സ് അസിസ്റ്റന്റ്, ഓഫ്‌ലൈൻ ഗെയിമുകൾ, കൂടുതൽ അനലിറ്റിക്സ് വിവരങ്ങൾ.",
+    support_why_features_desc:
+      "വോയ്സ് അസിസ്റ്റന്റ്, ഓഫ്‌ലൈൻ ഗെയിമുകൾ, കൂടുതൽ അനലിറ്റിക്സ് വിവരങ്ങൾ.",
     support_share_title: "സുഹൃത്തുക്കളുമായി പങ്കിടുക",
-    support_share_desc: "ഈ ആപ്പിനെക്കുറിച്ച് സുഹൃത്തുക്കളോടും കുടുംബാംഗങ്ങളോടും പങ്കുവെക്കൂ!",
+    support_share_desc:
+      "ഈ ആപ്പിനെക്കുറിച്ച് സുഹൃത്തുക്കളോടും കുടുംബാംഗങ്ങളോടും പങ്കുവെക്കൂ!",
     support_share_btn: "സപ്പോർട്ട് ലിങ്ക് പങ്കിടുക",
     support_copy_link: "ലിങ്ക് കോപ്പി ചെയ്യുക",
     support_thank_you_title: "ഹൃദയം നിറഞ്ഞ നന്ദി!",
-    support_thank_you_desc: "നിങ്ങളുടെ ഓരോ പിന്തുണയും ഞങ്ങൾക്ക് വലിയ പ്രചോദനമാണ്. നന്ദി!",
+    support_thank_you_desc:
+      "നിങ്ങളുടെ ഓരോ പിന്തുണയും ഞങ്ങൾക്ക് വലിയ പ്രചോദനമാണ്. നന്ദി!",
 
     // Analytics & Trends Screen
     analytics_title: "ഫല സ്ഥിതിവിവരക്കണക്കുകൾ",
@@ -1408,19 +1422,23 @@ export const translations = {
     support_title: "हमें सपोर्ट करें",
     support_subtitle: "हमें एक कॉफी पिलाएं और विकास का समर्थन करें",
     support_hero_badge: "विकास सहायता",
-    support_hero_title: "हमें एक कॉफी पिलाएं ☕",
+    support_hero_title: "हमें एक कॉफी पिलाएं",
     support_hero_desc:
       "आपका योगदान हाई-स्पीड लाइव ड्रॉ सर्वर, AI स्कैनर अपग्रेड और ऐप को 100% मुफ़्त और विज्ञापन-मुक्त रखने में मदद करता है।",
     support_btn_text: "Buy Me a Coffee पर सपोर्ट करें",
     support_why_title: "आपका समर्थन क्यों महत्वपूर्ण है",
     support_why_server_title: "अल्ट्रा-फास्ट 3 PM सर्वर",
-    support_why_server_desc: "दोपहर 3:00 बजे लाइव ड्रॉ के दौरान बिना किसी देरी के त्वरित परिणाम।",
+    support_why_server_desc:
+      "दोपहर 3:00 बजे लाइव ड्रॉ के दौरान बिना किसी देरी के त्वरित परिणाम।",
     support_why_scanner_title: "AI स्कैनर सुधार",
-    support_why_scanner_desc: "टिकट स्कैनिंग की गति और सटीकता में लगातार वृद्धि।",
+    support_why_scanner_desc:
+      "टिकट स्कैनिंग की गति और सटीकता में लगातार वृद्धि।",
     support_why_adfree_title: "100% मुफ़्त और गोपनीयता प्रथम",
-    support_why_adfree_desc: "बिना किसी विज्ञापन और पूर्ण गोपनीयता के साथ सुरक्षित उपयोग।",
+    support_why_adfree_desc:
+      "बिना किसी विज्ञापन और पूर्ण गोपनीयता के साथ सुरक्षित उपयोग।",
     support_why_features_title: "भविष्य की सुविधाएँ",
-    support_why_features_desc: "वॉयस सर्च, ऑफ़लाइन गेम और गहन विश्लेषणात्मक जानकारी।",
+    support_why_features_desc:
+      "वॉयस सर्च, ऑफ़लाइन गेम और गहन विश्लेषणात्मक जानकारी।",
     support_share_title: "दोस्तों के साथ साझा करें",
     support_share_desc: "इस उपयोगी ऐप के बारे में अपने दोस्तों को भी बताएं!",
     support_share_btn: "सपोर्ट लिंक साझा करें",
@@ -1887,21 +1905,26 @@ export const translations = {
     support_title: "எங்களை ஆதரிக்கவும்",
     support_subtitle: "எங்களுக்கு காபி வழங்கி செயலியை ஆதரிக்கவும்",
     support_hero_badge: "செயலி ஆதரவு",
-    support_hero_title: "எங்களுக்கு ஒரு காபி வழங்கவும் ☕",
+    support_hero_title: "எங்களுக்கு ஒரு காபி வழங்கவும்",
     support_hero_desc:
       "வேகமான நேரலை சேவையகங்கள், AI ஸ்கேனர் மேம்பாடுகள் மற்றும் செயலியை 100% இலவசமாகவும் விளம்பரமின்றியும் வைத்திருக்க உங்கள் ஆதரவு உதவுகிறது.",
     support_btn_text: "Buy Me a Coffee மூலம் ஆதரவளிக்கவும்",
     support_why_title: "உங்கள் ஆதரவின் முக்கியத்துவம்",
     support_why_server_title: "மின்னல் வேக 3 PM சர்வர்கள்",
-    support_why_server_desc: "மதியம் 3:00 மணிக்கு எந்தவித தாமதமுமின்றி நேரலை முடிவுகளை அறிய.",
+    support_why_server_desc:
+      "மதியம் 3:00 மணிக்கு எந்தவித தாமதமுமின்றி நேரலை முடிவுகளை அறிய.",
     support_why_scanner_title: "AI டிக்கெட் ஸ்கேனர் மேம்பாடுகள்",
-    support_why_scanner_desc: "டிக்கெட்டுகளை விரைவாகவும் துல்லியமாகவும் ஸ்கேன் செய்ய தொடர் மேம்பாடு.",
+    support_why_scanner_desc:
+      "டிக்கெட்டுகளை விரைவாகவும் துல்லியமாகவும் ஸ்கேன் செய்ய தொடர் மேம்பாடு.",
     support_why_adfree_title: "100% இலவசம் & விளம்பரமில்லை",
-    support_why_adfree_desc: "எவ்வித கட்டணமும் விளம்பரத் தொல்லையுமின்றி அனைவருக்கும் இலவசம்.",
+    support_why_adfree_desc:
+      "எவ்வித கட்டணமும் விளம்பரத் தொல்லையுமின்றி அனைவருக்கும் இலவசம்.",
     support_why_features_title: "எதிர்கால வசதிகள்",
-    support_why_features_desc: "குரல் தேடல், ஆஃப்லைன் விளையாட்டுகள் மற்றும் விரிவான புள்ளிவிவரங்கள்.",
+    support_why_features_desc:
+      "குரல் தேடல், ஆஃப்லைன் விளையாட்டுகள் மற்றும் விரிவான புள்ளிவிவரங்கள்.",
     support_share_title: "நண்பர்களுடன் பகிரவும்",
-    support_share_desc: "இந்த பயனுள்ள செயலியை உங்கள் நண்பர்களுக்கும் பகிருங்கள்!",
+    support_share_desc:
+      "இந்த பயனுள்ள செயலியை உங்கள் நண்பர்களுக்கும் பகிருங்கள்!",
     support_share_btn: "ஆதரவு இணைப்பைப் பகிரவும்",
     support_copy_link: "இணைப்பை நகலெடுக்கவும்",
     support_thank_you_title: "மனமார்ந்த நன்றிகள்!",
@@ -2360,25 +2383,31 @@ export const translations = {
     support_title: "ನಮ್ಮನ್ನು ಬೆಂಬಲಿಸಿ",
     support_subtitle: "ನಮಗೆ ಕಾಫಿ ಕೊಡಿಸಿ ಅಭಿವೃದ್ಧಿಯನ್ನು ಬೆಂಬಲಿಸಿ",
     support_hero_badge: "ಅಭಿವೃದ್ಧಿ ಬೆಂಬಲ",
-    support_hero_title: "ನಮಗೆ ಕಾಫಿ ಕೊಡಿಸಿ ☕",
+    support_hero_title: "ನಮಗೆ ಕಾಫಿ ಕೊಡಿಸಿ",
     support_hero_desc:
       "ಹೈ-ಸ್ಪೀಡ್ ಲೈವ್ ಡ್ರಾ ಸರ್ವರ್‌ಗಳು, AI ಸ್ಕ್ಯಾನರ್ ಸುಧಾರಣೆಗಳು ಮತ್ತು ಆಪ್ ಅನ್ನು 100% ಉಚಿತ ಹಾಗೂ ಜಾಹೀರಾತು ರಹಿತವಾಗಿಡಲು ನಿಮ್ಮ ಬೆಂಬಲ ಸಹಕಾರಿಯಾಗಿದೆ.",
     support_btn_text: "Buy Me a Coffee ನಲ್ಲಿ ಬೆಂಬಲಿಸಿ",
     support_why_title: "ನಿಮ್ಮ ಬೆಂಬಲ ಏಕೆ ಮುಖ್ಯ?",
     support_why_server_title: "ಅತಿವೇಗದ 3 PM ಸರ್ವರ್‌ಗಳು",
-    support_why_server_desc: "ಮಧ್ಯಾಹ್ನ 3:00 ಗಂಟೆಗೆ ಲೈವ್ ಫಲಿತಾಂಶಗಳನ್ನು ತಕ್ಷಣ ಪಡೆಯಲು ಅಡೆತಡೆಯಿಲ್ಲದ ವೇಗ.",
+    support_why_server_desc:
+      "ಮಧ್ಯಾಹ್ನ 3:00 ಗಂಟೆಗೆ ಲೈವ್ ಫಲಿತಾಂಶಗಳನ್ನು ತಕ್ಷಣ ಪಡೆಯಲು ಅಡೆತಡೆಯಿಲ್ಲದ ವೇಗ.",
     support_why_scanner_title: "AI ಟಿಕೆಟ್ ಸ್ಕ್ಯಾನರ್ ಸುಧಾರಣೆಗಳು",
-    support_why_scanner_desc: "ಟಿಕೆಟ್‌ಗಳನ್ನು ಮತ್ತಷ್ಟು ವೇಗವಾಗಿ ಹಾಗೂ ನಿಖರವಾಗಿ ಸ್ಕ್ಯಾನ್ ಮಾಡಲು ತಂತ್ರಜ್ಞಾನ ನವೀಕರಣ.",
+    support_why_scanner_desc:
+      "ಟಿಕೆಟ್‌ಗಳನ್ನು ಮತ್ತಷ್ಟು ವೇಗವಾಗಿ ಹಾಗೂ ನಿಖರವಾಗಿ ಸ್ಕ್ಯಾನ್ ಮಾಡಲು ತಂತ್ರಜ್ಞಾನ ನವೀಕರಣ.",
     support_why_adfree_title: "100% ಉಚಿತ ಮತ್ತು ಜಾಹೀರಾತು ರಹಿತ",
-    support_why_adfree_desc: "ಯಾವುದೇ ಜಾಹೀರಾತುಗಳ ಕಿರಿಕಿರಿಯಿಲ್ಲದೆ ಸಂಪೂರ್ಣ ಗೌಪ್ಯತೆಯೊಂದಿಗೆ ಉಚಿತ ಸೇವೆ.",
+    support_why_adfree_desc:
+      "ಯಾವುದೇ ಜಾಹೀರಾತುಗಳ ಕಿರಿಕಿರಿಯಿಲ್ಲದೆ ಸಂಪೂರ್ಣ ಗೌಪ್ಯತೆಯೊಂದಿಗೆ ಉಚಿತ ಸೇವೆ.",
     support_why_features_title: "ಮುಂಬರುವ ಹೊಸ ವೈಶಿಷ್ಟ್ಯಗಳು",
-    support_why_features_desc: "ಧ್ವನಿ ಹುಡುಕಾಟ, ಆಫ್‌ಲೈನ್ ಆಟಗಳು ಮತ್ತು ಆಳವಾದ ಅಂಕಿಅಂಶಗಳ ವಿವರ.",
+    support_why_features_desc:
+      "ಧ್ವನಿ ಹುಡುಕಾಟ, ಆಫ್‌ಲೈನ್ ಆಟಗಳು ಮತ್ತು ಆಳವಾದ ಅಂಕಿಅಂಶಗಳ ವಿವರ.",
     support_share_title: "ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ",
-    support_share_desc: "ಈ ಉಪಯುಕ್ತ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ನಿಮ್ಮ ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ!",
+    support_share_desc:
+      "ಈ ಉಪಯುಕ್ತ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ನಿಮ್ಮ ಸ್ನೇಹಿತರೊಂದಿಗೆ ಹಂಚಿಕೊಳ್ಳಿ!",
     support_share_btn: "ಬೆಂಬಲ ಲಿಂಕ್ ಹಂಚಿಕೊಳ್ಳಿ",
     support_copy_link: "ಲಿಂಕ್ ನಕಲಿಸಿ",
     support_thank_you_title: "ಹೃತ್ಪೂರ್ವಕ ಧನ್ಯವಾದಗಳು!",
-    support_thank_you_desc: "ನಿಮ್ಮ ಪ್ರತಿಯೊಂದು ಬೆಂಬಲಕ್ಕೂ ನಮ್ಮ ತುಂಬು ಹೃದಯದ ಧನ್ಯವಾದಗಳು!",
+    support_thank_you_desc:
+      "ನಿಮ್ಮ ಪ್ರತಿಯೊಂದು ಬೆಂಬಲಕ್ಕೂ ನಮ್ಮ ತುಂಬು ಹೃದಯದ ಧನ್ಯವಾದಗಳು!",
 
     // Statistics & Trends Screen
     analytics_title: "ಅಂಕಿಅಂಶಗಳು ಮತ್ತು ಪ್ರವೃತ್ತಿಗಳು",
@@ -2832,21 +2861,26 @@ export const translations = {
     support_title: "మమ్మల్ని సపోర్ట్ చేయండి",
     support_subtitle: "మాకు కాఫీ అందించండి & అభివృద్ధికి మద్దతు ఇవ్వండి",
     support_hero_badge: "అభివృద్ధికి మద్దతు",
-    support_hero_title: "మాకు ఒక కాఫీ అందించండి ☕",
+    support_hero_title: "మాకు ఒక కాఫీ అందించండి",
     support_hero_desc:
       "హై-స్పీడ్ లైవ్ డ్రా సర్వర్లు, AI స్కానర్ అప్‌గ్రేడ్‌లు మరియు యాప్‌ను 100% ఉచితంగా, ప్రకటనలు లేకుండా ఉంచడానికి మీ మద్దతు ఎంతో సహాయపడుతుంది.",
     support_btn_text: "Buy Me a Coffee లో సపోర్ట్ చేయండి",
     support_why_title: "మీ మద్దతు ఎందుకు ముఖ్యం?",
     support_why_server_title: "మెరుపు వేగవంతమైన 3 PM సర్వర్లు",
-    support_why_server_desc: "మధ్యాహ్నం 3:00 గంటలకు లైవ్ ఫలితాల కోసం వేగవంతమైన సర్వర్లు.",
+    support_why_server_desc:
+      "మధ్యాహ్నం 3:00 గంటలకు లైవ్ ఫలితాల కోసం వేగవంతమైన సర్వర్లు.",
     support_why_scanner_title: "AI టికెట్ స్కానర్ మెరుగుదలలు",
-    support_why_scanner_desc: "టిక్కెట్లను మరింత వేగంగా మరియు ఖచ్చితంగా స్కాన్ చేయడానికి నిరంతర సాంకేతికత.",
+    support_why_scanner_desc:
+      "టిక్కెట్లను మరింత వేగంగా మరియు ఖచ్చితంగా స్కాన్ చేయడానికి నిరంతర సాంకేతికత.",
     support_why_adfree_title: "100% ఉచితం & ప్రకటనలు లేనిది",
-    support_why_adfree_desc: "ఎలాంటి ప్రకటనల అంతరాయం లేకుండా పూర్తి భద్రత మరియు గోప్యత.",
+    support_why_adfree_desc:
+      "ఎలాంటి ప్రకటనల అంతరాయం లేకుండా పూర్తి భద్రత మరియు గోప్యత.",
     support_why_features_title: "రాబోయే కొత్త ఫీచర్లు",
-    support_why_features_desc: "వాయిస్ సెర్చ్, ఆఫ్‌లైన్ గేమ్‌లు మరియు లోతైన గణాంకాలు.",
+    support_why_features_desc:
+      "వాయిస్ సెర్చ్, ఆఫ్‌లైన్ గేమ్‌లు మరియు లోతైన గణాంకాలు.",
     support_share_title: "స్నేహితులతో పంచుకోండి",
-    support_share_desc: "ఈ ఉపయోగకరమైన యాప్ గురించి మీ స్నేహితులకు కూడా తెలియజేయండి!",
+    support_share_desc:
+      "ఈ ఉపయోగకరమైన యాప్ గురించి మీ స్నేహితులకు కూడా తెలియజేయండి!",
     support_share_btn: "సపోర్ట్ లింక్ షేర్ చేయండి",
     support_copy_link: "లింక్ కాపీ చేయండి",
     support_thank_you_title: "హృదయపూర్వక ధನ್ಯవాదాలు!",
