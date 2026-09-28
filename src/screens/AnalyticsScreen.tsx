@@ -313,7 +313,7 @@ export default function AnalyticsScreen({ navigation }: any) {
           const nums = draw.prizes![t];
           if (Array.isArray(nums)) {
             nums.forEach((num) => {
-              const digits = num.replace(/\D/g, "");
+              const digits = String(num || "").replace(/\D/g, "");
               if (digits.length >= 4) {
                 const e4 = digits.slice(-4);
                 drawnInThisDraw.add(e4);

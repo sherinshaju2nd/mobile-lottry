@@ -301,8 +301,8 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const [checkErrorMsg, setCheckErrorMsg] = useState<string | null>(null);
 
   const validateTicketMatch = (queryInput: string, prizeNumberStr: string) => {
-    const rawQuery = queryInput.trim().toUpperCase();
-    const rawPrize = prizeNumberStr.trim().toUpperCase();
+    const rawQuery = String(queryInput || "").trim().toUpperCase();
+    const rawPrize = String(prizeNumberStr || "").trim().toUpperCase();
 
     const queryDigits = rawQuery.replace(/\D/g, "");
     const querySeries = rawQuery.replace(/[^A-Z]/gi, "").trim();

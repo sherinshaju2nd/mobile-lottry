@@ -167,12 +167,15 @@ export default function AddReminderModal({
     if (editReminder && visible) {
       setTicketNumber(editReminder.ticketNumber);
       setTicketError(null);
-      setLotteryError(null);
-      const [y, m, d] = editReminder.drawDate.split("-").map(Number);
-      const targetDate = new Date(y, m - 1, d);
-      setDrawDate(targetDate);
-      setCalYear(targetDate.getFullYear());
-      setCalMonth(targetDate.getMonth());
+      if (editReminder.drawDate) {
+        const parts = String(editReminder.drawDate).split("-").map(Number);
+        if (parts.length === 3 && !parts.some(isNaN)) {
+          const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+          setDrawDate(targetDate);
+          setCalYear(targetDate.getFullYear());
+          setCalMonth(targetDate.getMonth());
+        }
+      }
       setLeadMinutes(editReminder.reminderLeadMinutes || 5);
     } else if (!editReminder && visible) {
       setTicketNumber("");

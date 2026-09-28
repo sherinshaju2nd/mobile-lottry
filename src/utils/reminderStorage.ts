@@ -61,11 +61,30 @@ export function generateId(): string {
 // Parse draw date+time into a JS Date object with configurable lead minutes (default 5 min before)
 export function getNotificationDate(
   drawDate: string,
-  drawTime: string,
+  drawTime?: string,
   leadMinutes: number = 5
 ): Date {
-  const [year, month, day] = drawDate.split("-").map(Number);
-  const [hour, minute] = drawTime.split(":").map(Number);
+  const parts = String(drawDate || "").split("-").map(Number);
+  const year = parts[0] || new Date().getFullYear();
+  const month = parts[1] || (new Date().getMonth() + 1);
+  const day = parts[2] || new Date().getDate();
+
+  let hour = 15;
+  let minute = 0;
+
+  if (drawTime) {
+    const clean = String(drawTime).trim().toUpperCase();
+    const isPM = clean.includes("PM");
+    const isAM = clean.includes("AM");
+    const digits = clean.replace(/[^0-9:]/g, "").split(":");
+    if (digits.length >= 2) {
+      hour = parseInt(digits[0], 10) || 0;
+      minute = parseInt(digits[1], 10) || 0;
+      if (isPM && hour < 12) hour += 12;
+      if (isAM && hour === 12) hour = 0;
+    }
+  }
+
   const drawDateObj = new Date(year, month - 1, day, hour, minute, 0);
   // Subtract configurable lead minutes
   drawDateObj.setMinutes(drawDateObj.getMinutes() - Math.max(1, leadMinutes));

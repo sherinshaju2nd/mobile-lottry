@@ -168,7 +168,7 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
 
     return () => {
       isMounted = false;
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
       appStateSub.remove();
     };
   }, [codeUpper]);

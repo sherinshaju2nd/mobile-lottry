@@ -43,26 +43,33 @@ import { useLanguage } from "../context/LanguageContext";
 import { getDayTranslated } from "../constants/lotteries";
 
 // Safe cross-platform date+time parser (avoids "T" string parsing bugs on Android and handles 12h/24h)
-function parseDrawDateTime(drawDate: string, drawTime?: string): number {
+function parseDrawDateTime(drawDate?: string, drawTime?: string): number {
   if (!drawDate) return 0;
-  const [y, mo, d] = drawDate.split("-").map(Number);
-  let hours = 15;
-  let minutes = 0;
+  try {
+    const parts = String(drawDate).split("-").map(Number);
+    if (parts.length < 3) return 0;
+    const [y, mo, d] = parts;
+    let hours = 15;
+    let minutes = 0;
 
-  if (drawTime) {
-    const clean = drawTime.trim().toUpperCase();
-    const isPM = clean.includes("PM");
-    const isAM = clean.includes("AM");
-    const digits = clean.replace(/[^0-9:]/g, "").split(":");
-    if (digits.length >= 2) {
-      hours = parseInt(digits[0], 10) || 0;
-      minutes = parseInt(digits[1], 10) || 0;
-      if (isPM && hours < 12) hours += 12;
-      if (isAM && hours === 12) hours = 0;
+    if (drawTime) {
+      const clean = String(drawTime).trim().toUpperCase();
+      const isPM = clean.includes("PM");
+      const isAM = clean.includes("AM");
+      const digits = clean.replace(/[^0-9:]/g, "").split(":");
+      if (digits.length >= 2) {
+        hours = parseInt(digits[0], 10) || 0;
+        minutes = parseInt(digits[1], 10) || 0;
+        if (isPM && hours < 12) hours += 12;
+        if (isAM && hours === 12) hours = 0;
+      }
     }
-  }
 
-  return new Date(y, mo - 1, d, hours, minutes, 0).getTime();
+    const t = new Date(y, mo - 1, d, hours, minutes, 0).getTime();
+    return isNaN(t) ? 0 : t;
+  } catch {
+    return 0;
+  }
 }
 
 export default function RemindersScreen({ navigation }: any) {
@@ -122,27 +129,42 @@ export default function RemindersScreen({ navigation }: any) {
     return parseDrawDateTime(item.drawDate, item.drawTime) > Date.now();
   };
 
-  const formatDate = (dateStr: string) => {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    if (isMl) {
-      const monthNamesMl = [
-        "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ",
-        "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
-      ];
-      return `${d} ${monthNamesMl[m - 1]} ${y}`;
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "";
+    try {
+      const parts = String(dateStr).split("-").map(Number);
+      if (parts.length < 3 || parts.some(isNaN)) return dateStr;
+      const [y, m, d] = parts;
+      const dateObj = new Date(y, m - 1, d);
+      if (isMl) {
+        const monthNamesMl = [
+          "ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ",
+          "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"
+        ];
+        return `${d} ${monthNamesMl[m - 1] || ""} ${y}`;
+      }
+      return dateObj.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
     }
-    return dateObj.toLocaleDateString("en-IN", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
   };
 
-  const formatTime = (timeStr: string) => {
-    const [h, min] = timeStr.split(":").map(Number);
-    const ampm = h >= 12 ? (isMl ? "PM" : "PM") : (isMl ? "AM" : "AM");
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return "3:00 PM";
+    const clean = String(timeStr).trim().toUpperCase();
+    if (clean.includes("PM") || clean.includes("AM")) {
+      return clean;
+    }
+    const digits = clean.replace(/[^0-9:]/g, "").split(":");
+    if (digits.length < 2) return timeStr;
+    const h = parseInt(digits[0], 10) || 0;
+    const min = parseInt(digits[1], 10) || 0;
+    const ampm = h >= 12 ? "PM" : "AM";
     const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
     return `${displayHour}:${String(min).padStart(2, "0")} ${ampm}`;
   };

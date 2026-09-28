@@ -528,7 +528,10 @@ export async function searchTicketNumber(
 
       if (nums && Array.isArray(nums)) {
         for (const num of nums) {
-          const normNum = num.trim().toUpperCase().replace(/\s+/g, "");
+          const normNum = String(num || "")
+            .trim()
+            .toUpperCase()
+            .replace(/\s+/g, "");
           const numDigits = normNum.replace(/\D/g, "");
           const numSeries = normNum.replace(/[^A-Z]/gi, "").trim();
 

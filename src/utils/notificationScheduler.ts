@@ -260,8 +260,8 @@ function checkTicketMatch(
   queryInput: string,
   prizeNumberStr: string
 ): { isMatch: boolean; exactSeriesMatch: boolean } {
-  const rawQuery = queryInput.trim().toUpperCase();
-  const rawPrize = prizeNumberStr.trim().toUpperCase();
+  const rawQuery = String(queryInput || "").trim().toUpperCase();
+  const rawPrize = String(prizeNumberStr || "").trim().toUpperCase();
 
   const queryDigits = rawQuery.replace(/\D/g, "");
   const querySeries = rawQuery.replace(/[^A-Z]/gi, "").trim();
