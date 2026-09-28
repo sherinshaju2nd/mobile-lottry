@@ -28,6 +28,7 @@ import {
   LayoutGrid,
   Layers,
   Check,
+  Coffee,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -440,6 +441,37 @@ export default function SideMenuDrawerModal({
               <Text style={styles.sectionLabel}>
                 {isMl ? "സഹായവും നയങ്ങളും" : "SUPPORT & LEGAL"}
               </Text>
+
+              {/* Buy Me a Coffee / Support */}
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: "#FFFBEB", borderRadius: 12, borderWidth: 1, borderColor: "#FDE68A", marginBottom: 6 }]}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("Support");
+                }}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.iconBox,
+                    { backgroundColor: "#FEF3C7", borderColor: "#F59E0B" },
+                  ]}
+                >
+                  <Coffee size={18} color="#D97706" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={[styles.menuTitle, { color: "#92400E", fontWeight: "800" }]}>
+                    {isMl ? "പിന്തുണയ്ക്കുക (Buy Coffee)" : "Support Us ☕"}
+                  </Text>
+                  <Text style={[styles.menuSub, { color: "#B45309" }]}>
+                    {isMl
+                      ? "ആപ്പ് വികസനത്തിന് പിന്തുണ നൽകൂ"
+                      : "Buy a coffee & support future development"}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color="#D97706" />
+              </TouchableOpacity>
 
               {/* Contact & Helplines */}
               <TouchableOpacity

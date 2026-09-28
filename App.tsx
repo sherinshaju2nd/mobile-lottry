@@ -18,6 +18,7 @@ import LotteryArchiveScreen from "./src/screens/LotteryArchiveScreen";
 import DrawBreakdownScreen from "./src/screens/DrawBreakdownScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
 import ContactScreen from "./src/screens/ContactScreen";
+import SupportScreen from "./src/screens/SupportScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import NotFoundScreen from "./src/screens/NotFoundScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
@@ -541,6 +542,7 @@ function AppContent() {
           <Stack.Screen name="Search" component={SearchScreen} />
           <Stack.Screen name="Checker" component={SearchScreen} />
           <Stack.Screen name="Contact" component={ContactScreen} />
+          <Stack.Screen name="Support" component={SupportScreen} />
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>
