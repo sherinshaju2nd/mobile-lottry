@@ -186,12 +186,7 @@ const withPlayStoreOptimizations = (config) => {
 
     // Standard R8 Compatibility Mode & Bytecode optimizations (prevents SurfaceControl/SplashScreen NPE on Android 12+)
     setOrAddProperty('android.enableR8.fullMode', 'false');
-    setOrAddProperty('android.enableDexingArtifactTransform', 'true');
-    setOrAddProperty('android.enableResourceOptimizations', 'true');
-    setOrAddProperty('android.enableAapt2Jni', 'true');
-    setOrAddProperty('android.bundle.enableUncompressedNativeLibs', 'false');
     setOrAddProperty('android.useAndroidX', 'true');
-    setOrAddProperty('android.enableJetifier', 'true');
 
     return config;
   });

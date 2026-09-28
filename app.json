@@ -54,7 +54,7 @@
     },
     "android": {
       "package": "com.keralalotteryresultstoday.app",
-      "versionCode": 14,
+      "versionCode": 15,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
