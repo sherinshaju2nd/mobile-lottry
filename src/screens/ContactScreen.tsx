@@ -34,7 +34,7 @@ const WHATSAPP_PHONE = "+919778570477";
 const WHATSAPP_CLEAN = "919778570477";
 const PHONE_1 = "+91 97785 70477";
 const PHONE_1_DIAL = "+919778570477";
-const PHONE_2 = "+91 82818 07752";
+const PHONE_2 = "+91 9496706727";
 const PHONE_2_DIAL = "+918281807752";
 const CONTACT_PERSON = "Ajo Mon John";
 const WEBSITE_URL = "https://www.keralalotteryresultstoday.in";
@@ -44,19 +44,21 @@ export default function ContactScreen({ navigation }: any) {
   const { language, t } = useLanguage();
 
   const handleEmail = () => {
-    const subject = encodeURIComponent("Kerala Lottery Results App - Support Inquiry");
+    const subject = encodeURIComponent(
+      "Kerala Lottery Results App - Support Inquiry",
+    );
     const url = `mailto:${SUPPORT_EMAIL}?subject=${subject}`;
     Linking.openURL(url).catch(() => {
       Alert.alert(
         "Could not open mail app",
-        `Please write to: ${SUPPORT_EMAIL}`
+        `Please write to: ${SUPPORT_EMAIL}`,
       );
     });
   };
 
   const handleWhatsApp = async () => {
     const msg = encodeURIComponent(
-      "Hello, I am contacting you regarding the Kerala Lottery Results Today app."
+      "Hello, I am contacting you regarding the Kerala Lottery Results Today app.",
     );
     const waScheme = `whatsapp://send?phone=${WHATSAPP_CLEAN}&text=${msg}`;
     const waWeb = `https://wa.me/${WHATSAPP_CLEAN}?text=${msg}`;
@@ -70,10 +72,7 @@ export default function ContactScreen({ navigation }: any) {
       }
     } catch {
       Linking.openURL(waWeb).catch(() => {
-        Alert.alert(
-          "Could not open WhatsApp",
-          `WhatsApp number: ${PHONE_1}`
-        );
+        Alert.alert("Could not open WhatsApp", `WhatsApp number: ${PHONE_1}`);
       });
     }
   };
@@ -82,16 +81,13 @@ export default function ContactScreen({ navigation }: any) {
     const cleanNumber = phoneNumber.replace(/[^0-9+]/g, "");
     const url = `tel:${cleanNumber}`;
     Linking.openURL(url).catch(() => {
-      Alert.alert(
-        "Could not initiate call",
-        `Phone number: ${phoneNumber}`
-      );
+      Alert.alert("Could not initiate call", `Phone number: ${phoneNumber}`);
     });
   };
 
   const handleOpenUrl = (url: string) => {
     Linking.openURL(url).catch((err) =>
-      console.error("Failed to open web link:", err)
+      console.error("Failed to open web link:", err),
     );
   };
 
@@ -99,9 +95,16 @@ export default function ContactScreen({ navigation }: any) {
     <SafeAreaView
       style={[
         styles.safeArea,
-        Platform.OS === "android" && { paddingTop: safeTopInset, paddingBottom: safeBottomInset },
+        Platform.OS === "android" && {
+          paddingTop: safeTopInset,
+          paddingBottom: safeBottomInset,
+        },
       ]}
-      edges={Platform.OS === "ios" ? ["top", "left", "right", "bottom"] : ["left", "right"]}
+      edges={
+        Platform.OS === "ios"
+          ? ["top", "left", "right", "bottom"]
+          : ["left", "right"]
+      }
     >
       <View style={styles.container}>
         {/* Header */}
@@ -117,7 +120,9 @@ export default function ContactScreen({ navigation }: any) {
             <Text style={[styles.title, isIndic(language) && { fontSize: 17 }]}>
               {t("contact_title")}
             </Text>
-            <Text style={[styles.subtitle, isIndic(language) && { fontSize: 11.5 }]}>
+            <Text
+              style={[styles.subtitle, isIndic(language) && { fontSize: 11.5 }]}
+            >
               {t("contact_subtitle")}
             </Text>
           </View>
@@ -134,16 +139,31 @@ export default function ContactScreen({ navigation }: any) {
                 {t("contact_hero_badge")}
               </Text>
             </View>
-            <Text style={[styles.heroTitle, isIndic(language) && { fontSize: 18, lineHeight: 24 }]}>
+            <Text
+              style={[
+                styles.heroTitle,
+                isIndic(language) && { fontSize: 18, lineHeight: 24 },
+              ]}
+            >
               {t("contact_hero_title")}
             </Text>
-            <Text style={[styles.heroDesc, isIndic(language) && { fontSize: 11.5, lineHeight: 17 }]}>
+            <Text
+              style={[
+                styles.heroDesc,
+                isIndic(language) && { fontSize: 11.5, lineHeight: 17 },
+              ]}
+            >
               {t("contact_hero_desc")}
             </Text>
           </View>
 
           {/* Direct Channels Section */}
-          <Text style={[styles.sectionHeading, isIndic(language) && { fontSize: 13 }]}>
+          <Text
+            style={[
+              styles.sectionHeading,
+              isIndic(language) && { fontSize: 13 },
+            ]}
+          >
             {t("direct_contact_heading")}
           </Text>
 
@@ -166,9 +186,7 @@ export default function ContactScreen({ navigation }: any) {
                 </View>
               </View>
               <Text style={styles.cardValue}>{PHONE_1}</Text>
-              <Text style={styles.cardSub}>
-                {CONTACT_PERSON}
-              </Text>
+              <Text style={styles.cardSub}>{CONTACT_PERSON}</Text>
             </View>
             <ExternalLink size={16} color="#16A34A" />
           </TouchableOpacity>
@@ -183,13 +201,9 @@ export default function ContactScreen({ navigation }: any) {
               <Mail size={24} color={COLORS.primary} />
             </View>
             <View style={styles.cardInfo}>
-              <Text style={styles.cardTitle}>
-                {t("official_email")}
-              </Text>
+              <Text style={styles.cardTitle}>{t("official_email")}</Text>
               <Text style={styles.cardValue}>{SUPPORT_EMAIL}</Text>
-              <Text style={styles.cardSub}>
-                {SUPPORT_EMAIL}
-              </Text>
+              <Text style={styles.cardSub}>{SUPPORT_EMAIL}</Text>
             </View>
             <ExternalLink size={16} color={COLORS.primary} />
           </TouchableOpacity>
@@ -197,16 +211,14 @@ export default function ContactScreen({ navigation }: any) {
           {/* Phone Numbers Card */}
           <View style={styles.phoneGroupCard}>
             <View style={styles.phoneGroupHeader}>
-              <View style={[styles.cardIconBox, { backgroundColor: "#FEF3C7" }]}>
+              <View
+                style={[styles.cardIconBox, { backgroundColor: "#FEF3C7" }]}
+              >
                 <Phone size={22} color="#D97706" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.cardTitle}>
-                  {t("phone_helpline")}
-                </Text>
-                <Text style={styles.cardSub}>
-                  {PHONE_1}
-                </Text>
+                <Text style={styles.cardTitle}>{t("phone_helpline")}</Text>
+                <Text style={styles.cardSub}>{PHONE_1}</Text>
               </View>
             </View>
 
@@ -220,9 +232,7 @@ export default function ContactScreen({ navigation }: any) {
             >
               <View>
                 <Text style={styles.phoneRowNumber}>{PHONE_1}</Text>
-                <Text style={styles.phoneRowLabel}>
-                  {CONTACT_PERSON}
-                </Text>
+                <Text style={styles.phoneRowLabel}>{CONTACT_PERSON}</Text>
               </View>
               <View style={styles.callPill}>
                 <Phone size={12} color="#FFFFFF" />
@@ -240,9 +250,7 @@ export default function ContactScreen({ navigation }: any) {
             >
               <View>
                 <Text style={styles.phoneRowNumber}>{PHONE_2}</Text>
-                <Text style={styles.phoneRowLabel}>
-                  {PHONE_2}
-                </Text>
+                <Text style={styles.phoneRowLabel}>{PHONE_2}</Text>
               </View>
               <View style={styles.callPill}>
                 <Phone size={12} color="#FFFFFF" />
@@ -256,12 +264,8 @@ export default function ContactScreen({ navigation }: any) {
             <View style={styles.metaRow}>
               <Clock size={16} color={COLORS.textMuted} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.metaLabel}>
-                  {t("support_hours")}
-                </Text>
-                <Text style={styles.metaValue}>
-                  {t("support_hours_value")}
-                </Text>
+                <Text style={styles.metaLabel}>{t("support_hours")}</Text>
+                <Text style={styles.metaValue}>{t("support_hours_value")}</Text>
               </View>
             </View>
 
@@ -274,10 +278,13 @@ export default function ContactScreen({ navigation }: any) {
             >
               <Globe size={16} color={COLORS.primary} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.metaLabel}>
-                  {t("official_website")}
-                </Text>
-                <Text style={[styles.metaValue, { color: COLORS.primary, fontWeight: "700" }]}>
+                <Text style={styles.metaLabel}>{t("official_website")}</Text>
+                <Text
+                  style={[
+                    styles.metaValue,
+                    { color: COLORS.primary, fontWeight: "700" },
+                  ]}
+                >
                   {WEBSITE_URL}
                 </Text>
               </View>
@@ -286,29 +293,48 @@ export default function ContactScreen({ navigation }: any) {
           </View>
 
           {/* Quick Help Links */}
-          <Text style={[styles.sectionHeading, isIndic(language) && { fontSize: 13 }]}>
+          <Text
+            style={[
+              styles.sectionHeading,
+              isIndic(language) && { fontSize: 13 },
+            ]}
+          >
             {t("helpful_resources")}
           </Text>
 
           <View style={styles.quickLinksGrid}>
             <TouchableOpacity
               style={styles.quickLinkBtn}
-              onPress={() => handleOpenUrl("https://www.keralalotteryresultstoday.in/claim")}
+              onPress={() =>
+                handleOpenUrl("https://www.keralalotteryresultstoday.in/claim")
+              }
               activeOpacity={0.75}
             >
               <FileText size={18} color={COLORS.primary} />
-              <Text style={[styles.quickLinkText, isIndic(language) && { fontSize: 12 }]}>
+              <Text
+                style={[
+                  styles.quickLinkText,
+                  isIndic(language) && { fontSize: 12 },
+                ]}
+              >
                 {t("prize_claim_guide")}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.quickLinkBtn}
-              onPress={() => handleOpenUrl("https://www.keralalotteryresultstoday.in/faq")}
+              onPress={() =>
+                handleOpenUrl("https://www.keralalotteryresultstoday.in/faq")
+              }
               activeOpacity={0.75}
             >
               <HelpCircle size={18} color={COLORS.primary} />
-              <Text style={[styles.quickLinkText, isIndic(language) && { fontSize: 12 }]}>
+              <Text
+                style={[
+                  styles.quickLinkText,
+                  isIndic(language) && { fontSize: 12 },
+                ]}
+              >
                 {t("faq")}
               </Text>
             </TouchableOpacity>
