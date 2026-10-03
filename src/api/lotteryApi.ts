@@ -939,7 +939,7 @@ export async function chatWithGeminiAssistantMobile(
   const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
   const systemInstruction = `
-You are the Official Kerala State Lottery AI Assistant for the mobile app.
+You are the  Kerala State Lottery AI Assistant for the mobile app.
 Help users in natural, friendly Malayalam (മലയാളം) or English with live results, ticket verification, claim procedures, 30% TDS tax rules, and bumper draw dates.
 
 Official Rules:
@@ -1053,7 +1053,7 @@ export async function chatWithGeminiAudioMobile(
   const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
   const systemInstruction = `
-You are the Official Kerala State Lottery AI Voice Assistant.
+You are the  Kerala State Lottery AI Voice Assistant.
 The user is speaking to you in Malayalam (മലയാളം) or English.
 1. Transcribe the user's spoken words accurately into "user_transcript".
 2. Provide a clear, helpful, and concise answer in "reply" in the user's language (Malayalam or English).
