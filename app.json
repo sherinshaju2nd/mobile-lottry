@@ -19,6 +19,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.keralalotteryresultstoday.app",
       "buildNumber": "4",
+      "associatedDomains": [
+        "applinks:www.keralalotteryresultstoday.in",
+        "applinks:keralalotteryresultstoday.in"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Kerala Lottery Results to access your camera to scan lottery ticket barcodes.",
         "NSMicrophoneUsageDescription": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
@@ -60,6 +64,28 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B3C5D"
       },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.keralalotteryresultstoday.in",
+              "pathPrefix": "/"
+            },
+            {
+              "scheme": "https",
+              "host": "keralalotteryresultstoday.in",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
