@@ -1,0 +1,54 @@
+{
+  "states": {
+    "idle": {
+      "animation": "float",
+      "loop": true,
+      "inputEnabled": true
+    },
+    "listening": {
+      "animation": "pulse",
+      "loop": true,
+      "inputEnabled": true
+    },
+    "thinking": {
+      "animation": "think",
+      "loop": true,
+      "inputEnabled": false
+    },
+    "searching": {
+      "animation": "scan",
+      "loop": true,
+      "inputEnabled": false
+    },
+    "processing": {
+      "animation": "orbit",
+      "loop": true,
+      "inputEnabled": false
+    },
+    "speaking": {
+      "animation": "voice",
+      "loop": true,
+      "inputEnabled": false
+    },
+    "success": {
+      "animation": "celebrate",
+      "loop": false,
+      "inputEnabled": true
+    },
+    "error": {
+      "animation": "shake",
+      "loop": false,
+      "inputEnabled": true
+    }
+  },
+  "flow": [
+    "idle",
+    "listening",
+    "thinking",
+    "searching",
+    "processing",
+    "speaking",
+    "success",
+    "idle"
+  ]
+}

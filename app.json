@@ -26,6 +26,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Kerala Lottery Results to access your camera to scan lottery ticket barcodes.",
         "NSMicrophoneUsageDescription": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
+        "NSSpeechRecognitionUsageDescription": "Allow Kerala Lottery Results to recognize your voice queries in Malayalam and English.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiresFullScreen": false,
         "UISupportedInterfaceOrientations": [
@@ -155,7 +156,14 @@
           "cameraPermission": "Allow Kerala Lottery Results to access your camera to scan ticket barcodes."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Kerala Lottery Results to access your microphone to ask lottery questions via voice in Malayalam and English.",
+          "speechRecognitionPermission": "Allow Kerala Lottery Results to recognize your speech in Malayalam and English."
+        }
+      ]
     ]
   }
 }

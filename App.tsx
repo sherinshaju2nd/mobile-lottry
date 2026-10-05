@@ -21,6 +21,7 @@ import ContactScreen from "./src/screens/ContactScreen";
 import SupportScreen from "./src/screens/SupportScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import NotFoundScreen from "./src/screens/NotFoundScreen";
+import AIAgentScreen from "./src/screens/AIAgentScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import OfflineGameModal from "./src/components/OfflineGameModal";
 import { NetworkProvider } from "./src/context/NetworkContext";
@@ -557,6 +558,8 @@ function AppContent() {
           <Stack.Screen name="Checker" component={SearchScreen} />
           <Stack.Screen name="Contact" component={ContactScreen} />
           <Stack.Screen name="Support" component={SupportScreen} />
+          <Stack.Screen name="AIAgent" component={AIAgentScreen} />
+          <Stack.Screen name="AIChat" component={AIAgentScreen} />
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>

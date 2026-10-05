@@ -2,6 +2,7 @@ import * as Speech from "expo-speech";
 import { DrawResult } from "../api/lotteryApi";
 import { getLotteryTranslatedName } from "../constants/lotteries";
 import { Language } from "../constants/translations";
+import { speakWithSoftLadyVoice } from "./softVoiceHelper";
 
 let isSpeakingState = false;
 
@@ -52,10 +53,7 @@ export async function speakLotteryResult(
 
     isSpeakingState = true;
 
-    Speech.speak(textToSpeak, {
-      language: voiceLocale,
-      pitch: 1.0,
-      rate: 0.9,
+    await speakWithSoftLadyVoice(textToSpeak, language, {
       onDone: () => {
         isSpeakingState = false;
         onDone?.();
