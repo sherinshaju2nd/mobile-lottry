@@ -4,6 +4,7 @@ import {
   ChatMessage,
 } from "../types/aiTypes";
 import { Language } from "../../../constants/translations";
+import { matchOfflineQuestion } from "../data/offlineLotteryQuestions";
 
 export interface GeneratedAssistantResponse {
   displayText: string;
@@ -21,6 +22,23 @@ export function generateNaturalMalayalamResponse(
   language: Language = "ml"
 ): GeneratedAssistantResponse {
   const isMl = language === "ml";
+
+  // Check 100+ Pre-computed Offline Questions for instant direct answers
+  const offlineMatch = matchOfflineQuestion(intent.rawQuestion);
+  if (offlineMatch?.item.directAnswer && (!verified.found || intent.intent === "LOTTERY_INFORMATION" || intent.intent === "APP_HELP")) {
+    const da = offlineMatch.item.directAnswer;
+    const txt = isMl ? da.ml : da.en;
+    return {
+      displayText: txt,
+      speechText: txt,
+      cardData: da.cardData as any || {
+        type: "claim_guide",
+        title: isMl ? offlineMatch.item.questionMl : offlineMatch.item.questionEn,
+        badgeText: "VERIFIED INFO",
+        details: da.cardData?.details || verified.details,
+      },
+    };
+  }
 
   // 1. TICKET CHECK RESPONSES
   if (intent.intent === "TICKET_CHECK" || intent.intent === "NUMBER_SEARCH") {
@@ -92,8 +110,8 @@ export function generateNaturalMalayalamResponse(
     // Ambiguous lottery name question: e.g. "ഇന്നത്തെ result?"
     if (verified.reason === "AMBIGUOUS_LOTTERY" || intent.isAmbiguous) {
       const displayText = isMl
-        ? "ഏത് ലോട്ടറിയുടെ ഇന്നത്തെ ഫലമാണ് നിങ്ങൾക്ക് വേണ്ടത്? വിൻ വിൻ, കാരുണ്യ, ഫിഫ്റ്റി ഫിഫ്റ്റി, സ്ത്രീശക്തി തുടങ്ങിയ ലോട്ടറിയുടെ പേര് പറയൂ."
-        : "Which lottery result are you looking for today? Please mention Win-Win, Karunya, Fifty-Fifty, or Sthree Sakthi.";
+        ? "ഏത് ലോട്ടറിയുടെ ഇന്നത്തെ ഫലമാണ് നിങ്ങൾക്ക് വേണ്ടത്? ഭാഗ്യതാരാ, സ്ത്രീശക്തി, ധനലക്ഷ്മി, കാരുണ്യ പ്ലസ്, സുവർണ്ണ കേരളം, കാരുണ്യ, സമൃദ്ധി എന്നിവയിൽ ഒന്ന് പറയൂ."
+        : "Which lottery result are you looking for today? Please mention Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, or Samrudhi.";
 
       return {
         displayText,

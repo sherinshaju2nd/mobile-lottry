@@ -7,6 +7,10 @@ export type LotteryIntentType =
   | "NUMBER_SEARCH"
   | "WINNING_NUMBERS"
   | "LOTTERY_INFORMATION"
+  | "SCHEDULE_VENUE"
+  | "CLAIM_PROCEDURE"
+  | "TAX_COMMISSION"
+  | "PRIZE_STRUCTURE"
   | "APP_HELP"
   | "GENERAL_QUESTION"
   | "UNKNOWN";
@@ -35,8 +39,8 @@ export interface ActivityStep {
 
 export interface StructuredIntent {
   intent: LotteryIntentType;
-  lottery: string | null; // e.g. "Karunya", "Win-Win", "Fifty-Fifty", "Sthree Sakthi", etc.
-  lotteryCode: string | null; // e.g. "KR", "WN", "FF", "KN", "SS", "BT", "SK", "SM"
+  lottery: string | null; // e.g. "Karunya", "Bhagyathara", "Dhanalekshmi", "Sthree Sakthi", etc.
+  lotteryCode: string | null; // e.g. "KR", "KN", "SS", "BT", "DL", "SK", "SM", "TH"
   date: string | null; // "today", "yesterday", or "YYYY-MM-DD"
   ticketNumber: string | null; // e.g. "123456", "WA 123456"
   prizeTier?: string | null; // e.g. "1st", "2nd", "3rd", "consolation"

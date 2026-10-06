@@ -124,7 +124,8 @@ export function useSpeechRecognition({
             : "Could not transcribe voice. Please speak clearly or type your question below.";
         setErrorMessage(errMsg);
         callbacksRef.current.onError?.(errMsg);
-        callbacksRef.current.onEnd?.();
+      } finally {
+        setIsListening(false);
       }
     } else {
       setIsListening(false);

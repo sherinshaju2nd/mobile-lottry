@@ -89,7 +89,8 @@ export async function queryVerifiedLotteryData(
 
   // 2. LOTTERY RESULT INTENT
   if (intent.intent === "LOTTERY_RESULT" || intent.intent === "WINNING_NUMBERS") {
-    if (intent.isAmbiguous || (!intent.lottery && !intent.lotteryCode && intent.date === "today")) {
+    // Only ambiguous if not asking about today's draw and missing both lottery name and code
+    if (intent.isAmbiguous && intent.date !== "today") {
       return {
         found: false,
         queryType: "LOTTERY_RESULT",
@@ -126,8 +127,8 @@ export async function queryVerifiedLotteryData(
         // Specific ISO date
         targetDraw = filteredByLottery.find((d) => d.draw_date === intent.date) || draws.find((d) => d.draw_date === intent.date) || null;
       } else {
-        // "today" / latest draw
-        targetDraw = filteredByLottery.length > 0 ? filteredByLottery[0] : null;
+        // "today" / latest draw: use filtered draw if available, otherwise latest database draw
+        targetDraw = filteredByLottery.length > 0 ? filteredByLottery[0] : (draws.length > 0 ? draws[0] : null);
       }
 
       if (targetDraw) {

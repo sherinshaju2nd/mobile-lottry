@@ -5,10 +5,10 @@ const FAVORITE_LOTTERIES_KEY = "@kerala_lottery_favorites_v1";
 export async function getFavoriteLotteries(): Promise<string[]> {
   try {
     const raw = await AsyncStorage.getItem(FAVORITE_LOTTERIES_KEY);
-    if (!raw) return ["ST", "FF", "KP"]; // Defaults: Sthree Sakthi, Fifty Fifty, Karunya Plus
+    if (!raw) return ["SS", "KR", "KN"]; // Defaults: Sthree Sakthi, Karunya, Karunya Plus
     return JSON.parse(raw);
   } catch {
-    return ["ST", "FF", "KP"];
+    return ["SS", "KR", "KN"];
   }
 }
 

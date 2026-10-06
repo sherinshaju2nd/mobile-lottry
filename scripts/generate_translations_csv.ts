@@ -51,7 +51,7 @@ Whether checking weekly Kerala Lottery draws or bumper lotteries, never miss a w
 • Search 4-digit, 5-digit, or 6-digit numbers across current and archived Kerala Lottery results.
 
 📅 Weekly & Bumper Lottery Schedule:
-• Weekly: Win-Win, Sthree Sakthi, Fifty-Fifty, Karunya Plus, Nirmal, Karunya, and Akshaya.
+• Weekly: Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, and Samrudhi.
 • Bumpers: Onam Bumper, Vishu Bumper, Pooja, Xmas-New Year, Monsoon, and Summer Bumper.
 
 📜 Official Kerala Lottery PDF Gazette:
@@ -152,7 +152,7 @@ Whether checking weekly Kerala Lottery draws or bumper lotteries, never miss a w
 • 3:00 PM लाइव ड्रॉ शुरू होने और फाइनल गजट आने पर तुरंत अलर्ट।
 
 📅 सभी साप्ताहिक और बम्पर लॉटरी:
-• Win-Win, Sthree Sakthi, Fifty-Fifty, Karunya Plus, Nirmal, Karunya, Akshaya और सभी बम्पर लॉटरी (Onam, Vishu, Pooja, Xmas)।
+• Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, Samrudhi और सभी बम्पर लॉटरी (Onam, Vishu, Pooja, Xmas)।
 
 📜 आधिकारिक PDF गजट:
 • ओरिजिनल सरकारी गजट PDF सीधे डाउनलोड करें।
@@ -195,7 +195,7 @@ Whether checking weekly Kerala Lottery draws or bumper lotteries, never miss a w
 • மதியம் 3:00 மணிக்கு குலுக்கல் தொடங்கும் போது நேரலை எச்சரிக்கை.
 
 📅 வாராந்திர & பம்பர் லாட்டரி:
-• Win-Win, Sthree Sakthi, Fifty-Fifty, Karunya Plus, Nirmal, Karunya, Akshaya மற்றும் பம்பர் முடிவுகள்.
+• Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, Samrudhi மற்றும் பம்பர் முடிவுகள்.
 
 📜 அதிகாரப்பூர்வ PDF பதிவிறக்கம்:
 • கேரள அரசு அதிகாரப்பூர்வ கெஜட் PDF-ஐ எளிதாக பதிவிறக்கம் செய்யலாம்.
@@ -237,7 +237,7 @@ Whether checking weekly Kerala Lottery draws or bumper lotteries, never miss a w
 • ಡ್ರಾ ಪ್ರಾರಂಭವಾದಾಗ ತ್ವರಿತ ಎಚ್ಚರಿಕೆಗಳು.
 
 📅 ಸಾಪ್ತಾಹಿಕ ಮತ್ತು ಬಂಪರ್ ಲಾಟರಿಗಳು:
-• Win-Win, Sthree Sakthi, Fifty-Fifty, Karunya Plus, Nirmal, Karunya, Akshaya ಮತ್ತು ಬಂಪರ್ ಲಾಟರಿಗಳು.
+• Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, Samrudhi ಮತ್ತು ಬಂಪರ್ ಲಾಟರಿಗಳು.
 
 📜 ಅಧಿಕೃತ PDF ಡೌನ್‌ಲೋಡ್:
 • ಅಧಿಕೃತ ಸರ್ಕಾರಿ ಗೆಜೆಟ್ PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.
@@ -278,7 +278,7 @@ Whether checking weekly Kerala Lottery draws or bumper lotteries, never miss a w
 • డ్రా ప్రారంభమైనప్పుడు తక్షణ అలర్ట్స్.
 
 📅 వీక్లీ & బంపర్ లాటరీలు:
-• Win-Win, Sthree Sakthi, Fifty-Fifty, Karunya Plus, Nirmal, Karunya, Akshaya మరియు బంపర్ ఫలితాలు.
+• Bhagyathara, Sthree Sakthi, Dhanalekshmi, Karunya Plus, Suvarna Keralam, Karunya, Samrudhi మరియు బంపర్ ఫలితాలు.
 
 📜 అధికారిక PDF గెజిట్:
 • కేరళ ప్రభుత్వ అధికారిక గెజిట్ PDF డౌన్‌లోడ్ చేసుకోండి.

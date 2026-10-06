@@ -6,7 +6,11 @@ import {
   DrawResult,
   SearchMatch,
 } from "../api/lotteryApi";
-import { WEEKLY_LOTTERIES, BUMPER_LOTTERIES, LotteryMeta } from "../constants/lotteries";
+import {
+  WEEKLY_LOTTERIES,
+  BUMPER_LOTTERIES,
+  LotteryMeta,
+} from "../constants/lotteries";
 import { Language } from "../constants/translations";
 
 export interface LocalAgentResult {
@@ -76,16 +80,32 @@ async function getFastDrawSnapshot(): Promise<DrawResult[]> {
 const LOTTERY_ALIASES: Record<string, { code: string; names: string[] }> = {
   samrudhi: { code: "SM", names: ["samrudhi", "samruddhi", "സമൃദ്ധി"] },
   karunya: { code: "KR", names: ["karunya", "കാരുണ്യ"] },
-  karunya_plus: { code: "KN", names: ["karunya plus", "karunyaplus", "കാരുണ്യ പ്ലസ്"] },
-  dhanalekshmi: { code: "DL", names: ["dhanalekshmi", "dhanalakshmi", "ധനലക്ഷ്മി"] },
-  sthree_sakthi: { code: "SS", names: ["sthree sakthi", "sthreesakthi", "sthree", "സ്ത്രീശക്തി"] },
+  karunya_plus: {
+    code: "KN",
+    names: ["karunya plus", "karunyaplus", "കാരുണ്യ പ്ലസ്"],
+  },
+  dhanalekshmi: {
+    code: "DL",
+    names: ["dhanalekshmi", "dhanalakshmi", "ധനലക്ഷ്മി"],
+  },
+  sthree_sakthi: {
+    code: "SS",
+    names: ["sthree sakthi", "sthreesakthi", "sthree", "സ്ത്രീശക്തി"],
+  },
   bhagyathara: { code: "BT", names: ["bhagyathara", "ഭാഗ്യതാര"] },
-  suvarna_keralam: { code: "SK", names: ["suvarna", "suvarna keralam", "സുവർണ്ണകേരളം", "സുവർണ്ണ"] },
-  fifty_fifty: { code: "FF", names: ["fifty fifty", "fifty", "ഫിഫ്റ്റി"] },
+  suvarna_keralam: {
+    code: "SK",
+    names: ["suvarna", "suvarna keralam", "സുവർണ്ണകേരളം", "സുവർണ്ണ"],
+  },
   nirmal: { code: "NR", names: ["nirmal", "നിർമ്മൽ"] },
-  win_win: { code: "WN", names: ["win win", "win-win", "വിൻ വിൻ"] },
-  thiruvonam: { code: "TH", names: ["thiruvonam", "onam bumper", "തിരുവോണം", "ഓണം ബംപർ"] },
-  christmas: { code: "XN", names: ["christmas", "xmas", "new year bumper", "ക്രിസ്മസ്"] },
+  thiruvonam: {
+    code: "TH",
+    names: ["thiruvonam", "onam bumper", "തിരുവോണം", "ഓണം ബംപർ"],
+  },
+  christmas: {
+    code: "XN",
+    names: ["christmas", "xmas", "new year bumper", "ക്രിസ്മസ്"],
+  },
   vishu: { code: "VB", names: ["vishu bumper", "വിഷു"] },
   pooja: { code: "PB", names: ["pooja bumper", "പൂജ"] },
   monsoon: { code: "MB", names: ["monsoon bumper", "മൺസൂൺ"] },
@@ -171,7 +191,10 @@ export function parseDateFromQuery(query: string): string | null {
   }
 
   // Check isolated digit match if month or date/തീയതി mentioned
-  if (!matchedDay && (matchedMonth || q.includes("തീയതി") || q.includes("date"))) {
+  if (
+    !matchedDay &&
+    (matchedMonth || q.includes("തീയതി") || q.includes("date"))
+  ) {
     const digitMatch = q.match(/\b([0-2]?[0-9]|3[01])\b/);
     if (digitMatch) {
       matchedDay = digitMatch[1].padStart(2, "0");
@@ -192,7 +215,7 @@ export function parseDateFromQuery(query: string): string | null {
  */
 export async function processInternalAgentQuery(
   rawQuery: string,
-  language: Language = "ml"
+  language: Language = "ml",
 ): Promise<LocalAgentResult> {
   const startTime = Date.now();
   const q = rawQuery.trim().toLowerCase();
@@ -232,7 +255,9 @@ export async function processInternalAgentQuery(
           title: isMl ? "ടിക്കറ്റ് നമ്പർ നൽകുക" : "Enter Ticket Number",
           subtitle: isMl ? "തത്സമയ പരിശോധന" : "Instant Verification",
           primaryHighlight: "e.g. MH 980055",
-          secondaryHighlight: isMl ? "6 അക്ക നമ്പർ നൽകുക" : "Provide 6 digits to verify",
+          secondaryHighlight: isMl
+            ? "6 അക്ക നമ്പർ നൽകുക"
+            : "Provide 6 digits to verify",
           badgeText: "AWAITING TICKET",
         },
         latencyMs: Date.now() - startTime,
@@ -264,11 +289,22 @@ export async function processInternalAgentQuery(
             secondaryHighlight: `Ticket: ${ticket}`,
             badgeText: "VERIFIED WINNER",
             details: [
-              { label: isMl ? "നറുക്കെടുപ്പ്" : "Draw Name", value: top.draw_name },
+              {
+                label: isMl ? "നറുക്കെടുപ്പ്" : "Draw Name",
+                value: top.draw_name,
+              },
               { label: isMl ? "ഡ്രോ കോഡ്" : "Draw Code", value: top.draw_code },
               { label: isMl ? "തീയതി" : "Draw Date", value: top.draw_date },
-              { label: isMl ? "സമ്മാനത്തുക" : "Prize Amount", value: top.prize_amount || top.prize_tier },
-              { label: isMl ? "ക്ലെയിം കാലാവധി" : "Claim Period", value: isMl ? "30 ദിവസത്തിനകം ഒറിജിനൽ ടിക്കറ്റുമായി സമർപ്പിക്കുക" : "Within 30 Days with Original Ticket" },
+              {
+                label: isMl ? "സമ്മാനത്തുക" : "Prize Amount",
+                value: top.prize_amount || top.prize_tier,
+              },
+              {
+                label: isMl ? "ക്ലെയിം കാലാവധി" : "Claim Period",
+                value: isMl
+                  ? "30 ദിവസത്തിനകം ഒറിജിനൽ ടിക്കറ്റുമായി സമർപ്പിക്കുക"
+                  : "Within 30 Days with Original Ticket",
+              },
             ],
           },
           latencyMs: Date.now() - startTime,
@@ -290,13 +326,30 @@ export async function processInternalAgentQuery(
             type: "ticket_no_match",
             title: isMl ? "സമ്മാനം ലഭിച്ചിട്ടില്ല" : "No Winning Match",
             subtitle: `Ticket: ${ticket}`,
-            primaryHighlight: isMl ? "ഔദ്യോഗിക പരിശോധന പൂർത്തിയായി" : "Checked Official Draws",
-            secondaryHighlight: isMl ? "പ്രസിദ്ധീകരിച്ച ലിസ്റ്റിൽ ഈ നമ്പർ ഇല്ല" : "Zero winning matches found in published draws",
+            primaryHighlight: isMl
+              ? "ഔദ്യോഗിക പരിശോധന പൂർത്തിയായി"
+              : "Checked Official Draws",
+            secondaryHighlight: isMl
+              ? "പ്രസിദ്ധീകരിച്ച ലിസ്റ്റിൽ ഈ നമ്പർ ഇല്ല"
+              : "Zero winning matches found in published draws",
             badgeText: "VERIFIED NO MATCH",
             details: [
-              { label: isMl ? "പരിശോധിച്ച ടിക്കറ്റ്" : "Searched Ticket", value: ticket },
-              { label: isMl ? "ഡാറ്റാബേസ് നില" : "Database Status", value: isMl ? "ഔദ്യോഗിക ലിസ്റ്റുമായി പരിശോധിച്ചു" : "Verified against published draws" },
-              { label: isMl ? "ശ്രദ്ധിക്കുക" : "Advice", value: isMl ? "സീരീസ് അക്ഷരങ്ങളും തീയതിയും പരിശോധിക്കുക" : "Please double check series & draw date" },
+              {
+                label: isMl ? "പരിശോധിച്ച ടിക്കറ്റ്" : "Searched Ticket",
+                value: ticket,
+              },
+              {
+                label: isMl ? "ഡാറ്റാബേസ് നില" : "Database Status",
+                value: isMl
+                  ? "ഔദ്യോഗിക ലിസ്റ്റുമായി പരിശോധിച്ചു"
+                  : "Verified against published draws",
+              },
+              {
+                label: isMl ? "ശ്രദ്ധിക്കുക" : "Advice",
+                value: isMl
+                  ? "സീരീസ് അക്ഷരങ്ങളും തീയതിയും പരിശോധിക്കുക"
+                  : "Please double check series & draw date",
+              },
             ],
           },
           latencyMs: Date.now() - startTime,
@@ -315,7 +368,8 @@ export async function processInternalAgentQuery(
       const dateDraw = draws.find((d) => d.draw_date === targetDate);
       if (dateDraw) {
         const ticketNum = dateDraw.first?.ticket || "Pending";
-        const prizeAmt = dateDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
+        const prizeAmt =
+          dateDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
         const loc = dateDraw.first?.location || "Kerala";
         const agnt = dateDraw.first?.agent || "Authorized Agency";
 
@@ -339,12 +393,21 @@ export async function processInternalAgentQuery(
             secondaryHighlight: `${isMl ? "ഒന്നാം സമ്മാനം" : "1st Prize"}: ${prizeAmt}`,
             badgeText: `${dateDraw.draw_date} DRAW`,
             details: [
-              { label: isMl ? "ലോട്ടറി പേര്" : "Draw Name", value: `${dateDraw.draw_name} (${dateDraw.draw_code})` },
-              { label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket", value: ticketNum },
+              {
+                label: isMl ? "ലോട്ടറി പേര്" : "Draw Name",
+                value: `${dateDraw.draw_name} (${dateDraw.draw_code})`,
+              },
+              {
+                label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket",
+                value: ticketNum,
+              },
               { label: isMl ? "സമ്മാനത്തുക" : "Prize Amount", value: prizeAmt },
               { label: isMl ? "വിറ്റ സ്ഥലം" : "Sold Location", value: loc },
               { label: isMl ? "ഏജന്റ്" : "Agent Name", value: agnt },
-              { label: isMl ? "നറുക്കെടുപ്പ് തീയതി" : "Draw Date", value: dateDraw.draw_date },
+              {
+                label: isMl ? "നറുക്കെടുപ്പ് തീയതി" : "Draw Date",
+                value: dateDraw.draw_date,
+              },
             ],
             fullPrizes: dateDraw.prizes?.amounts || {},
           },
@@ -371,7 +434,8 @@ export async function processInternalAgentQuery(
       if (draws && draws.length > 1) {
         const targetDraw = draws[1]; // Index 1 is yesterday's draw
         const ticketNum = targetDraw.first?.ticket || "Pending";
-        const prizeAmt = targetDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
+        const prizeAmt =
+          targetDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
         const loc = targetDraw.first?.location || "Kerala";
         const agnt = targetDraw.first?.agent || "Authorized Agency";
 
@@ -395,8 +459,14 @@ export async function processInternalAgentQuery(
             secondaryHighlight: `${isMl ? "ഒന്നാം സമ്മാനം" : "1st Prize"}: ${prizeAmt}`,
             badgeText: isMl ? "ഇന്നലത്തെ ഫലം" : "YESTERDAY DRAW",
             details: [
-              { label: isMl ? "ലോട്ടറി പേര്" : "Draw Name", value: `${targetDraw.draw_name} (${targetDraw.draw_code})` },
-              { label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket", value: ticketNum },
+              {
+                label: isMl ? "ലോട്ടറി പേര്" : "Draw Name",
+                value: `${targetDraw.draw_name} (${targetDraw.draw_code})`,
+              },
+              {
+                label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket",
+                value: ticketNum,
+              },
               { label: isMl ? "സമ്മാനത്തുക" : "Prize Amount", value: prizeAmt },
               { label: isMl ? "വിറ്റ സ്ഥലം" : "Sold Location", value: loc },
               { label: isMl ? "ഏജന്റ്" : "Agent Name", value: agnt },
@@ -416,14 +486,15 @@ export async function processInternalAgentQuery(
   const draws = await getFastDrawSnapshot();
 
   if (draws && draws.length > 0) {
-    // Check if user specifically named a lottery (e.g. Samrudhi, Karunya, Fifty Fifty, etc.)
+    // Check if user specifically named a lottery (e.g. Samrudhi, Karunya, Dhanalekshmi, etc.)
     for (const [_key, meta] of Object.entries(LOTTERY_ALIASES)) {
       if (meta.names.some((alias) => q.includes(alias))) {
         const found = draws.find(
           (d) =>
             (d.lottery_code && d.lottery_code.toUpperCase() === meta.code) ||
-            (d.draw_name && d.draw_name.toLowerCase().includes(meta.names[0])) ||
-            (d.draw_code && d.draw_code.toUpperCase().startsWith(meta.code))
+            (d.draw_name &&
+              d.draw_name.toLowerCase().includes(meta.names[0])) ||
+            (d.draw_code && d.draw_code.toUpperCase().startsWith(meta.code)),
         );
         if (found) {
           matchedSpecificLottery = found;
@@ -458,7 +529,8 @@ export async function processInternalAgentQuery(
       if (draws && draws.length > 0) {
         const targetDraw = matchedSpecificLottery || draws[0]; // If not specific, use latest live draw
         const ticketNum = targetDraw.first?.ticket || "Pending";
-        const prizeAmt = targetDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
+        const prizeAmt =
+          targetDraw.prizes?.amounts?.["1st"] || "₹1,00,00,000/- (1 Crore)";
         const loc = targetDraw.first?.location || "Kerala";
         const agnt = targetDraw.first?.agent || "Authorized Agency";
 
@@ -482,12 +554,24 @@ export async function processInternalAgentQuery(
             secondaryHighlight: `${isMl ? "ഒന്നാം സമ്മാനം" : "1st Prize"}: ${prizeAmt}`,
             badgeText: isMl ? "തത്സമയ ഫലം" : "LIVE DRAW",
             details: [
-              { label: isMl ? "ലോട്ടറി പേര്" : "Draw Name", value: `${targetDraw.draw_name} (${targetDraw.draw_code})` },
-              { label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket", value: ticketNum },
+              {
+                label: isMl ? "ലോട്ടറി പേര്" : "Draw Name",
+                value: `${targetDraw.draw_name} (${targetDraw.draw_code})`,
+              },
+              {
+                label: isMl ? "ഒന്നാം സമ്മാന ടിക്കറ്റ്" : "1st Prize Ticket",
+                value: ticketNum,
+              },
               { label: isMl ? "സമ്മാനത്തുക" : "Prize Amount", value: prizeAmt },
-              { label: isMl ? "വിറ്റ ജില്ല / സ്ഥലം" : "Sold Location", value: loc },
+              {
+                label: isMl ? "വിറ്റ ജില്ല / സ്ഥലം" : "Sold Location",
+                value: loc,
+              },
               { label: isMl ? "ഏജന്റ് പേര്" : "Agent Name", value: agnt },
-              { label: isMl ? "ഡാറ്റാബേസ് തീയതി" : "Draw Date", value: targetDraw.draw_date },
+              {
+                label: isMl ? "ഡാറ്റാബേസ് തീയതി" : "Draw Date",
+                value: targetDraw.draw_date,
+              },
             ],
             fullPrizes: targetDraw.prizes?.amounts || {},
           },
@@ -515,7 +599,9 @@ export async function processInternalAgentQuery(
   ) {
     try {
       const bumpers = await fetchBumperLotteries();
-      const b = (bumpers && bumpers.length > 0 ? bumpers[0] : BUMPER_LOTTERIES[0]) as LotteryMeta;
+      const b = (
+        bumpers && bumpers.length > 0 ? bumpers[0] : BUMPER_LOTTERIES[0]
+      ) as LotteryMeta;
       const jackpot = b.jackpot || "₹25 Crore";
       const price = b.ticket_price ? `₹${b.ticket_price}` : "₹300 - ₹500";
       const date = b.draw_date || b.day || "Announced by Directorate";
@@ -542,7 +628,10 @@ export async function processInternalAgentQuery(
           details: [
             { label: isMl ? "ബംപർ പേര്" : "Bumper Name", value: b.name },
             { label: isMl ? "ഒന്നാം സമ്മാനം" : "1st Prize", value: jackpot },
-            { label: isMl ? "ടിക്കറ്റ് നിരക്ക്" : "Ticket Price", value: price },
+            {
+              label: isMl ? "ടിക്കറ്റ് നിരക്ക്" : "Ticket Price",
+              value: price,
+            },
             { label: isMl ? "നറുക്കെടുപ്പ്" : "Draw Schedule", value: date },
           ],
         },
@@ -578,16 +667,42 @@ export async function processInternalAgentQuery(
       intent: "tax_calculator",
       cardData: {
         type: "tax_calculator",
-        title: isMl ? "30% TDS ടാക്സ് & സമ്മാനത്തുക" : "TDS 30% Tax & Net Payout Guide",
-        subtitle: isMl ? "ആദായനികുതി സെക്ഷൻ 194B" : "Section 194B Income Tax Act",
-        primaryHighlight: isMl ? "ഫ്ലാറ്റ് 30% TDS നികുതി" : "Flat 30% TDS Deduction",
-        secondaryHighlight: isMl ? "നെറ്റ് ലഭിക്കുന്നത്: 60% തുക" : "Net Payout: 60% in Bank",
+        title: isMl
+          ? "30% TDS ടാക്സ് & സമ്മാനത്തുക"
+          : "TDS 30% Tax & Net Payout Guide",
+        subtitle: isMl
+          ? "ആദായനികുതി സെക്ഷൻ 194B"
+          : "Section 194B Income Tax Act",
+        primaryHighlight: isMl
+          ? "ഫ്ലാറ്റ് 30% TDS നികുതി"
+          : "Flat 30% TDS Deduction",
+        secondaryHighlight: isMl
+          ? "നെറ്റ് ലഭിക്കുന്നത്: 60% തുക"
+          : "Net Payout: 60% in Bank",
         badgeText: isMl ? "നികുതി നിയമങ്ങൾ" : "TAX LAW",
         details: [
-          { label: isMl ? "നികുതിയിളവ്" : "Tax Exemption", value: isMl ? "₹10,000 വരെയുള്ള സമ്മാനങ്ങൾക്ക് ടാക്സ് ഇല്ല" : "Prizes up to ₹10,000 (0% TDS)" },
-          { label: isMl ? "TDS നിരക്ക്" : "TDS Rate", value: isMl ? "ഫ്ലാറ്റ് 30% (₹10,000 ന് മുകളിൽ)" : "Flat 30% (Prizes > ₹10,000)" },
-          { label: isMl ? "ഏജന്റ് കമ്മീഷൻ" : "Agent Commission", value: isMl ? "10% തുക" : "10% of Gross Prize" },
-          { label: isMl ? "₹1 കോടി ഉദാഹരണം" : "₹1 Crore Example", value: isMl ? "₹30L ടാക്സ് + ₹10L കമ്മീഷൻ = ₹60 ലക്ഷം നെറ്റ്" : "₹30L TDS + ₹10L Comm = ₹60L Net" },
+          {
+            label: isMl ? "നികുതിയിളവ്" : "Tax Exemption",
+            value: isMl
+              ? "₹10,000 വരെയുള്ള സമ്മാനങ്ങൾക്ക് ടാക്സ് ഇല്ല"
+              : "Prizes up to ₹10,000 (0% TDS)",
+          },
+          {
+            label: isMl ? "TDS നിരക്ക്" : "TDS Rate",
+            value: isMl
+              ? "ഫ്ലാറ്റ് 30% (₹10,000 ന് മുകളിൽ)"
+              : "Flat 30% (Prizes > ₹10,000)",
+          },
+          {
+            label: isMl ? "ഏജന്റ് കമ്മീഷൻ" : "Agent Commission",
+            value: isMl ? "10% തുക" : "10% of Gross Prize",
+          },
+          {
+            label: isMl ? "₹1 കോടി ഉദാഹരണം" : "₹1 Crore Example",
+            value: isMl
+              ? "₹30L ടാക്സ് + ₹10L കമ്മീഷൻ = ₹60 ലക്ഷം നെറ്റ്"
+              : "₹30L TDS + ₹10L Comm = ₹60L Net",
+          },
         ],
       },
       latencyMs: Date.now() - startTime,
@@ -618,16 +733,44 @@ export async function processInternalAgentQuery(
       intent: "claim_guide",
       cardData: {
         type: "claim_guide",
-        title: isMl ? "സമ്മാനം വാങ്ങുന്ന വിധം" : "Official Prize Claim Procedures",
-        subtitle: isMl ? "കേരള ലോട്ടറി ഡയറക്ടറേറ്റ്" : "Directorate of State Lotteries",
-        primaryHighlight: isMl ? "ക്ലെയിം കാലാവധി: 30 ദിവസം" : "Claim Window: 30 Days",
-        secondaryHighlight: isMl ? "ഒറിജിനൽ ടിക്കറ്റ് നിർബന്ധം" : "Submit with Original Ticket",
+        title: isMl
+          ? "സമ്മാനം വാങ്ങുന്ന വിധം"
+          : "Official Prize Claim Procedures",
+        subtitle: isMl
+          ? "കേരള ലോട്ടറി ഡയറക്ടറേറ്റ്"
+          : "Directorate of State Lotteries",
+        primaryHighlight: isMl
+          ? "ക്ലെയിം കാലാവധി: 30 ദിവസം"
+          : "Claim Window: 30 Days",
+        secondaryHighlight: isMl
+          ? "ഒറിജിനൽ ടിക്കറ്റ് നിർബന്ധം"
+          : "Submit with Original Ticket",
         badgeText: isMl ? "ക്ലെയിം നിയമങ്ങൾ" : "CLAIM GUIDE",
         details: [
-          { label: isMl ? "₹5,000 വരെ" : "Up to ₹5,000", value: isMl ? "ഏത് ലോട്ടറി ഏജന്റിൽ നിന്നും" : "Any Lottery Agent in Kerala" },
-          { label: isMl ? "₹5,000 - ₹1 ലക്ഷം" : "₹5,000 - ₹1 Lakh", value: isMl ? "ജില്ലാ ലോട്ടറി ഓഫീസ് (DLO)" : "District Lottery Office (DLO)" },
-          { label: isMl ? "₹1 ലക്ഷത്തിന് മുകളിൽ" : "Above ₹1 Lakh", value: isMl ? "ഡയറക്ടറേറ്റ്, വികാസ് ഭവൻ, തിരുവനന്തപുരം" : "Directorate, Vikas Bhavan, TVM" },
-          { label: isMl ? "ആവശ്യമായ രേഖകൾ" : "Mandatory IDs", value: isMl ? "ആധാർ, പാൻ കാർഡ്, ഫോട്ടോ" : "Aadhaar, PAN Card, Photos" },
+          {
+            label: isMl ? "₹5,000 വരെ" : "Up to ₹5,000",
+            value: isMl
+              ? "ഏത് ലോട്ടറി ഏജന്റിൽ നിന്നും"
+              : "Any Lottery Agent in Kerala",
+          },
+          {
+            label: isMl ? "₹5,000 - ₹1 ലക്ഷം" : "₹5,000 - ₹1 Lakh",
+            value: isMl
+              ? "ജില്ലാ ലോട്ടറി ഓഫീസ് (DLO)"
+              : "District Lottery Office (DLO)",
+          },
+          {
+            label: isMl ? "₹1 ലക്ഷത്തിന് മുകളിൽ" : "Above ₹1 Lakh",
+            value: isMl
+              ? "ഡയറക്ടറേറ്റ്, വികാസ് ഭവൻ, തിരുവനന്തപുരം"
+              : "Directorate, Vikas Bhavan, TVM",
+          },
+          {
+            label: isMl ? "ആവശ്യമായ രേഖകൾ" : "Mandatory IDs",
+            value: isMl
+              ? "ആധാർ, പാൻ കാർഡ്, ഫോട്ടോ"
+              : "Aadhaar, PAN Card, Photos",
+          },
         ],
       },
       latencyMs: Date.now() - startTime,
@@ -645,8 +788,8 @@ export async function processInternalAgentQuery(
     q.includes("samayam")
   ) {
     const displayText = isMl
-      ? "എല്ലാ ദിവസവും ഉച്ചയ്ക്ക് 3:00 മണിക്ക് തിരുവനന്തപുരം ഗോർക്കി ഭവനിൽ വച്ചാണ് ഔദ്യോഗിക ലോട്ടറി നറുക്കെടുപ്പ് നടക്കുന്നത്. തിങ്കൾ: വിൻ-വിൻ, ചൊവ്വ: സ്ത്രീശക്തി, ബുധൻ: ഫിഫ്റ്റി-ഫിഫ്റ്റി, വ്യാഴം: കാരുണ്യ പ്ലസ്, വെള്ളി: നിർമ്മൽ, ശനി: കാരുണ്യ, ഞായർ: സമൃദ്ധി."
-      : "Kerala State Lottery live draws occur daily at 3:00 PM IST at Gorky Bhavan, Thiruvananthapuram. Monday: Win-Win, Tuesday: Sthree Sakthi, Wednesday: Fifty-Fifty, Thursday: Karunya Plus, Friday: Nirmal, Saturday: Karunya, Sunday: Samrudhi.";
+      ? "എല്ലാ ദിവസവും ഉച്ചയ്ക്ക് 3:00 മണിക്ക് തിരുവനന്തപുരം ഗോർക്കി ഭവനിൽ വച്ചാണ് ഔദ്യോഗിക ലോട്ടറി നറുക്കെടുപ്പ് നടക്കുന്നത്. തിങ്കൾ: ഭാഗ്യതാരാ, ചൊവ്വ: സ്ത്രീശക്തി, ബുധൻ: ധനലക്ഷ്മി, വ്യാഴം: കാരുണ്യ പ്ലസ്, വെള്ളി: സുവർണ്ണ കേരളം, ശനി: കാരുണ്യ, ഞായർ: സമൃദ്ധി."
+      : "Kerala State Lottery live draws occur daily at 3:00 PM IST at Gorky Bhavan, Thiruvananthapuram. Monday: Bhagyathara, Tuesday: Sthree Sakthi, Wednesday: Dhanalekshmi, Thursday: Karunya Plus, Friday: Suvarna Keralam, Saturday: Karunya, Sunday: Samrudhi.";
 
     const speech = isMl
       ? "Daily live draw takes place at 3:00 PM IST at Gorky Bhavan, Thiruvananthapuram. Draws happen 7 days a week."
@@ -658,15 +801,36 @@ export async function processInternalAgentQuery(
       intent: "schedule_info",
       cardData: {
         type: "schedule_info",
-        title: isMl ? "നറുക്കെടുപ്പ് സമയവും ദിവസങ്ങളും" : "Daily Draw Schedule & Timings",
-        subtitle: isMl ? "തത്സമയ നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി" : "Live Draw: 3:00 PM IST Sharp",
-        primaryHighlight: isMl ? "എല്ലാ ദിവസവും ഉച്ചയ്ക്ക് 3:00 മണി" : "Daily at 3:00 PM",
-        secondaryHighlight: isMl ? "ഗോർക്കി ഭവൻ, തിരുവനന്തപുരം" : "Gorky Bhavan, Thiruvananthapuram",
+        title: isMl
+          ? "നറുക്കെടുപ്പ് സമയവും ദിവസങ്ങളും"
+          : "Daily Draw Schedule & Timings",
+        subtitle: isMl
+          ? "തത്സമയ നറുക്കെടുപ്പ്: ഉച്ചയ്ക്ക് 3:00 മണി"
+          : "Live Draw: 3:00 PM IST Sharp",
+        primaryHighlight: isMl
+          ? "എല്ലാ ദിവസവും ഉച്ചയ്ക്ക് 3:00 മണി"
+          : "Daily at 3:00 PM",
+        secondaryHighlight: isMl
+          ? "ഗോർക്കി ഭവൻ, തിരുവനന്തപുരം"
+          : "Gorky Bhavan, Thiruvananthapuram",
         badgeText: isMl ? "സമയം & സ്ഥലം" : "SCHEDULE",
         details: [
-          { label: isMl ? "സമയം" : "Draw Time", value: isMl ? "ഉച്ചയ്ക്ക് 3:00 മണി" : "3:00 PM IST Sharp Everyday" },
-          { label: isMl ? "വേദി" : "Venue", value: isMl ? "ഗോർക്കി ഭവൻ, ബേക്കറി ജങ്ഷൻ, തിരുവനന്തപുരം" : "Gorky Bhavan, Near Bakery Jn, TVM" },
-          { label: isMl ? "ടിക്കറ്റ് നിരക്ക്" : "Ticket Cost", value: isMl ? "₹40 - ₹50 (ആഴ്ചയിലെ ലോട്ടറികൾ)" : "₹40 - ₹50 (Weekly Draws)" },
+          {
+            label: isMl ? "സമയം" : "Draw Time",
+            value: isMl ? "ഉച്ചയ്ക്ക് 3:00 മണി" : "3:00 PM IST Sharp Everyday",
+          },
+          {
+            label: isMl ? "വേദി" : "Venue",
+            value: isMl
+              ? "ഗോർക്കി ഭവൻ, ബേക്കറി ജങ്ഷൻ, തിരുവനന്തപുരം"
+              : "Gorky Bhavan, Near Bakery Jn, TVM",
+          },
+          {
+            label: isMl ? "ടിക്കറ്റ് നിരക്ക്" : "Ticket Cost",
+            value: isMl
+              ? "₹40 - ₹50 (ആഴ്ചയിലെ ലോട്ടറികൾ)"
+              : "₹40 - ₹50 (Weekly Draws)",
+          },
         ],
       },
       latencyMs: Date.now() - startTime,
@@ -688,14 +852,26 @@ export async function processInternalAgentQuery(
     intent: "default",
     cardData: {
       type: "schedule_info",
-      title: isMl ? "കേരള ലോട്ടറി AI അസിസ്റ്റന്റ്" : "Kerala Lottery AI Assistant",
+      title: isMl
+        ? "കേരള ലോട്ടറി AI അസിസ്റ്റന്റ്"
+        : "Kerala Lottery AI Assistant",
       subtitle: isMl ? "ഡാറ്റാബേസ് കണക്ടഡ്" : "Database Connected",
-      primaryHighlight: isMl ? "ഡാറ്റാബേസ് തത്സമയം സജീവം" : "Supabase Live Connected",
-      secondaryHighlight: isMl ? "ചോദിക്കൂ, ഞാൻ കൃത്യമായ ഫലം നൽകാം" : "Ready to verify any lottery or ticket",
+      primaryHighlight: isMl
+        ? "ഡാറ്റാബേസ് തത്സമയം സജീവം"
+        : "Supabase Live Connected",
+      secondaryHighlight: isMl
+        ? "ചോദിക്കൂ, ഞാൻ കൃത്യമായ ഫലം നൽകാം"
+        : "Ready to verify any lottery or ticket",
       badgeText: isMl ? "AI ഏജന്റ്" : "AI AGENT",
       details: [
-        { label: isMl ? "ഡാറ്റാബേസ്" : "Database", value: isMl ? "തത്സമയ കണക്ഷൻ" : "Supabase Live DB" },
-        { label: isMl ? "ഭാഷ" : "Language", value: isMl ? "മലയാളം (Default)" : "Malayalam & English" },
+        {
+          label: isMl ? "ഡാറ്റാബേസ്" : "Database",
+          value: isMl ? "തത്സമയ കണക്ഷൻ" : "Supabase Live DB",
+        },
+        {
+          label: isMl ? "ഭാഷ" : "Language",
+          value: isMl ? "മലയാളം (Default)" : "Malayalam & English",
+        },
       ],
     },
     latencyMs: Date.now() - startTime,

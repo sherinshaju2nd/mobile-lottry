@@ -16,7 +16,11 @@ import {
 } from "../features/ai/types/aiTypes";
 import { useSpeechRecognition } from "../features/ai/hooks/useSpeechRecognition";
 import { useTextToSpeech } from "../features/ai/hooks/useTextToSpeech";
-import { detectIntentWithGemini } from "../features/ai/services/intentDetector";
+import {
+  detectIntentWithGemini,
+  detectIntentLocally,
+} from "../features/ai/services/intentDetector";
+import { matchOfflineQuestion } from "../features/ai/data/offlineLotteryQuestions";
 import { queryVerifiedLotteryData } from "../features/ai/services/verifiedLotteryService";
 import { generateNaturalMalayalamResponse } from "../features/ai/services/malayalamResponseGenerator";
 import {
@@ -127,6 +131,22 @@ export function useAIAgent(options: UseAIAgentOptions = {}): AIAgentContextState
     setAudioLevel(0);
   }, []);
 
+  // Watchdog timer: automatically unlock and recover to idle if stuck in processing
+  useEffect(() => {
+    let timer: any = null;
+    if (["transcribing", "thinking", "searching", "processing"].includes(state)) {
+      timer = setTimeout(() => {
+        console.warn("AIAgent: Watchdog recovered state to idle:", state);
+        setState("idle");
+        isInputLockedRef.current = false;
+        stopAudioWaveAnimation();
+      }, 10000); // 10s maximum timeout
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [state, stopAudioWaveAnimation]);
+
   // Step Status Helper
   const setStep = useCallback(
     (stepId: string, status: "completed" | "in_progress" | "pending") => {
@@ -210,10 +230,20 @@ export function useAIAgent(options: UseAIAgentOptions = {}): AIAgentContextState
       const query = rawQuery.trim();
       if (!query) return;
 
-      // Double-action / concurrency lock
-      if (isInputLockedRef.current) {
-        console.warn("AIAgent: Input locked, ignoring concurrent submission:", query);
-        return;
+      // If user was listening or transcribing, cancel it immediately and execute query
+      if (state === "listening" || state === "transcribing" || state === "speaking") {
+        await stopSpeech();
+        await abortListening();
+        stopAudioWaveAnimation();
+        isInputLockedRef.current = false;
+      } else if (isInputLockedRef.current) {
+        if (lastQueryRef.current === query) {
+          console.warn("AIAgent: Input locked, ignoring duplicate submission:", query);
+          return;
+        }
+        // Allow user to override stalled request with a new query
+        console.log("AIAgent: Overriding previous locked request with new query:", query);
+        isInputLockedRef.current = false;
       }
 
       // Check network status
@@ -248,14 +278,60 @@ export function useAIAgent(options: UseAIAgentOptions = {}): AIAgentContextState
       setMessages((prev) => [...prev, userMsg]);
 
       try {
-        // 1. THINKING state (Intent recognition)
+        // 0. Pre-computed Offline Question with Direct Answer (< 0.2ms, zero Gemini call)
+        const offlineMatch = matchOfflineQuestion(query);
+        if (offlineMatch?.item?.directAnswer) {
+          const ans = offlineMatch.item.directAnswer;
+          const speech = language === "ml" ? ans.ml : ans.en;
+          setStep("understand", "completed");
+          setStep("search", "completed");
+          setStep("verify", "completed");
+
+          const aiMsg: AgentMessage = {
+            id: `ai-${Date.now()}`,
+            sender: "ai",
+            text: speech,
+            speechText: speech,
+            timestamp: Date.now(),
+            cardData: ans.cardData
+              ? {
+                  type: "schedule_info",
+                  title: ans.cardData.title,
+                  subtitle: ans.cardData.subtitle,
+                  badgeText: ans.cardData.badgeText,
+                  primaryHighlight: ans.cardData.primaryHighlight,
+                  secondaryHighlight: ans.cardData.secondaryHighlight,
+                  details: ans.cardData.details,
+                }
+              : undefined,
+          };
+
+          setResponse(aiMsg);
+          setMessages((prev) => [...prev, aiMsg]);
+          saveSessionToHistory(query, speech);
+
+          if (!isVoiceMuted && speech) {
+            setState("speaking");
+            await speak(speech);
+          } else {
+            setState("success");
+            setTimeout(() => {
+              setState((curr) => (curr === "success" ? "idle" : curr));
+            }, 2000);
+          }
+          return;
+        }
+
+        // 1. THINKING state (Ultra-fast local & offline match first)
         setState("thinking");
         setStep("understand", "in_progress");
 
-        const intentResult: StructuredIntent = await detectIntentWithGemini(
-          query,
-          contextRef.current
-        );
+        // Try local offline matching first (zero network latency, offline FAQ + daily schedule)
+        const localIntent = detectIntentLocally(query, contextRef.current);
+        const intentResult: StructuredIntent =
+          localIntent && (localIntent.confidence || 0) >= 0.85
+            ? localIntent
+            : await detectIntentWithGemini(query, contextRef.current);
 
         if (activeRequestIdRef.current !== currentReqId) return; // Stale request
         setStep("understand", "completed");
@@ -378,12 +454,16 @@ export function useAIAgent(options: UseAIAgentOptions = {}): AIAgentContextState
     },
     onEnd: () => {
       stopAudioWaveAnimation();
-      setState((curr) => (curr === "listening" ? "transcribing" : curr));
+      setState((curr) => (curr === "listening" ? "idle" : curr));
     },
     onError: (err) => {
       stopAudioWaveAnimation();
       setState("error");
       setErrorMessage(err || "Microphone error. Please try again.");
+      setTimeout(() => {
+        setState((curr) => (curr === "error" ? "idle" : curr));
+        setErrorMessage(null);
+      }, 3500);
     },
   });
 

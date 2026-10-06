@@ -9,13 +9,31 @@ import {
   extractDateIntent,
   extractPrizeTier,
   KERALA_LOTTERIES,
+  LotteryAliasInfo,
 } from "../utils/lotteryNormalizer";
+import { matchOfflineQuestion } from "../data/offlineLotteryQuestions";
+
+/**
+ * Resolve Kerala lottery scheduled for a given day in Indian Standard Time (IST)
+ */
+export function getScheduledLotteryForDay(date: Date = new Date()): LotteryAliasInfo {
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+  const ist = new Date(utc + 3600000 * 5.5);
+  const day = ist.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const dayCodes = ["SM", "BT", "SS", "DL", "KN", "SK", "KR"];
+  const code = dayCodes[day] || "BT";
+  const found = Object.values(KERALA_LOTTERIES).find((l) => l.code === code);
+  return found || KERALA_LOTTERIES.bhagyathara;
+}
+
+
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
 /**
  * Fast Local Intent Detector (< 5ms)
  * Understands Malayalam, Manglish, and English with zero API latency.
+ * Checks 100+ pre-computed questions dataset to avoid calling Gemini!
  */
 export function detectIntentLocally(
   query: string,
@@ -23,6 +41,35 @@ export function detectIntentLocally(
 ): StructuredIntent | null {
   const q = query.trim().toLowerCase();
   if (!q) return null;
+
+  // 0. CHECK PRE-COMPUTED 100+ KERALA LOTTERY FAQ & INTENT DATASET
+  // Sub-1ms execution. Zero Gemini API calls needed!
+  const offlineMatch = matchOfflineQuestion(query);
+  if (offlineMatch) {
+    const item = offlineMatch.item;
+    const ticketFromQuery = extractTicketNumber(query);
+    let matchedLottery = item.lotteryName
+      ? { officialName: item.lotteryName, code: item.lotteryCode || "" }
+      : identifyLotteryFromText(query);
+
+    // Auto-resolve today's lottery if query is about today and no specific lottery was named
+    if (!matchedLottery && (item.dateTarget === "today" || extractDateIntent(query).type === "today")) {
+      const todaySched = getScheduledLotteryForDay();
+      matchedLottery = todaySched;
+    }
+
+    return {
+      intent: item.intent,
+      lottery: matchedLottery?.officialName || context?.lastLottery || null,
+      lotteryCode: item.lotteryCode || matchedLottery?.code || context?.lastLotteryCode || null,
+      date: item.dateTarget || extractDateIntent(query).type || context?.lastDate || "today",
+      ticketNumber: ticketFromQuery || null,
+      prizeTier: item.prizeTier || extractPrizeTier(query) || null,
+      rawQuestion: query,
+      confidence: 1.0,
+      isAmbiguous: false,
+    };
+  }
 
   // 1. TICKET CHECK INTENT (Explicit ticket number or check keyword)
   const ticket = extractTicketNumber(query);
@@ -141,7 +188,7 @@ export function detectIntentLocally(
   }
 
   // 5. LOTTERY RESULT INTENT
-  const matchedLottery = identifyLotteryFromText(query);
+  let matchedLottery = identifyLotteryFromText(query);
   const dateIntent = extractDateIntent(query);
   const isResultKeyword =
     q.includes("result") ||
@@ -155,12 +202,19 @@ export function detectIntentLocally(
     q.includes("entha") ||
     q.includes("എന്താണ്");
 
-  // Ambiguous query: "ഇന്നത്തെ result?", "today's result", "result entha?" without lottery name or context
-  const cleanQ = q.replace(/[?!.,;]/g, "").trim();
+  // Auto-resolve today's lottery if asking about today
+  const isAskingToday = dateIntent.type === "today" || q.includes("today") || q.includes("innathe") || q.includes("ഇന്നത്തെ");
+  if (!matchedLottery && isResultKeyword && isAskingToday) {
+    const todaySched = getScheduledLotteryForDay();
+    matchedLottery = todaySched;
+  }
+
+  // Ambiguous query: asking for result without specifying today, date, or lottery name
   if (
     isResultKeyword &&
     !matchedLottery &&
-    !context?.lastLottery
+    !context?.lastLottery &&
+    !isAskingToday
   ) {
     return {
       intent: "LOTTERY_RESULT",
@@ -171,7 +225,7 @@ export function detectIntentLocally(
       rawQuestion: query,
       confidence: 0.92,
       isAmbiguous: true,
-      clarificationPrompt: "ഏത് ലോട്ടറിയുടെ ഇന്നത്തെ ഫലമാണ് നിങ്ങൾക്ക് വേണ്ടത്?",
+      clarificationPrompt: "ഏത് ലോട്ടറിയുടെ ഫലമാണ് നിങ്ങൾക്ക് വേണ്ടത്?",
     };
   }
 

@@ -11,3 +11,4 @@ export * from "./hooks/useLotteryQuery";
 export * from "./hooks/useLotteryAI";
 export * from "../../hooks/useAIAgent";
 export * from "../../components/ai";
+export * from "./data/offlineLotteryQuestions";

@@ -8,47 +8,19 @@ export interface LotteryAliasInfo {
 }
 
 export const KERALA_LOTTERIES: Record<string, LotteryAliasInfo> = {
-  karunya: {
-    code: "KR",
-    officialName: "Karunya",
-    malayalamName: "കാരുണ്യ",
-    dayOfWeek: "Saturday",
-    defaultPrize: "₹80 Lakhs",
-    aliases: [
-      "karunya",
-      "karunya lottery",
-      "കാരുണ്യ",
-      "കാരുണ്യ ലോട്ടറി",
-      "കാരുണ്യ ഫലം",
-      "കാരുണ്യ റിസൾട്ട്",
-    ],
-  },
-  karunya_plus: {
-    code: "KN",
-    officialName: "Karunya Plus",
-    malayalamName: "കാരുണ്യ പ്ലസ്",
-    dayOfWeek: "Thursday",
-    defaultPrize: "₹80 Lakhs",
-    aliases: [
-      "karunya plus",
-      "karunyaplus",
-      "കാരുണ്യ പ്ലസ്",
-      "കാരുണ്യപ്ലസ്",
-    ],
-  },
-  win_win: {
-    code: "WN",
-    officialName: "Win-Win",
-    malayalamName: "വിൻ വിൻ",
+  bhagyathara: {
+    code: "BT",
+    officialName: "Bhagyathara",
+    malayalamName: "ഭാഗ്യതാരാ",
     dayOfWeek: "Monday",
-    defaultPrize: "₹75 Lakhs",
+    defaultPrize: "₹1 Crore",
     aliases: [
-      "win win",
-      "win-win",
-      "winwin",
-      "വിൻ വിൻ",
-      "വിൻവിൻ",
-      "വിൻ-വിൻ",
+      "bhagyathara",
+      "bhagya thara",
+      "ഭാഗ്യതാരാ",
+      "ഭാഗ്യതാര",
+      "ഭാഗ്യ താര",
+      "bt",
     ],
   },
   sthree_sakthi: {
@@ -64,57 +36,7 @@ export const KERALA_LOTTERIES: Record<string, LotteryAliasInfo> = {
       "sthree",
       "സ്ത്രീശക്തി",
       "സ്ത്രീ ശക്തി",
-    ],
-  },
-  fifty_fifty: {
-    code: "FF",
-    officialName: "Fifty-Fifty",
-    malayalamName: "ഫിഫ്റ്റി-ഫിഫ്റ്റി",
-    dayOfWeek: "Wednesday",
-    defaultPrize: "₹1 Crore",
-    aliases: [
-      "fifty fifty",
-      "fifty-fifty",
-      "fifty",
-      "ഫിഫ്റ്റി ഫിഫ്റ്റി",
-      "ഫിഫ്റ്റി-ഫിഫ്റ്റി",
-      "ഫിഫ്റ്റി",
-    ],
-  },
-  nirmal: {
-    code: "NR",
-    officialName: "Nirmal",
-    malayalamName: "നിർമ്മൽ",
-    dayOfWeek: "Friday",
-    defaultPrize: "₹70 Lakhs",
-    aliases: [
-      "nirmal",
-      "നിർമ്മൽ",
-      "നിർമൽ",
-    ],
-  },
-  samrudhi: {
-    code: "SM",
-    officialName: "Samrudhi",
-    malayalamName: "സമൃദ്ധി",
-    dayOfWeek: "Sunday",
-    defaultPrize: "₹70 Lakhs",
-    aliases: [
-      "samrudhi",
-      "samruddhi",
-      "samrudhi lottery",
-      "സമൃദ്ധി",
-    ],
-  },
-  bhagyathara: {
-    code: "BT",
-    officialName: "Bhagyathara",
-    malayalamName: "ഭാഗ്യതാര",
-    dayOfWeek: "Monday",
-    defaultPrize: "₹1 Crore",
-    aliases: [
-      "bhagyathara",
-      "ഭാഗ്യതാര",
+      "ss",
     ],
   },
   dhanalekshmi: {
@@ -126,8 +48,19 @@ export const KERALA_LOTTERIES: Record<string, LotteryAliasInfo> = {
     aliases: [
       "dhanalekshmi",
       "dhanalakshmi",
+      "dhana lakshmi",
       "ധനലക്ഷ്മി",
+      "ധന ലക്ഷ്മി",
+      "dl",
     ],
+  },
+  karunya_plus: {
+    code: "KN",
+    officialName: "Karunya Plus",
+    malayalamName: "കാരുണ്യ പ്ലസ്",
+    dayOfWeek: "Thursday",
+    defaultPrize: "₹80 Lakhs",
+    aliases: ["karunya plus", "karunyaplus", "കാരുണ്യ പ്ലസ്", "കാരുണ്യപ്ലസ്", "kn"],
   },
   suvarna_keralam: {
     code: "SK",
@@ -138,89 +71,93 @@ export const KERALA_LOTTERIES: Record<string, LotteryAliasInfo> = {
     aliases: [
       "suvarna",
       "suvarna keralam",
+      "suvarnakeralam",
       "സുവർണ്ണ",
       "സുവർണ്ണ കേരളം",
       "സുവർണ്ണകേരളം",
+      "sk",
     ],
+  },
+  karunya: {
+    code: "KR",
+    officialName: "Karunya",
+    malayalamName: "കാരുണ്യ",
+    dayOfWeek: "Saturday",
+    defaultPrize: "₹80 Lakhs",
+    aliases: [
+      "karunya",
+      "karunya lottery",
+      "കാരുണ്യ",
+      "കാരുണ്യ ലോട്ടറി",
+      "കാരുണ്യ ഫലം",
+      "കാരുണ്യ റിസൾട്ട്",
+      "kr",
+    ],
+  },
+  samrudhi: {
+    code: "SM",
+    officialName: "Samrudhi",
+    malayalamName: "സമൃദ്ധി",
+    dayOfWeek: "Sunday",
+    defaultPrize: "₹70 Lakhs",
+    aliases: ["samrudhi", "samruddhi", "samrudhi lottery", "സമൃദ്ധി", "sm"],
   },
   thiruvonam: {
     code: "TH",
     officialName: "Thiruvonam Bumper",
     malayalamName: "തിരുവോണം ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹25 Crore",
-    aliases: [
-      "thiruvonam",
-      "onam bumper",
-      "തിരുവോണം",
-      "ഓണം ബംപർ",
-    ],
+    dayOfWeek: "Bumper (September)",
+    defaultPrize: "₹30 Crore",
+    aliases: ["thiruvonam", "onam bumper", "തിരുവോണം", "ഓണം ബംപർ", "തിരുവോണം ബംപർ", "th"],
   },
   christmas: {
     code: "XN",
     officialName: "Christmas New Year Bumper",
     malayalamName: "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹20 Crore",
+    dayOfWeek: "Bumper (January)",
+    defaultPrize: "₹30 Crore",
     aliases: [
       "christmas bumper",
       "xmas bumper",
       "new year bumper",
+      "christmas new year",
       "ക്രിസ്മസ്",
       "ക്രിസ്മസ് ബംപർ",
-    ],
-  },
-  vishu: {
-    code: "VB",
-    officialName: "Vishu Bumper",
-    malayalamName: "വിഷു ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹12 Crore",
-    aliases: [
-      "vishu bumper",
-      "vishu",
-      "വിഷു",
-      "വിഷു ബംപർ",
-    ],
-  },
-  pooja: {
-    code: "PB",
-    officialName: "Pooja Bumper",
-    malayalamName: "പൂജ ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹12 Crore",
-    aliases: [
-      "pooja bumper",
-      "pooja",
-      "പൂജ",
-      "പൂജ ബംപർ",
-    ],
-  },
-  monsoon: {
-    code: "MB",
-    officialName: "Monsoon Bumper",
-    malayalamName: "മൺസൂൺ ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹10 Crore",
-    aliases: [
-      "monsoon bumper",
-      "monsoon",
-      "മൺസൂൺ",
-      "മൺസൂൺ ബംപർ",
+      "ക്രിസ്മസ് ന്യൂ ഇയർ ബംപർ",
+      "xn",
     ],
   },
   summer: {
     code: "SB",
     officialName: "Summer Bumper",
     malayalamName: "സമ്മർ ബംപർ",
-    dayOfWeek: "Bumper",
-    defaultPrize: "₹10 Crore",
-    aliases: [
-      "summer bumper",
-      "summer",
-      "സമ്മർ",
-      "സമ്മർ ബംപർ",
-    ],
+    dayOfWeek: "Bumper (March)",
+    defaultPrize: "₹30 Crore",
+    aliases: ["summer bumper", "summer", "സമ്മർ", "സമ്മർ ബംപർ", "sb"],
+  },
+  vishu: {
+    code: "VB",
+    officialName: "Vishu Bumper",
+    malayalamName: "വിഷു ബംപർ",
+    dayOfWeek: "Bumper (May)",
+    defaultPrize: "₹30 Crore",
+    aliases: ["vishu bumper", "vishu", "വിഷു", "വിഷു ബംപർ", "vb"],
+  },
+  monsoon: {
+    code: "MB",
+    officialName: "Monsoon Bumper",
+    malayalamName: "മൺസൂൺ ബംപർ",
+    dayOfWeek: "Bumper (July)",
+    defaultPrize: "₹30 Crore",
+    aliases: ["monsoon bumper", "monsoon", "മൺസൂൺ", "മൺസൂൺ ബംപർ", "mb"],
+  },
+  pooja: {
+    code: "PB",
+    officialName: "Pooja Bumper",
+    malayalamName: "പൂജ ബംപർ",
+    dayOfWeek: "Bumper (November)",
+    defaultPrize: "₹12 Crore",
+    aliases: ["pooja bumper", "pooja", "പൂജ", "പൂജ ബംപർ", "pb"],
   },
 };
 
@@ -282,7 +219,10 @@ export function extractTicketNumber(text: string): string | null {
 /**
  * Extract date intent from query ("today", "yesterday", or specific date)
  */
-export function extractDateIntent(text: string): { type: "today" | "yesterday" | "specific" | null; dateStr?: string } {
+export function extractDateIntent(text: string): {
+  type: "today" | "yesterday" | "specific" | null;
+  dateStr?: string;
+} {
   const q = text.toLowerCase();
 
   if (

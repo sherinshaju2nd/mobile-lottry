@@ -49,7 +49,7 @@ Rules:
 1. If the user spoke in Malayalam or Manglish, transcribe it into natural Malayalam script (മലയാളം).
    For example:
    - "ഇന്നത്തെ കാരുണ്യ ലോട്ടറി ഫലം എന്താണ്?"
-   - "വിൻ വിൻ ലോട്ടറി ഫലം പറയാമോ?"
+   - "ഭാഗ്യതാരാ ലോട്ടറി ഫലം പറയാമോ?"
    - "123456 എന്ന ടിക്കറ്റിന് സമ്മാനം ഉണ്ടോ?"
    - "ഒന്നാം സമ്മാനം എത്രയാണ്?"
    - "അടുത്ത നറുക്കെടുപ്പ് എപ്പോഴാണ്?"
@@ -58,10 +58,10 @@ Rules:
 `;
 
   const models = [
-    "gemini-3.5-flash",
-    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+    "gemini-3.5-flash-lite",
     "gemini-3.6-flash",
-    "gemini-3.8-flash",
+    "gemini-flash-lite-latest",
   ];
 
   let lastError: any = null;
