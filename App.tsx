@@ -6,10 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Home, Ticket, Search as SearchIcon, Camera, BarChart3 } from "lucide-react-native";
 import * as SplashScreen from "expo-splash-screen";
-import { Asset } from "expo-asset";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-
-SplashScreen.preventAutoHideAsync();
 
 import HomeScreen from "./src/screens/HomeRouterScreen";
 import LotteriesScreen from "./src/screens/LotteriesScreen";
@@ -22,7 +19,6 @@ import SupportScreen from "./src/screens/SupportScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import NotFoundScreen from "./src/screens/NotFoundScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
-import OfflineGameModal from "./src/components/OfflineGameModal";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
 import { LanguageProvider, useLanguage } from "./src/context/LanguageContext";
@@ -439,8 +435,7 @@ import InAppNotificationToast from "./src/components/InAppNotificationToast";
 import { navigationRef } from "./src/utils/navigationRef";
 
 function AppContent() {
-  const [appIsReady, setAppIsReady] = useState(false);
-  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean | null>(null);
+  const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean>(true);
   const [inAppNotif, setInAppNotif] = useState<{
     visible: boolean;
     title: string;
@@ -451,6 +446,20 @@ function AppContent() {
     let responseSub: any = null;
     let receiveSub: any = null;
     let appStateSub: any = null;
+
+    // Immediately ensure splash screen is hidden
+    SplashScreen.hideAsync().catch(() => {});
+
+    // Check privacy consent preference in background
+    AsyncStorage.getItem("privacy_consent_accepted")
+      .then((accepted) => {
+        if (accepted !== "true") {
+          setIsPrivacyAccepted(false);
+        }
+      })
+      .catch(() => {
+        setIsPrivacyAccepted(false);
+      });
 
     try {
       // Request notification permission early and ensure high-importance OS channels
@@ -477,25 +486,9 @@ function AppContent() {
           syncAllDrawNotifications().catch(() => {});
         }
       });
-    } catch {}
 
-    async function prepareApp() {
-      try {
-        await Asset.loadAsync([
-          require("./assets/icon.png"),
-          require("./assets/adaptive-icon.png"),
-        ]);
-        const accepted = await AsyncStorage.getItem("privacy_consent_accepted");
-        setIsPrivacyAccepted(accepted === "true");
-        syncAllDrawNotifications().catch(() => {});
-      } catch (e) {
-        console.warn("Asset caching/privacy load error:", e);
-        setIsPrivacyAccepted(false);
-      } finally {
-        setAppIsReady(true);
-      }
-    }
-    prepareApp();
+      syncAllDrawNotifications().catch(() => {});
+    } catch {}
 
     return () => {
       responseSub?.remove?.();
@@ -503,16 +496,6 @@ function AppContent() {
       appStateSub?.remove?.();
     };
   }, []);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (appIsReady) {
-      try {
-        await SplashScreen.hideAsync();
-      } catch {
-        // Silently catch in case activity is paused or surface is transitioning
-      }
-    }
-  }, [appIsReady]);
 
   const handleAcceptPrivacy = async () => {
     try {
@@ -524,17 +507,8 @@ function AppContent() {
     }
   };
 
-  if (!appIsReady || isPrivacyAccepted === null) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: "#0B3C5D" }}
-        onLayout={onLayoutRootView}
-      />
-    );
-  }
-
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View style={{ flex: 1 }}>
       <InAppNotificationToast
         visible={inAppNotif.visible}
         title={inAppNotif.title}
@@ -542,7 +516,12 @@ function AppContent() {
         onPress={() => navigationRef.current?.navigate("Reminders")}
         onDismiss={() => setInAppNotif((prev) => ({ ...prev, visible: false }))}
       />
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={() => {
+          SplashScreen.hideAsync().catch(() => {});
+        }}
+      >
         <StatusBar style="dark" />
         <Stack.Navigator
           initialRouteName="MainTabs"
@@ -560,8 +539,6 @@ function AppContent() {
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>
-      {/* Offline Mini-game & Network Lost Overlay */}
-      <OfflineGameModal />
       {isPrivacyAccepted ? (
         <LanguageSelectionModal />
       ) : (

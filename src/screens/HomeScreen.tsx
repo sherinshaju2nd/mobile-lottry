@@ -90,7 +90,6 @@ import {
 import { SUPPORTED_LANGUAGES, isIndic } from "../constants/translations";
 import {
   fetchAllDraws,
-  getCachedDrawsQuick,
   fetchLotteries,
   fetchBumperLotteries,
   DrawResult,
@@ -232,13 +231,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const loadData = async () => {
     try {
-      // Instant sub-50ms render from offline cache
-      const cached = await getCachedDrawsQuick();
-      if (cached && cached.length > 0 && allDraws.length === 0) {
-        setAllDraws(cached);
-        setIsLoading(false);
-      }
-
+      setIsLoading(true);
       const todayDate = getSafeTodayISTDate();
 
       const [draws, lotteries, bumpers, postponement] = await Promise.all([

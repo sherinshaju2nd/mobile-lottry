@@ -41,7 +41,6 @@ import {
 import { SUPPORTED_LANGUAGES, isIndic } from "../constants/translations";
 import {
   fetchAllDraws,
-  getCachedDrawsQuick,
   fetchLotteries,
   fetchBumperLotteries,
   DrawResult,
@@ -136,6 +135,193 @@ export function isDrawCompletedWith9th(draw: DrawResult | null | undefined): boo
 
 import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 
+function HomeScreenSkeletonLoader({ isMl }: { isMl: boolean }) {
+  const pulseAnim = useRef(new Animated.Value(0.35)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.85,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0.35,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  return (
+    <View style={skeletonStyles.container}>
+      {/* Real-time Status Banner */}
+      <View style={skeletonStyles.statusBanner}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        <Text style={skeletonStyles.statusText}>
+          {isMl
+            ? "തത്സമയ കേരള ലോട്ടറി ഫലങ്ങൾ ശേഖരിക്കുന്നു..."
+            : "Fetching live Kerala lottery draw results..."}
+        </Text>
+      </View>
+
+      {/* Top Featured Card Placeholder */}
+      <Animated.View style={[skeletonStyles.topCardSkeleton, { opacity: pulseAnim }]}>
+        <View style={skeletonStyles.rowBetween}>
+          <View style={[skeletonStyles.bar, { width: 95, height: 20 }]} />
+          <View style={[skeletonStyles.bar, { width: 80, height: 20, borderRadius: 10 }]} />
+        </View>
+        <View style={[skeletonStyles.bar, { width: "70%", height: 22, marginTop: 12 }]} />
+        <View style={[skeletonStyles.bar, { width: "45%", height: 14, marginTop: 8 }]} />
+        <View style={skeletonStyles.topCardBottom}>
+          <View style={[skeletonStyles.bar, { width: 120, height: 16 }]} />
+        </View>
+      </Animated.View>
+
+      {/* Section Header Placeholder */}
+      <View style={skeletonStyles.sectionHeaderRow}>
+        <Animated.View style={[skeletonStyles.bar, { width: 120, height: 14, opacity: pulseAnim }]} />
+        <Animated.View style={[skeletonStyles.bar, { width: 55, height: 16, borderRadius: 8, opacity: pulseAnim }]} />
+      </View>
+
+      {/* 2-Column Grid Skeletons */}
+      <View style={skeletonStyles.gridRow}>
+        <Animated.View style={[skeletonStyles.cardSkeleton, { opacity: pulseAnim }]}>
+          <View style={skeletonStyles.rowBetween}>
+            <View style={[skeletonStyles.bar, { width: 44, height: 16 }]} />
+            <View style={[skeletonStyles.bar, { width: 34, height: 14 }]} />
+          </View>
+          <View style={[skeletonStyles.bar, { width: "80%", height: 16, marginTop: 10 }]} />
+          <View style={[skeletonStyles.bar, { width: "50%", height: 11, marginTop: 5 }]} />
+          <View style={skeletonStyles.prizeBox}>
+            <View style={[skeletonStyles.bar, { width: "65%", height: 14 }]} />
+          </View>
+        </Animated.View>
+
+        <Animated.View style={[skeletonStyles.cardSkeleton, { opacity: pulseAnim }]}>
+          <View style={skeletonStyles.rowBetween}>
+            <View style={[skeletonStyles.bar, { width: 44, height: 16 }]} />
+            <View style={[skeletonStyles.bar, { width: 34, height: 14 }]} />
+          </View>
+          <View style={[skeletonStyles.bar, { width: "80%", height: 16, marginTop: 10 }]} />
+          <View style={[skeletonStyles.bar, { width: "50%", height: 11, marginTop: 5 }]} />
+          <View style={skeletonStyles.prizeBox}>
+            <View style={[skeletonStyles.bar, { width: "65%", height: 14 }]} />
+          </View>
+        </Animated.View>
+      </View>
+
+      <View style={skeletonStyles.gridRow}>
+        <Animated.View style={[skeletonStyles.cardSkeleton, { opacity: pulseAnim }]}>
+          <View style={skeletonStyles.rowBetween}>
+            <View style={[skeletonStyles.bar, { width: 44, height: 16 }]} />
+            <View style={[skeletonStyles.bar, { width: 34, height: 14 }]} />
+          </View>
+          <View style={[skeletonStyles.bar, { width: "80%", height: 16, marginTop: 10 }]} />
+          <View style={[skeletonStyles.bar, { width: "50%", height: 11, marginTop: 5 }]} />
+          <View style={skeletonStyles.prizeBox}>
+            <View style={[skeletonStyles.bar, { width: "65%", height: 14 }]} />
+          </View>
+        </Animated.View>
+
+        <Animated.View style={[skeletonStyles.cardSkeleton, { opacity: pulseAnim }]}>
+          <View style={skeletonStyles.rowBetween}>
+            <View style={[skeletonStyles.bar, { width: 44, height: 16 }]} />
+            <View style={[skeletonStyles.bar, { width: 34, height: 14 }]} />
+          </View>
+          <View style={[skeletonStyles.bar, { width: "80%", height: 16, marginTop: 10 }]} />
+          <View style={[skeletonStyles.bar, { width: "50%", height: 11, marginTop: 5 }]} />
+          <View style={skeletonStyles.prizeBox}>
+            <View style={[skeletonStyles.bar, { width: "65%", height: 14 }]} />
+          </View>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+const skeletonStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+  },
+  statusBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F9FF",
+    borderWidth: 1,
+    borderColor: "#BAE6FD",
+    borderRadius: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  statusText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: COLORS.primary,
+  },
+  topCardSkeleton: {
+    backgroundColor: "#E2E8F0",
+    borderRadius: 14,
+    overflow: "hidden",
+    paddingTop: 14,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  bar: {
+    backgroundColor: "#CBD5E1",
+    borderRadius: 6,
+  },
+  topCardBottom: {
+    backgroundColor: "#F8FAFC",
+    marginHorizontal: -14,
+    marginTop: 14,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  gridRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  cardSkeleton: {
+    width: CARD_WIDTH,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 10,
+  },
+  prizeBox: {
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginTop: 10,
+  },
+});
+
 export default function HomeScreen2({ navigation }: any) {
   const { safeTopInset, isCompact, isTablet, isTall, contentPaddingHorizontal } = useDeviceAdaptive(true);
   const { t, language, setLanguage } = useLanguage();
@@ -186,15 +372,10 @@ export default function HomeScreen2({ navigation }: any) {
     return () => pulse.stop();
   }, [livePulseAnim]);
 
-  // Load Data
+  // Load Data directly from Realtime Supabase API
   const loadData = useCallback(async () => {
     try {
-      const cached = await getCachedDrawsQuick();
-      if (cached && cached.length > 0 && allDraws.length === 0) {
-        setAllDraws(cached);
-        setIsLoading(false);
-      }
-
+      setIsLoading(true);
       const [draws, lotteries, bumpers] = await Promise.all([
         fetchAllDraws(),
         fetchLotteries(),
@@ -216,7 +397,7 @@ export default function HomeScreen2({ navigation }: any) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [allDraws.length]);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -610,12 +791,7 @@ export default function HomeScreen2({ navigation }: any) {
 
       {/* Main Content: 2-Column Grid with Top Full-Width Card */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>
-            {language === "ml" ? "ഫലങ്ങൾ ലഭ്യമാക്കുന്നു..." : "Loading draws..."}
-          </Text>
-        </View>
+        <HomeScreenSkeletonLoader isMl={isMl} />
       ) : (
         <FlatList
           data={paginatedDraws}
@@ -637,6 +813,17 @@ export default function HomeScreen2({ navigation }: any) {
               onRefresh={handleRefresh}
               colors={[COLORS.primary]}
             />
+          }
+          ListEmptyComponent={
+            !isLoading ? (
+              <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 28, paddingHorizontal: 16 }}>
+                <Text style={{ fontSize: 13.5, fontWeight: "700", color: "#64748B", textAlign: "center" }}>
+                  {language === "ml"
+                    ? "ഫലങ്ങൾ കണ്ടെത്താനായില്ല. വീണ്ടും വലിച്ചു പുതുക്കുക."
+                    : "No draws available yet. Pull down to refresh."}
+                </Text>
+              </View>
+            ) : null
           }
           ListFooterComponent={
             isLoadingMore ? (

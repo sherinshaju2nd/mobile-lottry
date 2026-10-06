@@ -30,14 +30,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsConnected(connected);
     setIsInternetReachable(reachable);
     setConnectionType(state.type || "unknown");
-
-    // Automatically show game modal when offline occurs
-    if (offline) {
-      setShowGameModal(true);
-    } else {
-      // When back online, automatically dismiss game modal and resume app seamlessly!
-      setShowGameModal(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -80,11 +72,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setIsConnected(hasNet);
       setIsInternetReachable(hasNet);
-      if (!hasNet) {
-        setShowGameModal(true);
-      } else {
-        setShowGameModal(false);
-      }
       return hasNet;
     } catch {
       return false;

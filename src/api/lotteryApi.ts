@@ -153,12 +153,12 @@ export async function fetchLotteriesFromDb(): Promise<{
 
       const DEFAULT_WEEKLY_PRIZES: Record<string, string> = {
         BT: "₹1 Crore",
-        SS: "₹75 Lakhs",
+        SS: "₹1 Crore",
         DL: "₹1 Crore",
-        KN: "₹80 Lakhs",
-        SK: "₹70 Lakhs",
-        KR: "₹80 Lakhs",
-        SM: "₹70 Lakhs",
+        KN: "₹1 Crore",
+        SK: "₹1 Crore",
+        KR: "₹1 Crore",
+        SM: "₹1 Crore",
       };
 
       data.forEach((d: any) => {
@@ -166,7 +166,7 @@ export async function fetchLotteriesFromDb(): Promise<{
         const defaultJackpot = isBumper
           ? BUMPER_LOTTERIES.find((b) => b.code === d.code)?.jackpot ||
             "₹10 Crore"
-          : DEFAULT_WEEKLY_PRIZES[d.code] || "₹80 Lakhs";
+          : DEFAULT_WEEKLY_PRIZES[d.code] || "₹1 Crore";
 
         const defaultTicketPrice = isBumper
           ? d.code === "TH"
@@ -204,28 +204,14 @@ export async function fetchLotteriesFromDb(): Promise<{
         return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
       });
 
-      const result = {
+      return {
         weekly: weekly.length > 0 ? weekly : WEEKLY_LOTTERIES,
         bumper: bumper.length > 0 ? bumper : BUMPER_LOTTERIES,
       };
-
-      // Persist snapshot to AsyncStorage for offline instant startup
-      AsyncStorage.setItem(
-        "@lotteries_meta_cache",
-        JSON.stringify(result),
-      ).catch(() => {});
-      return result;
     }
   } catch (e) {
-    console.warn("fetchLotteriesFromDb error, falling back to cache:", e);
+    console.warn("fetchLotteriesFromDb error:", e);
   }
-
-  try {
-    const cached = await AsyncStorage.getItem("@lotteries_meta_cache");
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  } catch {}
 
   return { weekly: WEEKLY_LOTTERIES, bumper: BUMPER_LOTTERIES };
 }
@@ -272,37 +258,19 @@ export async function fetchAllDraws(): Promise<DrawResult[]> {
         };
       });
 
-      // Persist snapshot to AsyncStorage for offline viewing
-      AsyncStorage.setItem(
-        "@draw_results_cache",
-        JSON.stringify(parsedDraws),
-      ).catch(() => {});
       return parsedDraws;
     }
   } catch (e) {
-    console.warn("Supabase fetchAll error, falling back to offline cache:", e);
+    console.warn("Supabase fetchAll error:", e);
   }
-
-  try {
-    const cached = await AsyncStorage.getItem("@draw_results_cache");
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  } catch {}
 
   return [];
 }
 
 /**
- * Fast synchronous-like cache reader for instant sub-50ms app startup
+ * Legacy stub - returns empty array since disk caching is disabled
  */
 export async function getCachedDrawsQuick(): Promise<DrawResult[]> {
-  try {
-    const cached = await AsyncStorage.getItem("@draw_results_cache");
-    if (cached) {
-      return JSON.parse(cached);
-    }
-  } catch {}
   return [];
 }
 
