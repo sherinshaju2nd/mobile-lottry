@@ -790,8 +790,6 @@ export async function scanTicketWithGeminiVision(
   lotteryName?: string;
   drawDate?: string;
 }> {
-  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-
   const cleanBase64 = base64Image.replace(/^data:[^;]+;base64,/, "");
 
   const prompt = `
@@ -806,6 +804,35 @@ Return ONLY JSON:
 {"series": "KN", "ticket_number": "482910", "lottery_name": "Karunya Plus", "draw_date": "2026-03-15"}
 `;
 
+  // 1. Primary: Call secure backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: cleanBase64, mimeType }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.ticket) {
+        const t = json.ticket;
+        const fullTicket =
+          t.series && t.ticket_number
+            ? `${t.series} ${t.ticket_number}`
+            : t.ticket_number || t.series || "";
+        return {
+          ticketNumber: fullTicket,
+          series: t.series,
+          lotteryName: t.lottery_name,
+          drawDate: t.draw_date,
+        };
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend scan error, trying local fallback:", backendErr);
+  }
+
+  // 2. Local Fallback: Call direct Gemini API if dev key provided
+  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
   const models = GEMINI_MODELS;
   if (GEMINI_API_KEY) {
     for (const model of models) {
@@ -864,33 +891,6 @@ Return ONLY JSON:
     }
   }
 
-  // Backup fallback: Call backend server endpoint
-  try {
-    const res = await fetch(`${BACKEND_API_BASE}/api/ai/scan`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: cleanBase64, mimeType }),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.ticket) {
-        const t = json.ticket;
-        const fullTicket =
-          t.series && t.ticket_number
-            ? `${t.series} ${t.ticket_number}`
-            : t.ticket_number || t.series || "";
-        return {
-          ticketNumber: fullTicket,
-          series: t.series,
-          lotteryName: t.lottery_name,
-          drawDate: t.draw_date,
-        };
-      }
-    }
-  } catch (backendErr) {
-    console.warn("Backend scan fallback error:", backendErr);
-  }
-
   throw new Error(
     "Unable to read ticket digits. Please ensure the ticket number is clearly visible.",
   );
@@ -904,8 +904,6 @@ export async function chatWithGeminiAssistantMobile(
   history: Array<{ role: "user" | "model"; text: string }> = [],
   contextData?: string,
 ): Promise<string> {
-  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-
   const systemInstruction = `
 You are the  Kerala State Lottery AI Assistant for the mobile app.
 Help users in natural, friendly Malayalam (മലയാളം) or English with live results, ticket verification, claim procedures, 30% TDS tax rules, and bumper draw dates.
@@ -949,8 +947,26 @@ ${contextData || "No extra context."}
     },
   ];
 
-  const models = GEMINI_MODELS;
+  // 1. Primary: Call secure backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage, history }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.reply) {
+        return json.reply;
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend chat error, trying local fallback:", backendErr);
+  }
 
+  // 2. Local Fallback: Call direct Gemini API if dev key provided
+  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
+  const models = GEMINI_MODELS;
   if (GEMINI_API_KEY) {
     for (const model of models) {
       try {
@@ -981,23 +997,6 @@ ${contextData || "No extra context."}
         console.warn(`Mobile direct chat model ${model} error:`, e);
       }
     }
-  }
-
-  // Backup fallback: Call backend server endpoint
-  try {
-    const res = await fetch(`${BACKEND_API_BASE}/api/ai/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userMessage, history }),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.reply) {
-        return json.reply;
-      }
-    }
-  } catch (backendErr) {
-    console.warn("Backend chat fallback error:", backendErr);
   }
 
   throw new Error("AI Assistant is currently unavailable. Please try again.");
@@ -1057,6 +1056,27 @@ ${contextData || "No extra context."}
 
   const cleanAudio = base64Audio.replace(/^data:[^;]+;base64,/, "");
 
+  // 1. Primary: Call secure backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio: cleanAudio, mimeType, history }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.reply) {
+        return {
+          userTranscript: json.user_transcript || "🎙️ Voice Question",
+          reply: json.reply,
+        };
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend audio chat error, trying local fallback:", backendErr);
+  }
+
+  // 2. Local Fallback: Call direct Gemini API if dev key provided
   const contents = [
     ...validHistory,
     {
@@ -1169,6 +1189,24 @@ Return ONLY JSON:
 }
 `;
 
+  // 1. Primary: Call secure backend server endpoint
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/digest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ draw }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.digest) {
+        return json.digest;
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend digest error, trying local fallback:", backendErr);
+  }
+
+  // 2. Local Fallback: Call direct Gemini API if dev key provided
   const models = GEMINI_MODELS;
   if (GEMINI_API_KEY) {
     for (const model of models) {
@@ -1207,23 +1245,6 @@ Return ONLY JSON:
         console.warn(`Digest model ${model} error:`, e);
       }
     }
-  }
-
-  // Backup fallback: Call backend server endpoint
-  try {
-    const res = await fetch(`${BACKEND_API_BASE}/api/ai/digest`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ draw }),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.digest) {
-        return json.digest;
-      }
-    }
-  } catch (backendErr) {
-    console.warn("Backend digest fallback error:", backendErr);
   }
 
   return {
@@ -1407,11 +1428,29 @@ export async function analyzeLotteryPatternsWithGeminiMobile(
   draws: DrawResult[],
   lang: string = "en",
 ): Promise<LotteryAiPatternAnalysis> {
-  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
-
-  if (!GEMINI_API_KEY) {
-    throw new Error("EXPO_PUBLIC_GEMINI_API_KEY is not configured.");
+  // 1. Primary: Call secure backend pattern-predict API endpoint (cached or backend Gemini)
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/pattern-predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lotteryName,
+        lotteryCode,
+        draws: (draws || []).slice(0, 40),
+        lang,
+      }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.analysis) {
+        return json.analysis;
+      }
+    }
+  } catch (backendErr) {
+    console.warn("Backend pattern prediction error, trying fallback:", backendErr);
   }
+
+  const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "";
 
   const formattedDraws = draws.slice(0, 40).map((d, index) => {
     const p = d.prizes || {};
@@ -1592,42 +1631,44 @@ Return strictly a valid JSON object matching this exact schema without markdown 
 
   let lastError: any = null;
 
-  for (const model of models) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              response_mime_type: "application/json",
-              temperature: 0.2,
-            },
-          }),
-        },
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const raw =
-          data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-        const cleaned = raw
-          .replace(/^```json\s*/i, "")
-          .replace(/```$/i, "")
-          .trim();
-        return JSON.parse(cleaned);
-      } else {
-        const errText = await response.text();
-        console.warn(
-          `Mobile Gemini Pattern model ${model} HTTP ${response.status}:`,
-          errText,
+  if (GEMINI_API_KEY) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                response_mime_type: "application/json",
+                temperature: 0.2,
+              },
+            }),
+          },
         );
+
+        if (response.ok) {
+          const data = await response.json();
+          const raw =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
+          const cleaned = raw
+            .replace(/^```json\s*/i, "")
+            .replace(/```$/i, "")
+            .trim();
+          return JSON.parse(cleaned);
+        } else {
+          const errText = await response.text();
+          console.warn(
+            `Mobile Gemini Pattern model ${model} HTTP ${response.status}:`,
+            errText,
+          );
+        }
+      } catch (e) {
+        lastError = e;
+        console.warn(`Mobile Pattern model ${model} error:`, e);
       }
-    } catch (e) {
-      lastError = e;
-      console.warn(`Mobile Pattern model ${model} error:`, e);
     }
   }
 
