@@ -291,7 +291,6 @@ export default function HomeScreen({ navigation }: any) {
     };
     updateCountdown();
     const countdownInterval = setInterval(updateCountdown, 1000);
-    const timeInterval = setInterval(updateCountdown, 15000);
 
     // Realtime listener for live cron job updates, admin updates, and draw announcements
     const channelName = `realtime-mobile-home-${Date.now()}`;
@@ -302,8 +301,48 @@ export default function HomeScreen({ navigation }: any) {
         { event: "*", schema: "public", table: "draw_results" },
         (payload) => {
           const newRow = payload.new as any;
+          if (!newRow) return;
+
+          let firstObj: any = {};
+          let prizesObj: any = {};
+          try {
+            firstObj =
+              typeof newRow.first_prize === "string"
+                ? JSON.parse(newRow.first_prize)
+                : newRow.first_prize || {};
+          } catch {
+            firstObj = {};
+          }
+          try {
+            prizesObj =
+              typeof newRow.prizes === "string"
+                ? JSON.parse(newRow.prizes)
+                : newRow.prizes || {};
+          } catch {
+            prizesObj = {};
+          }
+
+          const structuredRow = {
+            id: newRow.id,
+            draw_date: newRow.draw_date,
+            draw_name: newRow.draw_name,
+            draw_code: newRow.draw_code,
+            lottery_code: newRow.lottery_code,
+            first: firstObj,
+            prizes: prizesObj,
+            created_at: newRow.created_at,
+          };
+
+          // Immediately hydrate allDraws in memory (zero network request!)
+          setAllDraws((prev) => {
+            const filtered = prev.filter(
+              (d) => d.draw_date !== structuredRow.draw_date
+            );
+            return [structuredRow, ...filtered];
+          });
+
           const currentToday = getSafeTodayISTDate();
-          if (newRow && newRow.draw_date === currentToday) {
+          if (newRow.draw_date === currentToday) {
             // Auto-switch to today's tab when results start streaming in
             setHeroTab(0);
             setSocketStatus("live_updating");
@@ -313,35 +352,34 @@ export default function HomeScreen({ navigation }: any) {
             setTimeout(() => setSocketStatus("connected"), 4000);
 
             // Dispatch instant stage push notification if enabled
-            if (newRow.first?.ticket && newRow.first.ticket !== "N/A") {
+            if (firstObj.ticket && firstObj.ticket !== "N/A") {
               sendInstantWinnerNotification(
                 newRow.lottery_code,
                 newRow.draw_name,
                 newRow.draw_date,
-                newRow.first.ticket,
-                newRow.first.location,
-                newRow.prizes?.amounts?.["1st"]
+                firstObj.ticket,
+                firstObj.location,
+                prizesObj?.amounts?.["1st"]
               );
               sendDistrictWinnerNotification(
                 newRow.lottery_code,
                 newRow.draw_name,
                 newRow.draw_date,
-                newRow.first.location,
-                newRow.first.ticket,
-                newRow.prizes?.amounts?.["1st"]
+                firstObj.location,
+                firstObj.ticket,
+                prizesObj?.amounts?.["1st"]
               );
             }
-            if (hasAnyDrawResult(newRow)) {
+            if (hasAnyDrawResult(structuredRow)) {
               sendFullResultPublishedNotification(
                 newRow.lottery_code,
                 newRow.draw_name,
                 newRow.draw_date
               );
               // Auto-match saved tickets against all prizes & notify on win
-              checkSavedTicketsAndSendWinAlert(newRow);
+              checkSavedTicketsAndSendWinAlert(structuredRow);
             }
           }
-          loadData();
         },
       )
       .on(
@@ -367,19 +405,6 @@ export default function HomeScreen({ navigation }: any) {
         }
       });
 
-    // Intelligent Polling Backup: Poll every 15s during active draw window
-    const pollInterval = setInterval(() => {
-      try {
-        const todayDate = new Date().toLocaleDateString("en-CA", {
-          timeZone: "Asia/Kolkata",
-        });
-        const isBumperDay = (bumperLotteriesRef.current || []).some((b: any) => b.draw_date === todayDate);
-        if (getIsPollingWindow(isBumperDay)) {
-          loadData();
-        }
-      } catch {}
-    }, 15000);
-
     // AppState listener: Instant live data refresh when app returns from background
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
@@ -392,8 +417,6 @@ export default function HomeScreen({ navigation }: any) {
     return () => {
       supabase.removeChannel(channel);
       clearInterval(countdownInterval);
-      clearInterval(timeInterval);
-      clearInterval(pollInterval);
       appStateSub.remove();
     };
   }, []);

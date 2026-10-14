@@ -234,8 +234,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
                 setDrawResult(liveDraw);
               }
             } catch {}
-
-            loadData();
           }
         },
       )
@@ -256,14 +254,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
         }
       });
 
-    // Smart polling for today's draw
-    const todayDate = getSafeTodayISTDate();
-    const pollInterval = setInterval(() => {
-      if (date === todayDate && (!drawResult || !hasAnyDrawResult(drawResult))) {
-        loadData();
-      }
-    }, 15000);
-
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
         loadData();
@@ -273,7 +263,6 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(pollInterval);
       appStateSub.remove();
     };
   }, [codeUpper, date]);
