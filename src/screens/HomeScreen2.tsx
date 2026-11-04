@@ -50,6 +50,7 @@ import {
   upsertDrawInList,
 } from "../api/lotteryApi";
 import { refreshHomeWidget } from "../widget/refreshHomeWidget";
+import PlaySmartHeaderButton from "../components/PlaySmartHeaderButton";
 import { useLanguage } from "../context/LanguageContext";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
@@ -769,8 +770,10 @@ export default function HomeScreen2({ navigation }: any) {
             </View>
           </View>
 
-          {/* Right Header Actions: Language Switcher first, 3-line Menu last */}
+          {/* Right Header Actions: Play Smart, Language Switcher, 3-line Menu last */}
           <View style={styles.headerActions}>
+            <PlaySmartHeaderButton isMl={language === "ml"} />
+
             {/* Language Selector */}
             <TouchableOpacity
               style={styles.langBtn}

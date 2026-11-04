@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Minus, Plus, X } from "lucide-react-native";
+import { CalendarDays, Minus, Plus, X } from "lucide-react-native";
+import ModernDatePickerModal from "./ModernDatePickerModal";
 import { COLORS } from "../constants/colors";
 import { BUMPER_LOTTERIES, WEEKLY_LOTTERIES } from "../constants/lotteries";
 import { fetchBumperLotteries } from "../api/lotteryApi";
@@ -60,6 +61,7 @@ export default function AddPlayEntryModal({
   const [date, setDate] = useState(today);
   const [bumperPrices, setBumperPrices] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   // Once the user edits the price for the selected lottery, prefills must not replace it.
   const priceTouchedRef = useRef(false);
 
@@ -98,6 +100,7 @@ export default function AddPlayEntryModal({
     setAmountText(initialAmount ? String(initialAmount) : "");
     setDate(today);
     setSaving(false);
+    setShowDatePicker(false);
     priceTouchedRef.current = false;
   }, [visible, initialAmount, initialLotteryName, today]);
 
@@ -264,6 +267,22 @@ export default function AddPlayEntryModal({
                   </TouchableOpacity>
                 );
               })}
+              {/* Any other past date: shown as its own selected chip, or as "Pick date". */}
+              <TouchableOpacity
+                style={[styles.chip, styles.pickChip, !dateOptions.includes(date) && styles.chipActive]}
+                onPress={() => {
+                  triggerLightHaptic();
+                  setShowDatePicker(true);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: !dateOptions.includes(date) }}
+                accessibilityLabel={isMl ? "തീയതി തിരഞ്ഞെടുക്കുക" : "Pick a date"}
+              >
+                <CalendarDays size={14} color={dateOptions.includes(date) ? COLORS.primary : COLORS.white} />
+                <Text style={[styles.chipText, !dateOptions.includes(date) && styles.chipTextActive]}>
+                  {dateOptions.includes(date) ? (isMl ? "തീയതി" : "Pick date") : formatSafeDateDisplay(date)}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.totalRow}>
@@ -284,6 +303,15 @@ export default function AddPlayEntryModal({
             </Text>
           </ScrollView>
         </View>
+        {/* Rendered inside this Modal: iOS cannot show two sibling modals at once. Future dates are blocked by the picker. */}
+        <ModernDatePickerModal
+          visible={showDatePicker}
+          selectedDate={date}
+          onClose={() => setShowDatePicker(false)}
+          onSelectDate={(picked) => {
+            if (picked && picked <= today) setDate(picked);
+          }}
+        />
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -316,6 +344,7 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   chipText: { fontSize: 13, fontWeight: "700", color: COLORS.textDark },
   chipTextActive: { color: COLORS.white },
+  pickChip: { flexDirection: "row", alignItems: "center", gap: 6 },
   row: { flexDirection: "row", gap: 12 },
   flex: { flex: 1 },
   stepper: {

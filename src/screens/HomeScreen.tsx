@@ -106,6 +106,7 @@ import {
 } from "../api/lotteryApi";
 import { useFocusEffect } from "@react-navigation/native";
 import { refreshHomeWidget } from "../widget/refreshHomeWidget";
+import PlaySmartHeaderButton from "../components/PlaySmartHeaderButton";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
@@ -589,6 +590,7 @@ export default function HomeScreen({ navigation }: any) {
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <PlaySmartHeaderButton isMl={language === "ml"} />
               <TouchableOpacity
                 style={{
                   height: 34,
