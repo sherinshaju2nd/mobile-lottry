@@ -355,7 +355,10 @@ export default function BarcodeScannerModal({
               ref={cameraRef}
               style={StyleSheet.absoluteFill}
               facing="back"
-              enableTorch={torchOn}
+              // Pause the preview once a code is captured so the camera surface is
+              // released before the modal unmounts (avoids SurfaceControl NPE on close).
+              active={visible && !scanned}
+              enableTorch={torchOn && !scanned}
               barcodeScannerSettings={{
                 barcodeTypes: [
                   "code128",

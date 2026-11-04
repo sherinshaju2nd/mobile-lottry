@@ -373,6 +373,9 @@ export default function RemindersScreen({ navigation }: any) {
         </View>
       ) : (
         <FlatList
+          // Android default (true) detaches rows natively and crashes with
+          // IndexOutOfBoundsException in ReactClippingViewManager.addView when data changes live.
+          removeClippedSubviews={false}
           data={reminders}
           keyExtractor={(item, index) => item?.id || `reminder-${index}`}
           renderItem={renderItem}

@@ -12,6 +12,7 @@ import {
   AppState,
   AppStateStatus,
   Alert,
+  type ScrollViewInstance,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -144,7 +145,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   };
 
   // Refs for auto-scroll to checker
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const checkerYOffset = useRef<number>(0);
 
   useEffect(() => {

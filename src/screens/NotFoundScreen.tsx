@@ -43,7 +43,7 @@ export default function NotFoundScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: safeTopInset, paddingBottom: safeBottomInset }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" />
 
       {/* Top Bar */}
       <View style={styles.topBar}>

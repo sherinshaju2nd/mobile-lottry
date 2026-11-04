@@ -364,6 +364,9 @@ export default function LotteriesScreen({ navigation }: any) {
           <View style={{ paddingTop: 6 }}>{renderSkeleton()}</View>
         ) : (
           <FlatList
+            // Android default (true) detaches rows natively and crashes with
+            // IndexOutOfBoundsException in ReactClippingViewManager.addView when data changes live.
+            removeClippedSubviews={false}
             data={currentData}
             keyExtractor={(item, index) => item?.code || `lottery-${index}`}
             renderItem={renderItem}

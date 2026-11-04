@@ -311,7 +311,7 @@ export default function OfflineGameModal() {
         setShowGameModal(false);
       }}
     >
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="light-content" />
 
       {/* Full-Screen Interactive Game Arena */}
       <TouchableOpacity

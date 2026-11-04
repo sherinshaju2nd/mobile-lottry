@@ -10,6 +10,7 @@ import {
   Dimensions,
   TextInput,
   Platform,
+  type ScrollViewInstance,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -67,7 +68,7 @@ function SingleDigitWheel({
   value: number;
   onChange: (newVal: number) => void;
 }) {
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const lastIndexRef = useRef(value);
 
   // Sync scroll position when value changes externally (e.g. Quick Picks)

@@ -23,6 +23,50 @@ import {
   PostponedDraw,
 } from "../api/lotteryApi";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const SENT_LIVE_ALERTS_KEY = "sent_live_alerts_v1";
+const MAX_SENT_LIVE_ALERTS = 300;
+// Claimed synchronously so concurrent realtime events for the same draw can't both send.
+const claimedLiveAlerts = new Set<string>();
+// Serialises storage writes so two different claims can't overwrite each other.
+let liveAlertStoreQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Returns true exactly once per key (persisted across app restarts) and false for every
+ * later call. Live draw rows are updated many times as prize tiers stream in, so every
+ * live-draw alert must claim a key before sending.
+ */
+export const claimOneTimeLiveAlert = (key: string): Promise<boolean> => {
+  if (claimedLiveAlerts.has(key)) return Promise.resolve(false);
+  claimedLiveAlerts.add(key);
+
+  const claim = liveAlertStoreQueue.then(async () => {
+    try {
+      const raw = await AsyncStorage.getItem(SENT_LIVE_ALERTS_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      const sent = Array.isArray(parsed)
+        ? parsed.filter((k): k is string => typeof k === "string")
+        : [];
+      if (sent.includes(key)) return false;
+      await AsyncStorage.setItem(
+        SENT_LIVE_ALERTS_KEY,
+        JSON.stringify([...sent, key].slice(-MAX_SENT_LIVE_ALERTS)),
+      );
+      return true;
+    } catch (err: unknown) {
+      // The in-memory claim still blocks duplicates for this app session.
+      console.warn(
+        "[notifications] Could not persist live alert key:",
+        err instanceof Error ? err.message : String(err),
+      );
+      return true;
+    }
+  });
+  liveAlertStoreQueue = claim;
+  return claim;
+};
+
 export type NotificationPermissionState = {
   granted: boolean;
   canAskAgain: boolean;
@@ -184,6 +228,8 @@ export async function sendInstantWinnerNotification(
       if (!isFav) return;
     }
 
+    if (!(await claimOneTimeLiveAlert(`first_prize_${drawCode}_${drawDate}`))) return;
+
     const granted = await requestNotificationPermission();
     if (!granted) return;
 
@@ -228,6 +274,8 @@ export async function sendFullResultPublishedNotification(
       const isFav = await isLotteryFavorite(drawCode);
       if (!isFav) return;
     }
+
+    if (!(await claimOneTimeLiveAlert(`full_results_${drawCode}_${drawDate}`))) return;
 
     const granted = await requestNotificationPermission();
     if (!granted) return;
@@ -325,16 +373,23 @@ export async function checkSavedTicketsAndSendWinAlert(
     if (!reminders || reminders.length === 0) return { wonCount: 0 };
 
     const targetDate = drawResult.draw_date;
-    const targetLottery = (drawResult.lottery_code || drawResult.draw_name || "").toLowerCase();
+    const targetCode = String(drawResult.lottery_code ?? "").toLowerCase();
+    const targetNames = [
+      drawResult.draw_name,
+      ALL_LOTTERIES.find((l) => l.code.toLowerCase() === targetCode)?.name,
+    ]
+      .filter((n): n is string => typeof n === "string" && n.trim().length > 0)
+      .map((n) => n.toLowerCase());
 
-    // Find saved tickets for this draw date
+    // Only tickets saved for THIS draw: same date AND same lottery (exact code, or name match).
     const relevantReminders = reminders.filter((r) => {
-      const matchesDate = r.drawDate === targetDate;
-      const matchesLottery =
-        !r.lotteryName ||
-        targetLottery.includes(r.lotteryName.toLowerCase()) ||
-        r.lotteryName.toLowerCase().includes(targetLottery);
-      return matchesDate || matchesLottery;
+      if (r.drawDate !== targetDate) return false;
+      const savedName = r.lotteryName?.trim().toLowerCase() ?? "";
+      if (!savedName) return true;
+      return (
+        savedName === targetCode ||
+        targetNames.some((n) => n.includes(savedName) || savedName.includes(n))
+      );
     });
 
     if (relevantReminders.length === 0) return { wonCount: 0 };
@@ -472,6 +527,8 @@ export async function sendDistrictWinnerNotification(
     const locLower = location.toLowerCase();
 
     if (locLower.includes(userDist)) {
+      if (!(await claimOneTimeLiveAlert(`district_${drawCode}_${drawDate}`))) return;
+
       const granted = await requestNotificationPermission();
       if (!granted) return;
 

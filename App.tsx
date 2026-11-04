@@ -27,7 +27,11 @@ import LanguageSelectionModal from "./src/components/LanguageSelectionModal";
 import PrivacyConsentModal from "./src/components/PrivacyConsentModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
-import { syncAllDrawNotifications, ensureNotificationChannels } from "./src/utils/notificationScheduler";
+import {
+  syncAllDrawNotifications,
+  ensureNotificationChannels,
+  requestNotificationPermission,
+} from "./src/utils/notificationScheduler";
 import { LogBox, AppState } from "react-native";
 import { COLORS } from "./src/constants/colors";
 import { triggerLightHaptic } from "./src/utils/haptics";
@@ -434,7 +438,34 @@ const tabStyles = StyleSheet.create({
 import InAppNotificationToast from "./src/components/InAppNotificationToast";
 import { navigationRef } from "./src/utils/navigationRef";
 
+// Android 13+ only shows the POST_NOTIFICATIONS prompt once a notification channel exists,
+// so channels must be created (and awaited) BEFORE asking. Draw alerts are synced afterwards
+// so they are scheduled on the very first launch.
+const bootstrapNotifications = async (): Promise<void> => {
+  try {
+    await ensureNotificationChannels();
+    await requestNotificationPermission();
+  } catch (err: unknown) {
+    console.warn("[notifications] Permission bootstrap failed:", err instanceof Error ? err.message : String(err));
+  }
+  try {
+    await syncAllDrawNotifications();
+  } catch (err: unknown) {
+    console.warn("[notifications] Initial sync failed:", err instanceof Error ? err.message : String(err));
+  }
+};
+
 function AppContent() {
+  // Notification taps can arrive before the navigator is mounted (cold start).
+  const pendingNotificationNavRef = useRef(false);
+  const openRemindersFromNotification = useCallback(() => {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate("Reminders");
+    } else {
+      pendingNotificationNavRef.current = true;
+    }
+  }, []);
+
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean>(true);
   const [inAppNotif, setInAppNotif] = useState<{
     visible: boolean;
@@ -455,6 +486,8 @@ function AppContent() {
       .then((accepted) => {
         if (accepted !== "true") {
           setIsPrivacyAccepted(false);
+        } else {
+          bootstrapNotifications();
         }
       })
       .catch(() => {
@@ -462,14 +495,17 @@ function AppContent() {
       });
 
     try {
-      // Request notification permission early and ensure high-importance OS channels
-      Notifications.requestPermissionsAsync().catch(() => {});
-      ensureNotificationChannels().catch(() => {});
+      // Permission is requested only after privacy consent (see bootstrapNotifications).
 
       // Handle tapping a notification from system tray → go to Reminders
-      responseSub = Notifications.addNotificationResponseReceivedListener(() => {
-        navigationRef.current?.navigate("Reminders");
-      });
+      responseSub = Notifications.addNotificationResponseReceivedListener(openRemindersFromNotification);
+      Notifications.getLastNotificationResponseAsync()
+        .then((response) => {
+          if (response) openRemindersFromNotification();
+        })
+        .catch((err: unknown) =>
+          console.warn("[notifications] Could not read launch notification:", err instanceof Error ? err.message : String(err)),
+        );
 
       // Handle foreground notification receipt → show sleek in-app toast
       receiveSub = Notifications.addNotificationReceivedListener((notification) => {
@@ -486,25 +522,25 @@ function AppContent() {
           syncAllDrawNotifications().catch(() => {});
         }
       });
-
-      syncAllDrawNotifications().catch(() => {});
-    } catch {}
+    } catch (err: unknown) {
+      console.warn("[notifications] Listener setup failed:", err instanceof Error ? err.message : String(err));
+    }
 
     return () => {
       responseSub?.remove?.();
       receiveSub?.remove?.();
       appStateSub?.remove?.();
     };
-  }, []);
+  }, [openRemindersFromNotification]);
 
   const handleAcceptPrivacy = async () => {
     try {
       await AsyncStorage.setItem("privacy_consent_accepted", "true");
-      setIsPrivacyAccepted(true);
     } catch (e) {
       console.warn("Error setting privacy consent:", e);
-      setIsPrivacyAccepted(true);
     }
+    setIsPrivacyAccepted(true);
+    bootstrapNotifications();
   };
 
   return (
@@ -513,13 +549,17 @@ function AppContent() {
         visible={inAppNotif.visible}
         title={inAppNotif.title}
         body={inAppNotif.body}
-        onPress={() => navigationRef.current?.navigate("Reminders")}
+        onPress={openRemindersFromNotification}
         onDismiss={() => setInAppNotif((prev) => ({ ...prev, visible: false }))}
       />
       <NavigationContainer
         ref={navigationRef}
         onReady={() => {
           SplashScreen.hideAsync().catch(() => {});
+          if (pendingNotificationNavRef.current) {
+            pendingNotificationNavRef.current = false;
+            navigationRef.navigate("Reminders");
+          }
         }}
       >
         <StatusBar style="dark" />

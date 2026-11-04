@@ -466,6 +466,9 @@ export default function LotteryArchiveScreen({ route, navigation }: any) {
           </View>
         ) : filteredHistory.length > 0 ? (
           <FlatList
+            // Android default (true) detaches rows natively and crashes with
+            // IndexOutOfBoundsException in ReactClippingViewManager.addView when data changes live.
+            removeClippedSubviews={false}
             data={filteredHistory}
             keyExtractor={(item: DrawResult, index: number) =>
               item?.id ? String(item.id) : `${item?.lottery_code || "draw"}-${item?.draw_date || index}-${index}`

@@ -107,6 +107,32 @@ export function hasAnyDrawResult(draw: DrawResult | null | undefined): boolean {
   return false;
 }
 
+const NON_TIER_PRIZE_KEYS = ["amounts", "guess", "mc", "1st"];
+const LOWEST_PRIZE_TIERS = ["9th", "8th"] as const;
+
+/**
+ * True only when the whole prize chart is published (results arrive tier by tier
+ * during the live draw). Uses the announced prize amounts when available, otherwise
+ * requires the 1st prize plus the lowest tier (8th/9th).
+ */
+export const isDrawResultComplete = (draw: DrawResult | null | undefined): boolean => {
+  const firstTicket = draw?.first?.ticket?.trim().toLowerCase() ?? "";
+  if (!firstTicket || firstTicket === "pending" || firstTicket === "n/a") return false;
+
+  const prizes = (draw?.prizes ?? {}) as Record<string, unknown>;
+  const hasNumbers = (tier: string) => {
+    const val = prizes[tier];
+    return Array.isArray(val) && val.length > 0;
+  };
+
+  const announcedTiers = Object.keys(draw?.prizes?.amounts ?? {}).filter(
+    (tier) => !NON_TIER_PRIZE_KEYS.includes(tier),
+  );
+  if (announcedTiers.length > 0) return announcedTiers.every(hasNumbers);
+
+  return LOWEST_PRIZE_TIERS.some(hasNumbers);
+};
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
@@ -219,6 +245,38 @@ export async function fetchLotteriesFromDb(): Promise<{
 /**
  * Fetch all draw results directly from Supabase database with offline cache
  */
+const parseJsonColumn = <T,>(value: unknown): T => {
+  if (typeof value !== "string") return (value ?? {}) as T;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return {} as T;
+  }
+};
+
+/** Converts a raw `draw_results` row (REST or realtime payload) into a DrawResult. */
+export const parseDrawResultRow = (row: Record<string, any>): DrawResult => ({
+  id: row.id,
+  draw_date: row.draw_date,
+  draw_name: row.draw_name,
+  draw_code: row.draw_code,
+  lottery_code: row.lottery_code,
+  first: parseJsonColumn<WinnerInfo>(row.first_prize),
+  prizes: parseJsonColumn<PrizeBreakdown>(row.prizes),
+  created_at: row.created_at,
+});
+
+/**
+ * Inserts or replaces one draw in a date-descending list (keyed by date + lottery code)
+ * without refetching the table.
+ */
+export const upsertDrawInList = (list: DrawResult[], draw: DrawResult): DrawResult[] => {
+  const others = list.filter(
+    (d) => !(d.draw_date === draw.draw_date && d.lottery_code === draw.lottery_code),
+  );
+  return [...others, draw].sort((a, b) => b.draw_date.localeCompare(a.draw_date));
+};
+
 export async function fetchAllDraws(): Promise<DrawResult[]> {
   try {
     const { data, error } = await supabase
@@ -227,38 +285,7 @@ export async function fetchAllDraws(): Promise<DrawResult[]> {
       .order("draw_date", { ascending: false });
 
     if (!error && data && data.length > 0) {
-      const parsedDraws: DrawResult[] = data.map((row) => {
-        let firstObj: WinnerInfo = {};
-        let prizesObj: PrizeBreakdown = {};
-        try {
-          firstObj =
-            typeof row.first_prize === "string"
-              ? JSON.parse(row.first_prize)
-              : row.first_prize || {};
-        } catch {
-          firstObj = {};
-        }
-        try {
-          prizesObj =
-            typeof row.prizes === "string"
-              ? JSON.parse(row.prizes)
-              : row.prizes || {};
-        } catch {
-          prizesObj = {};
-        }
-        return {
-          id: row.id,
-          draw_date: row.draw_date,
-          draw_name: row.draw_name,
-          draw_code: row.draw_code,
-          lottery_code: row.lottery_code,
-          first: firstObj,
-          prizes: prizesObj,
-          created_at: row.created_at,
-        };
-      });
-
-      return parsedDraws;
+      return data.map(parseDrawResultRow);
     }
   } catch (e) {
     console.warn("Supabase fetchAll error:", e);
@@ -1367,57 +1394,8 @@ export async function getCachedAiPatternPrediction(
   return null;
 }
 
-/**
- * Save or update AI pattern prediction in Supabase from Mobile
- */
-export async function saveAiPatternPrediction(
-  record: CachedAiPatternRecord,
-): Promise<boolean> {
-  const code = (record.lottery_code || "ALL").toUpperCase();
-  const now = new Date().toISOString();
-  let saved = false;
-
-  // 1. Try upserting to ai_pattern_predictions table
-  try {
-    const { error } = await supabase.from("ai_pattern_predictions").upsert(
-      {
-        lottery_code: code,
-        lottery_name: record.lottery_name,
-        draws_count: record.draws_count,
-        latest_draw_date: record.latest_draw_date || null,
-        analysis: record.analysis,
-        updated_at: now,
-      },
-      { onConflict: "lottery_code" },
-    );
-
-    if (!error) {
-      saved = true;
-    }
-  } catch (err) {
-    console.warn("Mobile ai_pattern_predictions upsert note:", err);
-  }
-
-  // 2. Backup copy in app_config
-  try {
-    await supabase.from("app_config").upsert(
-      {
-        key: `ai_pred_${code}`,
-        value: JSON.stringify({
-          ...record,
-          updated_at: now,
-        }),
-        updated_at: now,
-      },
-      { onConflict: "key" },
-    );
-    saved = true;
-  } catch (err) {
-    console.warn("Mobile app_config fallback upsert note:", err);
-  }
-
-  return saved;
-}
+// The shared AI prediction cache is written only by the backend (/api/ai/pattern-predict);
+// the app has read-only database access.
 
 /**
  * Direct Gemini client call for Lottery Pattern Analysis on mobile
@@ -1992,17 +1970,6 @@ export async function fetchAiPatternPredictionMobile(
       code,
       draws,
       lang,
-    );
-
-    // Save to Supabase cache asynchronously
-    saveAiPatternPrediction({
-      lottery_code: code,
-      lottery_name: lotteryName,
-      draws_count: currentDrawCount,
-      latest_draw_date: latestDrawDate,
-      analysis: freshAnalysis,
-    }).catch((saveErr) =>
-      console.warn("Failed to persist to Supabase:", saveErr),
     );
 
     return {

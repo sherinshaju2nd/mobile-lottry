@@ -13,6 +13,7 @@ import {
   AppState,
   AppStateStatus,
   KeyboardAvoidingView,
+  type ScrollViewInstance,
 } from "react-native";
 
 if (
@@ -87,7 +88,7 @@ function formatDisplayDate(dateStr?: string | null) {
 export default function SearchScreen({ navigation }: any) {
   const { safeTopInset, isCompact, contentPaddingHorizontal } = useDeviceAdaptive(true);
   const { t, language } = useLanguage();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const [mode, setMode] = useState<"single" | "batch">("single");
   const [query, setQuery] = useState("");
   const [searchedQuery, setSearchedQuery] = useState("");
@@ -206,7 +207,8 @@ export default function SearchScreen({ navigation }: any) {
     if (newMode === mode) return;
     triggerLightHaptic();
     try {
-      LayoutAnimation.configureNext({
+      // LayoutAnimation on Android (Fabric) races view insertion and throws IndexOutOfBoundsException in addView.
+      if (Platform.OS === "ios") LayoutAnimation.configureNext({
         duration: 250,
         create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
         update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },

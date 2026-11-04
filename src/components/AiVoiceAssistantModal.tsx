@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   Animated,
+  type ScrollViewInstance,
 } from "react-native";
 import {
   useAudioRecorder,
@@ -184,7 +185,7 @@ export default function AiVoiceAssistantModal({
 
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const timerRef = useRef<any>(null);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const blinkAnim = useRef(new Animated.Value(1)).current;
 
   // Blinking red dot animation during WhatsApp recording

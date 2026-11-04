@@ -46,6 +46,8 @@ import {
   DrawResult,
   supabase,
   hasAnyDrawResult,
+  parseDrawResultRow,
+  upsertDrawInList,
 } from "../api/lotteryApi";
 import { useLanguage } from "../context/LanguageContext";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
@@ -373,9 +375,10 @@ export default function HomeScreen2({ navigation }: any) {
   }, [livePulseAnim]);
 
   // Load Data directly from Realtime Supabase API
-  const loadData = useCallback(async () => {
+  // `silent` refreshes keep the list mounted (no skeleton swap → no flicker / scroll jump).
+  const loadData = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const [draws, lotteries, bumpers] = await Promise.all([
         fetchAllDraws(),
         fetchLotteries(),
@@ -414,8 +417,16 @@ export default function HomeScreen2({ navigation }: any) {
         "postgres_changes",
         { event: "*", schema: "public", table: "draw_results" },
         (payload: any) => {
-          if (payload.new && payload.new.draw_date) {
-            loadData();
+          // Live draws update the same row many times; patch it in place instead of
+          // refetching the whole table and remounting the list.
+          if (payload.eventType === "DELETE") {
+            loadData({ silent: true });
+            return;
+          }
+          const row = payload.new;
+          if (row?.draw_date && row?.lottery_code) {
+            const draw = parseDrawResultRow(row);
+            setAllDraws((prev) => upsertDrawInList(prev, draw));
           }
         }
       )
@@ -431,7 +442,7 @@ export default function HomeScreen2({ navigation }: any) {
     triggerLightHaptic();
     setIsRefreshing(true);
     setVisibleCount(PAGE_SIZE);
-    loadData();
+    loadData({ silent: true });
   };
 
   // Find today's draw or build current featured top card (swaps at midnight automatically)
@@ -794,6 +805,9 @@ export default function HomeScreen2({ navigation }: any) {
         <HomeScreenSkeletonLoader isMl={isMl} />
       ) : (
         <FlatList
+          // Android default (true) detaches rows natively and crashes with
+          // IndexOutOfBoundsException in ReactClippingViewManager.addView when data changes live.
+          removeClippedSubviews={false}
           data={paginatedDraws}
           keyExtractor={(item, index) => `${item.lottery_code}-${item.draw_date}-${index}`}
           renderItem={renderGridItem}
@@ -823,7 +837,7 @@ export default function HomeScreen2({ navigation }: any) {
                     : "No draws available yet. Pull down to refresh."}
                 </Text>
               </View>
-            ) : null
+            ) : undefined
           }
           ListFooterComponent={
             isLoadingMore ? (

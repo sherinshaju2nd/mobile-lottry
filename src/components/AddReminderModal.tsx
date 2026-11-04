@@ -542,6 +542,9 @@ export default function AddReminderModal({
                 </View>
 
                 <FlatList
+                  // Android default (true) detaches rows natively and crashes with
+                  // IndexOutOfBoundsException in ReactClippingViewManager.addView when data changes live.
+                  removeClippedSubviews={false}
                   data={lotteries}
                   keyExtractor={(item, index) => item?.code || `lottery-${index}`}
                   contentContainerStyle={{ padding: 12, paddingBottom: 32 }}

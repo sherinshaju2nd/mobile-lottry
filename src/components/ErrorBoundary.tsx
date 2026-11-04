@@ -77,7 +77,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
       return (
         <SafeAreaView style={styles.safeArea}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+          <StatusBar barStyle="dark-content" />
           <ScrollView
             contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}

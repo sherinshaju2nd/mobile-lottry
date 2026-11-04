@@ -18,6 +18,7 @@ import {
   Vibration,
   KeyboardAvoidingView,
   Modal,
+  type ScrollViewInstance,
 } from "react-native";
 
 if (
@@ -99,6 +100,8 @@ import {
   checkIsDatePostponed,
   PostponedDraw,
   hasAnyDrawResult,
+  isDrawResultComplete,
+  upsertDrawInList,
   formatTicketSearchInput,
 } from "../api/lotteryApi";
 import { useFocusEffect } from "@react-navigation/native";
@@ -115,7 +118,7 @@ import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 export default function HomeScreen({ navigation }: any) {
   const { safeTopInset, isCompact, isTablet, isTall, contentPaddingHorizontal, scaleText } = useDeviceAdaptive(true);
   const { t, language, setLanguage, setShowLanguageModal } = useLanguage();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<ScrollViewInstance>(null);
   const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   // Core Data States
@@ -178,7 +181,8 @@ export default function HomeScreen({ navigation }: any) {
     if (newTab === heroTab) return;
     triggerLightHaptic();
     try {
-      LayoutAnimation.configureNext({
+      // LayoutAnimation on Android (Fabric) races view insertion and throws IndexOutOfBoundsException in addView.
+      if (Platform.OS === "ios") LayoutAnimation.configureNext({
         duration: 260,
         create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
         update: { type: LayoutAnimation.Types.spring, springDamping: 0.8 },
@@ -334,12 +338,7 @@ export default function HomeScreen({ navigation }: any) {
           };
 
           // Immediately hydrate allDraws in memory (zero network request!)
-          setAllDraws((prev) => {
-            const filtered = prev.filter(
-              (d) => d.draw_date !== structuredRow.draw_date
-            );
-            return [structuredRow, ...filtered];
-          });
+          setAllDraws((prev) => upsertDrawInList(prev, structuredRow));
 
           const currentToday = getSafeTodayISTDate();
           if (newRow.draw_date === currentToday) {
@@ -371,11 +370,14 @@ export default function HomeScreen({ navigation }: any) {
               );
             }
             if (hasAnyDrawResult(structuredRow)) {
-              sendFullResultPublishedNotification(
-                newRow.lottery_code,
-                newRow.draw_name,
-                newRow.draw_date
-              );
+              // Rows update tier-by-tier during the draw; announce "full results" only once complete.
+              if (isDrawResultComplete(structuredRow)) {
+                sendFullResultPublishedNotification(
+                  newRow.lottery_code,
+                  newRow.draw_name,
+                  newRow.draw_date
+                );
+              }
               // Auto-match saved tickets against all prizes & notify on win
               checkSavedTicketsAndSendWinAlert(structuredRow);
             }
