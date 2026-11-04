@@ -165,7 +165,7 @@ export default function SideMenuDrawerModal({
           >
             <View style={styles.brandRow}>
               <Image
-                source={require("../../assets/icon.png")}
+                source={require("../../assets/logo-144.png")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />

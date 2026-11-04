@@ -440,6 +440,7 @@ const tabStyles = StyleSheet.create({
 import InAppNotificationToast from "./src/components/InAppNotificationToast";
 import { navigationRef } from "./src/utils/navigationRef";
 import { refreshHomeWidget } from "./src/widget/refreshHomeWidget";
+import { appLinking } from "./src/utils/deepLinking";
 
 // Android 13+ only shows the POST_NOTIFICATIONS prompt once a notification channel exists,
 // so channels must be created (and awaited) BEFORE asking. Draw alerts are synced afterwards
@@ -558,6 +559,7 @@ function AppContent() {
       />
       <NavigationContainer
         ref={navigationRef}
+        linking={appLinking}
         onReady={() => {
           SplashScreen.hideAsync().catch(() => {});
           if (pendingNotificationNavRef.current) {

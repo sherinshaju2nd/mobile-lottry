@@ -561,7 +561,7 @@ export default function HomeScreen({ navigation }: any) {
             >
               <View style={styles.logoBadge}>
                 <Image
-                  source={require("../../assets/icon.png")}
+                  source={require("../../assets/logo-144.png")}
                   style={{ width: 44, height: 44, borderRadius: 10 }}
                   resizeMode="contain"
                 />

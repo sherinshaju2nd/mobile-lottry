@@ -961,7 +961,7 @@ Help users in natural, friendly Malayalam (മലയാളം) or English with l
 Official Rules:
 - Daily draws at 3:00 PM IST from Gorky Bhavan, Thiruvananthapuram.
 - Claim validity: 30 days.
-- 30% TDS on prizes > ₹10,000 + 10% agent commission.
+- Prizes > ₹10,000: 10% agent commission first, then 30% TDS on the remainder (₹1 Cr → ₹63 L in hand).
 - Claim offices: Up to ₹5,000 at local agents; ₹5,000-₹1L at DLO; above ₹1L at Directorate.
 
 Grounding Context:
@@ -1084,7 +1084,7 @@ Return ONLY valid JSON matching this schema:
 Official Rules:
 - Daily draws at 3:00 PM IST from Gorky Bhavan, Thiruvananthapuram.
 - Claim validity: 30 days.
-- 30% TDS on prizes > ₹10,000 + 10% agent commission.
+- Prizes > ₹10,000: 10% agent commission first, then 30% TDS on the remainder (₹1 Cr → ₹63 L in hand).
 - Claim offices: Up to ₹5,000 at local agents; ₹5,000-₹1L at DLO; above ₹1L at Directorate.
 
 Grounding Context:

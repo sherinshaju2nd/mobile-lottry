@@ -8,7 +8,6 @@ const withPlayStoreOptimizations = (config) => {
   // 1. Android Manifest optimizations:
   // - Large screen support & resizability (Tablets, Foldables, Chromebooks)
   // - Orientation unlocking
-  // - Picture-in-Picture (PiP) support
   // - Window compatibility properties for Android 12L / 13 / 14 / 15
   config = withAndroidManifest(config, async (config) => {
     const androidManifest = config.modResults.manifest;
@@ -91,12 +90,14 @@ const withPlayStoreOptimizations = (config) => {
         }
       });
 
-      // Activity-level optimizations: PiP, resizability, configChanges, orientation
+      // Activity-level optimizations: resizability, configChanges, orientation.
+      // No picture-in-picture: the app has no video, and declaring PiP support without
+      // implementing it makes Play Console flag "Implement picture-in-picture".
       if (app.activity && Array.isArray(app.activity)) {
         app.activity.forEach((activity) => {
           activity.$ = activity.$ || {};
           activity.$['android:resizeableActivity'] = 'true';
-          activity.$['android:supportsPictureInPicture'] = 'true';
+          delete activity.$['android:supportsPictureInPicture'];
           activity.$['android:windowSoftInputMode'] = 'adjustResize';
 
           // Ensure orientation is unspecified so large screen devices / tablets can freely rotate
@@ -127,19 +128,23 @@ const withPlayStoreOptimizations = (config) => {
       );
 
       if (appTheme && Array.isArray(appTheme.item)) {
-        // Remove deprecated translucent status/nav attributes if present
+        // Remove attributes deprecated for edge-to-edge (Android 15/16). React Native 0.88
+        // always draws edge-to-edge with transparent system bars, so they are not needed and
+        // Play Console flags them as "deprecated APIs or parameters for edge-to-edge".
+        const DEPRECATED_EDGE_TO_EDGE_ATTRS = [
+          'android:windowTranslucentStatus',
+          'android:windowTranslucentNavigation',
+          'android:statusBarColor',
+          'android:navigationBarColor',
+          'android:navigationBarDividerColor',
+          'android:windowOptOutEdgeToEdgeEnforcement',
+        ];
         appTheme.item = appTheme.item.filter(
-          (item) =>
-            item.$ &&
-            item.$.name !== 'android:windowTranslucentStatus' &&
-            item.$.name !== 'android:windowTranslucentNavigation'
+          (item) => item.$ && !DEPRECATED_EDGE_TO_EDGE_ATTRS.includes(item.$.name)
         );
 
         // Define edge-to-edge items
         const edgeToEdgeItems = [
-          { name: 'android:windowOptOutEdgeToEdgeEnforcement', value: 'false' },
-          { name: 'android:navigationBarColor', value: '@android:color/transparent' },
-          { name: 'android:statusBarColor', value: '@android:color/transparent' },
           { name: 'android:windowLightStatusBar', value: 'true' },
           { name: 'android:windowLightNavigationBar', value: 'true' },
           { name: 'android:enforceNavigationBarContrast', value: 'false' },

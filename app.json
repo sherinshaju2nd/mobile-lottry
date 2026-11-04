@@ -58,7 +58,7 @@
     },
     "android": {
       "package": "com.keralalotteryresultstoday.app",
-      "versionCode": 16,
+      "versionCode": 17,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -71,13 +71,41 @@
           "data": [
             {
               "scheme": "https",
-              "host": "www.keralalotteryresultstoday.in",
-              "pathPrefix": "/"
+              "host": "www.keralalotteryresultstoday.in"
             },
             {
               "scheme": "https",
-              "host": "keralalotteryresultstoday.in",
-              "pathPrefix": "/"
+              "host": "keralalotteryresultstoday.in"
+            },
+            {
+              "path": "/"
+            },
+            {
+              "pathPrefix": "/search"
+            },
+            {
+              "path": "/claim"
+            },
+            {
+              "pathPrefix": "/bhagyathara"
+            },
+            {
+              "pathPrefix": "/sthreesakthi"
+            },
+            {
+              "pathPrefix": "/dhanalekshmi"
+            },
+            {
+              "pathPrefix": "/karunya"
+            },
+            {
+              "pathPrefix": "/suvarnakeralam"
+            },
+            {
+              "pathPrefix": "/samrudhi"
+            },
+            {
+              "pathPattern": "/.*-bumper.*"
             }
           ],
           "category": [

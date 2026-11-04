@@ -742,7 +742,7 @@ export default function HomeScreen2({ navigation }: any) {
           <View style={styles.brandCol}>
             <View style={styles.logoBadge}>
               <Image
-                source={require("../../assets/icon.png")}
+                source={require("../../assets/logo-144.png")}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
