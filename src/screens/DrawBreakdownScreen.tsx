@@ -27,6 +27,7 @@ import {
   Sparkles,
   Volume2,
   Square,
+  Image as ImageIcon,
   Zap,
   Radio,
 } from "lucide-react-native";
@@ -62,6 +63,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { useResultReadAloud } from "../hooks/useResultReadAloud";
 import { getPrizeTierLabel } from "../utils/resultSpeech";
+import ShareResultCardModal from "../components/ShareResultCardModal";
 import {
   getSafeTodayISTDate,
   formatSafeDateDisplay,
@@ -112,6 +114,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
   const readAloud = useResultReadAloud(drawResult, language);
+  const [showShareCard, setShowShareCard] = useState(false);
   const [postponement, setPostponement] = useState<PostponedDraw | null>(null);
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -538,6 +541,20 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={styles.readAloudBtn}
+                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel={language === "ml" ? "ചിത്രമായി പങ്കിടുക" : "Share as image"}
+                onPress={() => {
+                  triggerLightHaptic();
+                  setShowShareCard(true);
+                }}
+              >
+                <ImageIcon size={17} color={COLORS.primary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={[styles.readAloudBtn, readAloud.isReading && styles.readAloudBtnActive]}
                 activeOpacity={0.8}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -599,6 +616,13 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             <Text style={styles.readAloudBarStop}>{language === "ml" ? "നിർത്തുക" : "Stop"}</Text>
           </TouchableOpacity>
         )}
+
+        <ShareResultCardModal
+          visible={showShareCard}
+          draw={drawResult}
+          isMl={language === "ml"}
+          onClose={() => setShowShareCard(false)}
+        />
 
         {/* Floating Copied Toast */}
         {copiedToast && (

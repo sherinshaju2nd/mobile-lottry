@@ -24,6 +24,7 @@ import {
 } from "../api/lotteryApi";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { isPlayBreakActiveNow } from "./playSmart";
 
 const SENT_LIVE_ALERTS_KEY = "sent_live_alerts_v1";
 const MAX_SENT_LIVE_ALERTS = 300;
@@ -740,7 +741,9 @@ export async function syncDaily3pmDrawNotification(
     await Notifications.cancelScheduledNotificationAsync(DAILY_3PM_NOTIF_ID).catch(() => {});
 
     // If disabled, cancel all weekly 3pm notifications
-    if (!settings.masterEnabled || !settings.dailyDraw3pmReminder) {
+    // Paused while the user is on a Play Smart break (results & ticket reminders still work).
+    const onBreak = await isPlayBreakActiveNow(getTodayIST().dateStr);
+    if (!settings.masterEnabled || !settings.dailyDraw3pmReminder || onBreak) {
       try {
         const scheduled = await Notifications.getAllScheduledNotificationsAsync();
         for (const notif of scheduled) {
@@ -907,7 +910,8 @@ export async function syncBumper2pmDrawNotification(
     await Notifications.cancelScheduledNotificationAsync(BUMPER_2PM_NOTIF_ID).catch(() => {});
 
     // If disabled, cancel all bumper 2pm notifications
-    if (!settings.masterEnabled || !settings.bumper2pmReminder) {
+    const onBreak = await isPlayBreakActiveNow(getTodayIST().dateStr);
+    if (!settings.masterEnabled || !settings.bumper2pmReminder || onBreak) {
       try {
         const scheduled = await Notifications.getAllScheduledNotificationsAsync();
         for (const notif of scheduled) {

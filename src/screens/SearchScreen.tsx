@@ -75,6 +75,8 @@ import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import JustMissModal from "../components/JustMissModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
+import { recordPositiveMoment } from "../utils/ratingPrompt";
+import VoiceTicketButton from "../components/VoiceTicketButton";
 
 function formatDisplayDate(dateStr?: string | null) {
   if (!dateStr) return "";
@@ -255,6 +257,7 @@ export default function SearchScreen({ navigation }: any) {
       setSingleResults(matches);
       if (matches && matches.length > 0) {
         triggerSuccessHaptic();
+        void recordPositiveMoment("ticket_win");
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 4500);
       } else {
@@ -521,6 +524,14 @@ export default function SearchScreen({ navigation }: any) {
                   </TouchableOpacity>
                 )}
               </View>
+              <VoiceTicketButton
+                isMl={language === "ml"}
+                onTicket={(ticket) => {
+                  const formatted = formatTicketSearchInput(ticket);
+                  setQuery(formatted);
+                  void handleSingleSearch(formatted);
+                }}
+              />
               <TouchableOpacity
                 style={styles.cameraIconBtn}
                 onPress={() => setIsScannerOpen(true)}
@@ -1007,7 +1018,9 @@ export default function SearchScreen({ navigation }: any) {
                       navigation.navigate("ClaimCalculator", {
                         amount: match.prize_amount,
                         drawDate: match.draw_date,
-                        prizeLabel: `${match.prize_tier} · ${match.draw_name}`,
+                        prizeLabel: `${match.prize_tier} · ${match.draw_name} · ${match.ticket_matched}`,
+                        lotteryName: match.draw_name,
+                        lotteryCode: match.lottery_code,
                       })
                     }
                   >

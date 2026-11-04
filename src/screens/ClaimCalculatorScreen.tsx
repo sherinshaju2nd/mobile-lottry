@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -9,13 +11,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Building2, CalendarClock, CheckCircle2, FileText, Info, Store } from "lucide-react-native";
+import { Bell, BellOff, Building2, CalendarClock, CheckCircle2, FileText, Info, MapPin, PiggyBank, Store } from "lucide-react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import SafeScreenContainer from "../components/SafeScreenContainer";
 import ScreenHeader from "../components/ScreenHeader";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
 import {
   CLAIM_PERIOD_DAYS,
+  LATE_CLAIM_LIMIT_DAYS,
   ClaimOffice,
   calculateClaim,
   getClaimDeadline,
@@ -23,7 +27,22 @@ import {
 } from "../utils/claimCalculator";
 import { getSafeTodayISTDate, formatSafeDateDisplay } from "../utils/formatters";
 import { formatGroupedRupees, formatRupeesShort, parsePrizeAmount } from "../utils/prizeAmounts";
-import { triggerLightHaptic } from "../utils/haptics";
+import { triggerLightHaptic, triggerSuccessHaptic } from "../utils/haptics";
+import {
+  cancelClaimReminders,
+  claimReminderKey,
+  getClaimReminderDates,
+  hasClaimReminders,
+  scheduleClaimReminders,
+} from "../utils/claimReminders";
+import { recordPositiveMoment } from "../utils/ratingPrompt";
+
+// Google Maps searches for the office that pays this prize size.
+const OFFICE_MAP_QUERY: Record<ClaimOffice, string> = {
+  agent: "Kerala lottery agency near me",
+  district_office: "District Lottery Office near me",
+  directorate: "Directorate of State Lotteries, Vikas Bhavan, Thiruvananthapuram",
+};
 
 // Current Kerala weekly prize structure plus a typical bumper jackpot.
 const PRESET_AMOUNTS = [250_000_000, 10_000_000, 2_500_000, 500_000, 5_000, 2_000, 1_000, 500, 200, 100];
@@ -73,6 +92,9 @@ interface RouteParams {
   amount?: number | string;
   drawDate?: string;
   prizeLabel?: string;
+  /** Lottery name / code, for logging the win in Play Smart. */
+  lotteryName?: string;
+  lotteryCode?: string;
 }
 
 export default function ClaimCalculatorScreen({ navigation, route }: any) {
@@ -88,6 +110,90 @@ export default function ClaimCalculatorScreen({ navigation, route }: any) {
   const deadline = getClaimDeadline(params.drawDate);
   const daysLeft = deadline ? getDaysUntil(deadline, getSafeTodayISTDate()) : null;
   const [officeTitle, officeDesc] = OFFICE_INFO[estimate.claimOffice][isMl ? "ml" : "en"];
+  const todayIST = getSafeTodayISTDate();
+  const reminderLabel = params.prizeLabel ?? (params.drawDate ? `Prize · ${params.drawDate}` : "");
+  const reminderKey = params.drawDate ? claimReminderKey({ drawDate: params.drawDate, label: reminderLabel }) : null;
+  const canRemind = Boolean(params.drawDate && getClaimReminderDates(params.drawDate, todayIST).length > 0);
+  const [remindersOn, setRemindersOn] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!reminderKey) return;
+      hasClaimReminders(reminderKey)
+        .then(setRemindersOn)
+        .catch((err: unknown) => console.warn("[claim] Reminder state unavailable:", err instanceof Error ? err.message : String(err)));
+    }, [reminderKey]),
+  );
+
+  // Opening the calculator for a real win is a good moment to (maybe) ask for a rating.
+  // Counted once per visit, not on every refocus (e.g. coming back from Play Smart).
+  const ratingRecordedRef = useRef(false);
+  useEffect(() => {
+    if (ratingRecordedRef.current || !initialAmount || initialAmount <= 0) return;
+    ratingRecordedRef.current = true;
+    void recordPositiveMoment("claim_calculator");
+  }, [initialAmount]);
+
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const reminderBusyRef = useRef(false);
+
+  const toggleReminders = async () => {
+    if (!params.drawDate || !reminderKey || reminderBusyRef.current) return;
+    reminderBusyRef.current = true;
+    setReminderBusy(true);
+    triggerLightHaptic();
+    try {
+      if (remindersOn) {
+        await cancelClaimReminders(reminderKey);
+        setRemindersOn(false);
+        return;
+      }
+      const count = await scheduleClaimReminders(
+        {
+          drawDate: params.drawDate,
+          label: reminderLabel,
+          officeName: OFFICE_INFO[estimate.claimOffice].en[0],
+          amount: estimate.grossPrize,
+        },
+        todayIST,
+      );
+      if (count > 0) {
+        triggerSuccessHaptic();
+        setRemindersOn(true);
+        Alert.alert(
+          isMl ? "ഓർമ്മപ്പെടുത്തൽ സജ്ജമാക്കി" : "Reminders set",
+          isMl ? `സമയപരിധിക്ക് മുമ്പ് ${count} തവണ ഓർമ്മിപ്പിക്കും.` : `We'll remind you ${count} times before the deadline.`,
+        );
+      } else {
+        Alert.alert(
+          isMl ? "ഓർമ്മപ്പെടുത്തൽ സജ്ജമാക്കാനായില്ല" : "Couldn't set reminders",
+          isMl ? "നോട്ടിഫിക്കേഷൻ അനുമതി നൽകുക." : "Please allow notifications for this app in your phone settings.",
+        );
+      }
+    } catch (err: unknown) {
+      console.warn("[claim] Reminder toggle failed:", err instanceof Error ? err.message : String(err));
+      Alert.alert(isMl ? "പിശക്" : "Something went wrong", isMl ? "വീണ്ടും ശ്രമിക്കുക." : "Please try again.");
+    } finally {
+      reminderBusyRef.current = false;
+      setReminderBusy(false);
+    }
+  };
+
+  const openOfficeMap = () => {
+    triggerLightHaptic();
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(OFFICE_MAP_QUERY[estimate.claimOffice])}`;
+    Linking.openURL(url).catch((err: unknown) => {
+      console.warn("[claim] Maps unavailable:", err instanceof Error ? err.message : String(err));
+      Alert.alert(officeTitle, OFFICE_MAP_QUERY[estimate.claimOffice]);
+    });
+  };
+
+  const logWinInPlaySmart = () => {
+    triggerLightHaptic();
+    navigation.navigate("PlaySmart", {
+      logWin: { amount: estimate.netAmount, lotteryName: params.lotteryName, lotteryCode: params.lotteryCode },
+    });
+  };
 
   const selectPreset = (value: number) => {
     triggerLightHaptic();
@@ -192,6 +298,10 @@ export default function ClaimCalculatorScreen({ navigation, route }: any) {
                 </View>
                 <Text style={styles.officeTitle}>{officeTitle}</Text>
                 <Text style={styles.body}>{officeDesc}</Text>
+                <TouchableOpacity style={styles.linkBtn} onPress={openOfficeMap} accessibilityRole="button">
+                  <MapPin size={16} color={COLORS.primary} />
+                  <Text style={styles.linkBtnText}>{isMl ? "മാപ്പിൽ ഓഫീസ് കണ്ടെത്തുക" : "Find the office on Maps"}</Text>
+                </TouchableOpacity>
 
                 <View style={[styles.sectionTitleRow, { marginTop: 14 }]}>
                   <CalendarClock size={18} color={COLORS.gold} />
@@ -210,6 +320,31 @@ export default function ClaimCalculatorScreen({ navigation, route }: any) {
                       : `Submit the ticket within ${CLAIM_PERIOD_DAYS} days of the draw date.`}
                   </Text>
                 )}
+                <Text style={styles.lateNote}>
+                  {isMl
+                    ? `വൈകിയുള്ള ക്ലെയിമുകൾ (${LATE_CLAIM_LIMIT_DAYS} ദിവസം വരെ) തക്കതായ കാരണമുണ്ടെങ്കിൽ മാത്രം ഡയറക്ടറുടെ വിവേചനാധികാരത്തിൽ സ്വീകരിക്കും.`
+                    : `Late claims (up to ${LATE_CLAIM_LIMIT_DAYS} days) are accepted only with a valid reason, at the Director's discretion.`}
+                </Text>
+                {canRemind ? (
+                  <TouchableOpacity
+                    style={[styles.remindBtn, remindersOn && styles.remindBtnOn]}
+                    onPress={() => void toggleReminders()}
+                    disabled={reminderBusy}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: remindersOn }}
+                  >
+                    {remindersOn ? <BellOff size={16} color={COLORS.primary} /> : <Bell size={16} color="#FFFFFF" />}
+                    <Text style={[styles.remindText, remindersOn && styles.remindTextOn]}>
+                      {remindersOn
+                        ? isMl
+                          ? "ഓർമ്മപ്പെടുത്തൽ ഓണാണ് · ഓഫാക്കുക"
+                          : "Reminders on · Turn off"
+                        : isMl
+                          ? "ക്ലെയിം ചെയ്യാൻ ഓർമ്മിപ്പിക്കുക"
+                          : "Remind me to claim"}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
 
               {/* Documents */}
@@ -228,6 +363,13 @@ export default function ClaimCalculatorScreen({ navigation, route }: any) {
                 </View>
               ) : null}
             </>
+          ) : null}
+
+          {amount > 0 ? (
+            <TouchableOpacity style={styles.playSmartLink} onPress={logWinInPlaySmart} accessibilityRole="button">
+              <PiggyBank size={16} color="#15803D" />
+              <Text style={styles.playSmartText}>{isMl ? "പ്ലേ സ്മാർട്ടിൽ ഈ സമ്മാനം ചേർക്കുക" : "Add this win to Play Smart"}</Text>
+            </TouchableOpacity>
           ) : null}
 
           <View style={styles.disclaimer}>
@@ -303,6 +445,34 @@ const styles = StyleSheet.create({
   officeTitle: { fontSize: 15, fontWeight: "700", color: COLORS.primary, marginBottom: 4 },
   body: { fontSize: 14, color: COLORS.textDark, lineHeight: 20 },
   urgent: { color: "#DC2626", fontWeight: "700" },
+  lateNote: { fontSize: 12, color: COLORS.textMuted, marginTop: 6, lineHeight: 17 },
+  linkBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  linkBtnText: { fontSize: 14, fontWeight: "800", color: COLORS.primary },
+  remindBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+  },
+  remindBtnOn: { backgroundColor: COLORS.primaryLight },
+  remindText: { color: "#FFFFFF", fontWeight: "800", fontSize: 14 },
+  remindTextOn: { color: COLORS.primary },
+  playSmartLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+  },
+  playSmartText: { color: "#15803D", fontWeight: "800", fontSize: 14 },
   docRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingVertical: 5 },
   docText: { flex: 1, fontSize: 14, color: COLORS.textDark, lineHeight: 20 },
   disclaimer: { flexDirection: "row", gap: 6, alignItems: "flex-start", paddingHorizontal: 4 },

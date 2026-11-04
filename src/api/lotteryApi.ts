@@ -828,6 +828,35 @@ export async function checkIsDatePostponed(
 
 const BACKEND_API_BASE = "https://www.keralalotteryresultstoday.in";
 
+export interface VoiceTicketResponse {
+  ticket: string;
+  transcript: string;
+}
+
+/**
+ * Sends a short voice clip to the backend, which returns the spoken ticket number.
+ * Throws with a user-facing message when nothing usable was heard or the service is down.
+ */
+export const recognizeTicketByVoice = async (base64Audio: string, mimeType: string): Promise<VoiceTicketResponse> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const res = await fetch(`${BACKEND_API_BASE}/api/ai/voice-ticket`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio: base64Audio, mimeType }),
+      signal: controller.signal,
+    });
+    const json = (await res.json().catch(() => ({}))) as { success?: boolean; ticket?: string; transcript?: string; error?: string };
+    if (!res.ok || !json.success || !json.ticket) {
+      throw new Error(json.error ?? `Voice search failed (${res.status}).`);
+    }
+    return { ticket: json.ticket, transcript: json.transcript ?? "" };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 /**
  * Scan a Kerala Lottery ticket image using Gemini Vision on Mobile
  */

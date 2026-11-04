@@ -20,6 +20,7 @@ import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import NotFoundScreen from "./src/screens/NotFoundScreen";
 import ClaimCalculatorScreen from "./src/screens/ClaimCalculatorScreen";
 import LuckyPlacesScreen from "./src/screens/LuckyPlacesScreen";
+import PlaySmartScreen from "./src/screens/PlaySmartScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
@@ -461,14 +462,44 @@ const bootstrapNotifications = async (): Promise<void> => {
 
 function AppContent() {
   // Notification taps can arrive before the navigator is mounted (cold start).
-  const pendingNotificationNavRef = useRef(false);
-  const openRemindersFromNotification = useCallback(() => {
+  type NotificationTarget = { name: string; params?: Record<string, unknown> };
+  const pendingNotificationNavRef = useRef<NotificationTarget | null>(null);
+
+  // Where a tapped notification should lead: claim reminders reopen the claim calculator
+  // for that win; everything else opens the Reminders screen.
+  const getNotificationTarget = (data: Record<string, unknown> | undefined): NotificationTarget => {
+    if (data?.type === "claim_reminder" && typeof data.drawDate === "string") {
+      return {
+        name: "ClaimCalculator",
+        params: {
+          drawDate: data.drawDate,
+          ...(typeof data.prizeLabel === "string" ? { prizeLabel: data.prizeLabel } : {}),
+          ...(typeof data.amount === "number" ? { amount: data.amount } : {}),
+        },
+      };
+    }
+    return { name: "Reminders" };
+  };
+
+  const openNotificationTarget = useCallback((target: NotificationTarget) => {
     if (navigationRef.isReady()) {
-      navigationRef.navigate("Reminders");
+      navigationRef.navigate(target.name, target.params);
     } else {
-      pendingNotificationNavRef.current = true;
+      pendingNotificationNavRef.current = target;
     }
   }, []);
+
+  const handleNotificationResponse = useCallback(
+    (response: Notifications.NotificationResponse) =>
+      openNotificationTarget(
+        getNotificationTarget(response.notification.request.content.data as Record<string, unknown> | undefined),
+      ),
+    [openNotificationTarget],
+  );
+  const openRemindersFromNotification = useCallback(
+    () => openNotificationTarget({ name: "Reminders" }),
+    [openNotificationTarget],
+  );
 
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState<boolean>(true);
   const [inAppNotif, setInAppNotif] = useState<{
@@ -502,10 +533,10 @@ function AppContent() {
       // Permission is requested only after privacy consent (see bootstrapNotifications).
 
       // Handle tapping a notification from system tray → go to Reminders
-      responseSub = Notifications.addNotificationResponseReceivedListener(openRemindersFromNotification);
+      responseSub = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
       Notifications.getLastNotificationResponseAsync()
         .then((response) => {
-          if (response) openRemindersFromNotification();
+          if (response) handleNotificationResponse(response);
         })
         .catch((err: unknown) =>
           console.warn("[notifications] Could not read launch notification:", err instanceof Error ? err.message : String(err)),
@@ -536,7 +567,7 @@ function AppContent() {
       receiveSub?.remove?.();
       appStateSub?.remove?.();
     };
-  }, [openRemindersFromNotification]);
+  }, [handleNotificationResponse]);
 
   const handleAcceptPrivacy = async () => {
     try {
@@ -562,9 +593,10 @@ function AppContent() {
         linking={appLinking}
         onReady={() => {
           SplashScreen.hideAsync().catch(() => {});
-          if (pendingNotificationNavRef.current) {
-            pendingNotificationNavRef.current = false;
-            navigationRef.navigate("Reminders");
+          const pending = pendingNotificationNavRef.current;
+          if (pending) {
+            pendingNotificationNavRef.current = null;
+            navigationRef.navigate(pending.name, pending.params);
           }
         }}
       >
@@ -584,6 +616,7 @@ function AppContent() {
           <Stack.Screen name="Support" component={SupportScreen} />
           <Stack.Screen name="ClaimCalculator" component={ClaimCalculatorScreen} />
           <Stack.Screen name="LuckyPlaces" component={LuckyPlacesScreen} />
+          <Stack.Screen name="PlaySmart" component={PlaySmartScreen} />
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>

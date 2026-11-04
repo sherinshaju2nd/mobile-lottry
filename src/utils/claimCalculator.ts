@@ -12,8 +12,13 @@
 export const TAX_FREE_LIMIT = 10_000;
 export const AGENT_COMMISSION_RATE = 0.1;
 export const TDS_RATE = 0.3;
-/** Days from the draw within which the ticket must be surrendered (as stated on the website's /claim page). */
-export const CLAIM_PERIOD_DAYS = 90;
+/**
+ * Days from the draw within which the ticket must be surrendered. Kerala rules allow 30 days;
+ * late claims (up to 90 days) are accepted only with a valid reason at the Director's discretion.
+ * Reminders use the 30-day date so nobody misses the normal deadline.
+ */
+export const CLAIM_PERIOD_DAYS = 30;
+export const LATE_CLAIM_LIMIT_DAYS = 90;
 
 export type ClaimOffice = "agent" | "district_office" | "directorate";
 

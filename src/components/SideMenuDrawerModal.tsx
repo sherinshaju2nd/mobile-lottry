@@ -31,6 +31,7 @@ import {
   Heart,
   Calculator,
   MapPin,
+  ShieldCheck as PlaySmartIcon,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -453,6 +454,26 @@ export default function SideMenuDrawerModal({
                       ? "നിയമങ്ങളും നറുക്കെടുപ്പ് വിവരങ്ങളും"
                       : "Draw rules, timings & ticket verification"}
                   </Text>
+                </View>
+                <ChevronRight size={16} color="#94A3B8" />
+              </TouchableOpacity>
+
+              {/* Play Smart (responsible play) */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("PlaySmart");
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconBox, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
+                  <PlaySmartIcon size={18} color="#1D4ED8" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={styles.menuTitle}>{isMl ? "പ്ലേ സ്മാർട്ട്" : "Play Smart"}</Text>
+                  <Text style={styles.menuSub}>{isMl ? "ചെലവ്, പരിധി, ഇടവേള" : "Track spending, set limits, take a break"}</Text>
                 </View>
                 <ChevronRight size={16} color="#94A3B8" />
               </TouchableOpacity>
