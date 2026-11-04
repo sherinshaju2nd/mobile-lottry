@@ -29,6 +29,8 @@ import {
   Layers,
   Check,
   Heart,
+  Calculator,
+  MapPin,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -451,6 +453,46 @@ export default function SideMenuDrawerModal({
                       ? "നിയമങ്ങളും നറുക്കെടുപ്പ് വിവരങ്ങളും"
                       : "Draw rules, timings & ticket verification"}
                   </Text>
+                </View>
+                <ChevronRight size={16} color="#94A3B8" />
+              </TouchableOpacity>
+
+              {/* Claim calculator */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("ClaimCalculator");
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconBox, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
+                  <Calculator size={18} color="#16A34A" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={styles.menuTitle}>{isMl ? "സമ്മാനത്തുക കാൽക്കുലേറ്റർ" : "Prize Claim Calculator"}</Text>
+                  <Text style={styles.menuSub}>{isMl ? "കൈയിൽ കിട്ടുന്ന തുക, നികുതി, ക്ലെയിം" : "Amount after tax & where to claim"}</Text>
+                </View>
+                <ChevronRight size={16} color="#94A3B8" />
+              </TouchableOpacity>
+
+              {/* Lucky places */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("LuckyPlaces");
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconBox, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
+                  <MapPin size={18} color="#DC2626" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={styles.menuTitle}>{isMl ? "ഭാഗ്യ ജില്ലകൾ & ഏജൻസികൾ" : "Lucky Districts & Agencies"}</Text>
+                  <Text style={styles.menuSub}>{isMl ? "ഒന്നാം സമ്മാനം വിറ്റ സ്ഥലങ്ങൾ" : "Where 1st prizes were sold"}</Text>
                 </View>
                 <ChevronRight size={16} color="#94A3B8" />
               </TouchableOpacity>

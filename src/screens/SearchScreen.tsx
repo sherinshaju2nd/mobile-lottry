@@ -998,6 +998,23 @@ export default function SearchScreen({ navigation }: any) {
                   <Text style={[styles.detailsBtnText, { marginTop: 8, fontSize: 12, color: COLORS.primary }]}>
                     {t("tap_to_view_details")}
                   </Text>
+
+                  <TouchableOpacity
+                    style={styles.claimLink}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    onPress={() =>
+                      navigation.navigate("ClaimCalculator", {
+                        amount: match.prize_amount,
+                        drawDate: match.draw_date,
+                        prizeLabel: `${match.prize_tier} · ${match.draw_name}`,
+                      })
+                    }
+                  >
+                    <Text style={styles.claimLinkText}>
+                      {language === "ml" ? "കൈയിൽ എത്ര കിട്ടും? എങ്ങനെ ക്ലെയിം ചെയ്യാം →" : "How much will I get & how to claim →"}
+                    </Text>
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
               </>
@@ -1460,6 +1477,17 @@ const styles = StyleSheet.create({
   },
   winBadgeText: { fontSize: 12, fontWeight: "800", color: COLORS.successText },
   prizeAmount: { fontSize: 14, fontWeight: "900", color: COLORS.primary },
+  claimLink: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    alignSelf: "flex-start",
+  },
+  claimLinkText: { fontSize: 13, fontWeight: "800", color: "#15803D" },
   drawTitle: {
     fontSize: 16,
     fontWeight: "800",

@@ -34,6 +34,8 @@ export interface WinnerInfo {
   ticket?: string;
   location?: string;
   agent?: string;
+  /** Selling agency, e.g. "C 7248"; the letter identifies the district lottery office. */
+  agency_no?: string;
 }
 
 export interface PrizeBreakdown {
@@ -275,6 +277,27 @@ export const upsertDrawInList = (list: DrawResult[], draw: DrawResult): DrawResu
     (d) => !(d.draw_date === draw.draw_date && d.lottery_code === draw.lottery_code),
   );
   return [...others, draw].sort((a, b) => b.draw_date.localeCompare(a.draw_date));
+};
+
+const FIRST_PRIZE_PAGE_SIZE = 1000; // PostgREST's default max rows per request
+
+/**
+ * Every draw's 1st prize only (no prize lists), paged so it is never cut off at 1000 rows.
+ * Throws on failure so callers can keep showing what they already have.
+ */
+export const fetchFirstPrizeHistory = async (): Promise<DrawResult[]> => {
+  const rows: Record<string, any>[] = [];
+  for (let from = 0; ; from += FIRST_PRIZE_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("draw_results")
+      .select("draw_date,lottery_code,draw_name,draw_code,first_prize")
+      .order("draw_date", { ascending: false })
+      .range(from, from + FIRST_PRIZE_PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < FIRST_PRIZE_PAGE_SIZE) break;
+  }
+  return rows.map(parseDrawResultRow);
 };
 
 export async function fetchAllDraws(): Promise<DrawResult[]> {

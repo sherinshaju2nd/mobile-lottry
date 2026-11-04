@@ -22,6 +22,7 @@ import {
 } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Speech from "expo-speech";
+import { toSpeechLanguage } from "../utils/speechLocale";
 import {
   X,
   Sparkles,
@@ -248,7 +249,7 @@ export default function AiVoiceAssistantModal({
 
       try {
         Speech.speak(cleanText, {
-          language: langCode,
+          language: toSpeechLanguage(langCode),
           pitch: 1.0,
           rate: 0.95,
           onDone: () => setPlayingMessageId(null),

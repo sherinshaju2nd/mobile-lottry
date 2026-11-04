@@ -18,6 +18,8 @@ import ContactScreen from "./src/screens/ContactScreen";
 import SupportScreen from "./src/screens/SupportScreen";
 import AnalyticsScreen from "./src/screens/AnalyticsRouterScreen";
 import NotFoundScreen from "./src/screens/NotFoundScreen";
+import ClaimCalculatorScreen from "./src/screens/ClaimCalculatorScreen";
+import LuckyPlacesScreen from "./src/screens/LuckyPlacesScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
@@ -437,6 +439,7 @@ const tabStyles = StyleSheet.create({
 
 import InAppNotificationToast from "./src/components/InAppNotificationToast";
 import { navigationRef } from "./src/utils/navigationRef";
+import { refreshHomeWidget } from "./src/widget/refreshHomeWidget";
 
 // Android 13+ only shows the POST_NOTIFICATIONS prompt once a notification channel exists,
 // so channels must be created (and awaited) BEFORE asking. Draw alerts are synced afterwards
@@ -519,6 +522,7 @@ function AppContent() {
       // Synchronize advance notification alarms whenever app becomes active
       appStateSub = AppState.addEventListener("change", (nextAppState) => {
         if (nextAppState === "active") {
+          refreshHomeWidget();
           syncAllDrawNotifications().catch(() => {});
         }
       });
@@ -576,6 +580,8 @@ function AppContent() {
           <Stack.Screen name="Checker" component={SearchScreen} />
           <Stack.Screen name="Contact" component={ContactScreen} />
           <Stack.Screen name="Support" component={SupportScreen} />
+          <Stack.Screen name="ClaimCalculator" component={ClaimCalculatorScreen} />
+          <Stack.Screen name="LuckyPlaces" component={LuckyPlacesScreen} />
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>

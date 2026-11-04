@@ -25,6 +25,8 @@ import {
   Clock,
   Share2,
   Sparkles,
+  Volume2,
+  Square,
   Zap,
   Radio,
 } from "lucide-react-native";
@@ -58,6 +60,8 @@ import ConfettiCelebration from "../components/ConfettiCelebration";
 import { shareDrawResultToWhatsApp } from "../utils/whatsappShareHelper";
 import { useLanguage } from "../context/LanguageContext";
 import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
+import { useResultReadAloud } from "../hooks/useResultReadAloud";
+import { getPrizeTierLabel } from "../utils/resultSpeech";
 import {
   getSafeTodayISTDate,
   formatSafeDateDisplay,
@@ -107,6 +111,7 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
   const isAfter3PM = date === todayISTDate && getIsAfterDrawTime(isBumper);
 
   const [drawResult, setDrawResult] = useState<DrawResult | null>(null);
+  const readAloud = useResultReadAloud(drawResult, language);
   const [postponement, setPostponement] = useState<PostponedDraw | null>(null);
   const [allDraws, setAllDraws] = useState<DrawResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -533,6 +538,28 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
               </TouchableOpacity>
 
               <TouchableOpacity
+                style={[styles.readAloudBtn, readAloud.isReading && styles.readAloudBtnActive]}
+                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  readAloud.isReading
+                    ? language === "ml" ? "വായന നിർത്തുക" : "Stop reading results"
+                    : language === "ml" ? "ഫലം ഉറക്കെ വായിക്കുക" : "Read results aloud"
+                }
+                onPress={() => {
+                  triggerLightHaptic();
+                  readAloud.toggle();
+                }}
+              >
+                {readAloud.isReading ? (
+                  <Square size={15} color="#FFFFFF" fill="#FFFFFF" />
+                ) : (
+                  <Volume2 size={17} color={COLORS.primary} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.pdfDownloadBtn}
                 activeOpacity={0.8}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -553,6 +580,25 @@ export default function DrawBreakdownScreen({ route, navigation }: any) {
             </View>
           )}
         </View>
+
+        {readAloud.isReading && (
+          <TouchableOpacity
+            style={styles.readAloudBar}
+            activeOpacity={0.85}
+            onPress={() => readAloud.stop()}
+            accessibilityRole="button"
+            accessibilityLabel={language === "ml" ? "വായന നിർത്തുക" : "Stop reading results"}
+          >
+            <Volume2 size={16} color="#FFFFFF" />
+            <Text style={styles.readAloudBarText} numberOfLines={1}>
+              {language === "ml" ? "വായിക്കുന്നു" : "Reading"}
+              {readAloud.currentTier
+                ? `: ${getPrizeTierLabel(readAloud.currentTier, language === "ml" ? "ml" : "en")}`
+                : "…"}
+            </Text>
+            <Text style={styles.readAloudBarStop}>{language === "ml" ? "നിർത്തുക" : "Stop"}</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Floating Copied Toast */}
         {copiedToast && (
@@ -1635,6 +1681,38 @@ const styles = StyleSheet.create({
   },
   emptyContainer: { alignItems: "center", marginTop: 40 },
   emptyText: { marginTop: 8, fontSize: 13, color: COLORS.textMuted },
+  readAloudBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  readAloudBtnActive: {
+    backgroundColor: "#DC2626",
+  },
+  readAloudBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+  },
+  readAloudBarText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  readAloudBarStop: {
+    color: "#FDE68A",
+    fontSize: 13,
+    fontWeight: "800",
+  },
   pdfDownloadBtn: {
     padding: 8,
     borderRadius: 8,

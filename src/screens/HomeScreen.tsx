@@ -105,6 +105,7 @@ import {
   formatTicketSearchInput,
 } from "../api/lotteryApi";
 import { useFocusEffect } from "@react-navigation/native";
+import { refreshHomeWidget } from "../widget/refreshHomeWidget";
 import BarcodeScannerModal from "../components/BarcodeScannerModal";
 import BarcodeResultModal from "../components/BarcodeResultModal";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
@@ -339,6 +340,7 @@ export default function HomeScreen({ navigation }: any) {
 
           // Immediately hydrate allDraws in memory (zero network request!)
           setAllDraws((prev) => upsertDrawInList(prev, structuredRow));
+          refreshHomeWidget();
 
           const currentToday = getSafeTodayISTDate();
           if (newRow.draw_date === currentToday) {

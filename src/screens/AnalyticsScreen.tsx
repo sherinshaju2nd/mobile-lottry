@@ -39,6 +39,7 @@ import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
 import { isIndic, getDistrictTranslatedName } from "../constants/translations";
 import { getLotteryTranslatedName } from "../constants/lotteries";
 import { KERALA_DISTRICTS } from "../utils/notificationSettingsStorage";
+import { resolveWinnerDistrict } from "../utils/luckyPlaces";
 import { triggerLightHaptic } from "../utils/haptics";
 import ShimmerSkeleton from "../components/ShimmerSkeleton";
 import AiLotteryPatternPredictor from "../components/AiLotteryPatternPredictor";
@@ -375,18 +376,17 @@ export default function AnalyticsScreen({ navigation }: any) {
 
     filteredDraws.forEach((draw) => {
       const loc = (draw.first?.location || "").toLowerCase();
-      if (loc && loc !== "n/a") {
+      if ((loc && loc !== "n/a") || draw.first?.agency_no) {
         totalJackpotDraws++;
-        for (const dist of KERALA_DISTRICTS) {
-          if (loc.includes(dist.toLowerCase())) {
-            distCounts[dist].count += 1;
-            distCounts[dist].lotteries.push(
-              (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
-                draw.draw_name ||
-                draw.lottery_code,
-            );
-            break;
-          }
+        // Locations are towns ("PAYYANNUR"), not districts: resolve via town table / agency letter.
+        const dist = resolveWinnerDistrict(draw.first);
+        if (dist && distCounts[dist]) {
+          distCounts[dist].count += 1;
+          distCounts[dist].lotteries.push(
+            (draw.lottery_code ? getLotteryTranslatedName(draw.lottery_code, language) : "") ||
+              draw.draw_name ||
+              draw.lottery_code,
+          );
         }
       }
     });

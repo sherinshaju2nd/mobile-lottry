@@ -49,6 +49,7 @@ import {
   parseDrawResultRow,
   upsertDrawInList,
 } from "../api/lotteryApi";
+import { refreshHomeWidget } from "../widget/refreshHomeWidget";
 import { useLanguage } from "../context/LanguageContext";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
@@ -427,6 +428,7 @@ export default function HomeScreen2({ navigation }: any) {
           if (row?.draw_date && row?.lottery_code) {
             const draw = parseDrawResultRow(row);
             setAllDraws((prev) => upsertDrawInList(prev, draw));
+            refreshHomeWidget();
           }
         }
       )
