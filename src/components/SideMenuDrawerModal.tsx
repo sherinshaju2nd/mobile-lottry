@@ -32,6 +32,7 @@ import {
   Calculator,
   MapPin,
   ShieldCheck as PlaySmartIcon,
+  Newspaper,
 } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -474,6 +475,26 @@ export default function SideMenuDrawerModal({
                 <View style={styles.menuTextCol}>
                   <Text style={styles.menuTitle}>{isMl ? "പ്ലേ സ്മാർട്ട്" : "Play Smart"}</Text>
                   <Text style={styles.menuSub}>{isMl ? "ചെലവ്, പരിധി, ഇടവേള" : "Track spending, set limits, take a break"}</Text>
+                </View>
+                <ChevronRight size={16} color="#94A3B8" />
+              </TouchableOpacity>
+
+              {/* News & newsletter */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  triggerLightHaptic();
+                  handleClose();
+                  navigation?.navigate("News");
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconBox, { backgroundColor: "#F5F3FF", borderColor: "#DDD6FE" }]}>
+                  <Newspaper size={18} color="#7C3AED" />
+                </View>
+                <View style={styles.menuTextCol}>
+                  <Text style={styles.menuTitle}>{isMl ? "വാർത്തകൾ & ന്യൂസ്‌ലെറ്റർ" : "News & Newsletter"}</Text>
+                  <Text style={styles.menuSub}>{isMl ? "ലോട്ടറി വാർത്തകൾ, ഗൈഡുകൾ, ടിപ്പുകൾ" : "Lottery news, guides & tips"}</Text>
                 </View>
                 <ChevronRight size={16} color="#94A3B8" />
               </TouchableOpacity>

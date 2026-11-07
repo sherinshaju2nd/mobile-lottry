@@ -33,7 +33,11 @@ type AppRoute =
   | { name: "MainTabs"; params?: { screen: "HomeTab" | "SearchTab" | "LotteriesTab" } }
   | { name: "LotteryArchive"; params: { code: string } }
   | { name: "DrawBreakdown"; params: { code: string; date: string; highlight?: string } }
-  | { name: "ClaimCalculator"; params?: Record<string, never> };
+  | { name: "ClaimCalculator"; params?: Record<string, never> }
+  | { name: "News"; params?: Record<string, never> }
+  | { name: "ArticleDetail"; params: { slug: string } };
+
+const ARTICLE_SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -59,6 +63,9 @@ export const resolveAppLink = (path: string): AppRoute => {
   if (first === "search") return { name: "MainTabs", params: { screen: "SearchTab" } };
   if (first === "claim") return { name: "ClaimCalculator" };
   if (first === "lotteries") return { name: "MainTabs", params: { screen: "LotteriesTab" } };
+  if (first === "news") {
+    return second && ARTICLE_SLUG.test(second) ? { name: "ArticleDetail", params: { slug: second } } : { name: "News" };
+  }
 
   // Old /lottery/<slug>/<date> URLs (the website redirects them to /<slug>/<date>).
   const [slug, date] = first === "lottery" ? [second, segments[2]] : [first, second];

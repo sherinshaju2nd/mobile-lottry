@@ -113,6 +113,7 @@ import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
 import AiSocialDigestModal from "../components/AiSocialDigestModal";
 import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
+import LatestNewsCard from "../components/LatestNewsCard";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { useLanguage } from "../context/LanguageContext";
 import { useDeviceAdaptive } from "../hooks/useDeviceAdaptive";
@@ -829,6 +830,9 @@ export default function HomeScreen({ navigation }: any) {
             )}
           </View>
         </ScrollView>
+
+        {/* News & newsletter entry point */}
+        <LatestNewsCard navigation={navigation} />
 
         {/* Quick Ticket Checker Card */}
         {(() => {

@@ -21,6 +21,8 @@ import NotFoundScreen from "./src/screens/NotFoundScreen";
 import ClaimCalculatorScreen from "./src/screens/ClaimCalculatorScreen";
 import LuckyPlacesScreen from "./src/screens/LuckyPlacesScreen";
 import PlaySmartScreen from "./src/screens/PlaySmartScreen";
+import NewsScreen from "./src/screens/NewsScreen";
+import ArticleDetailScreen from "./src/screens/ArticleDetailScreen";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { NetworkProvider } from "./src/context/NetworkContext";
 import { ScannerProvider, useScanner } from "./src/context/ScannerContext";
@@ -617,6 +619,8 @@ function AppContent() {
           <Stack.Screen name="ClaimCalculator" component={ClaimCalculatorScreen} />
           <Stack.Screen name="LuckyPlaces" component={LuckyPlacesScreen} />
           <Stack.Screen name="PlaySmart" component={PlaySmartScreen} />
+          <Stack.Screen name="News" component={NewsScreen} />
+          <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
           <Stack.Screen name="NotFound" component={NotFoundScreen} />
         </Stack.Navigator>
       </NavigationContainer>

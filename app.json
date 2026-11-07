@@ -87,6 +87,9 @@
               "path": "/claim"
             },
             {
+              "pathPrefix": "/news"
+            },
+            {
               "pathPrefix": "/bhagyathara"
             },
             {

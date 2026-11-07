@@ -53,6 +53,7 @@ import { refreshHomeWidget } from "../widget/refreshHomeWidget";
 import PlaySmartHeaderButton from "../components/PlaySmartHeaderButton";
 import { useLanguage } from "../context/LanguageContext";
 import SideMenuDrawerModal from "../components/SideMenuDrawerModal";
+import LatestNewsCard from "../components/LatestNewsCard";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import GeminiAiFloatingButton from "../components/GeminiAiFloatingButton";
 import AiVoiceAssistantModal from "../components/AiVoiceAssistantModal";
@@ -712,6 +713,9 @@ export default function HomeScreen2({ navigation }: any) {
             <Text style={styles.topCardDateText}>{formattedDate}</Text>
           </View>
         </TouchableOpacity>
+
+        {/* News & newsletter entry point */}
+        <LatestNewsCard navigation={navigation} />
 
         {/* Section Header for Past Draws */}
         <View style={styles.sectionHeaderRow}>
