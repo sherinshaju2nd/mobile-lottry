@@ -2,19 +2,18 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Clock, Mail, Newspaper, RotateCw, WifiOff } from "lucide-react-native";
+import { Clock, Newspaper, RotateCw, WifiOff } from "lucide-react-native";
 import SafeScreenContainer from "../components/SafeScreenContainer";
 import ScreenHeader from "../components/ScreenHeader";
 import ShimmerSkeleton from "../components/ShimmerSkeleton";
+import ArticleListItem, { ArticleCover } from "../components/ArticleListItem";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -27,82 +26,9 @@ import {
   formatArticleDate,
   getCategoryMeta,
   readCachedFeed,
-  subscribeToNewsletter,
 } from "../api/articlesApi";
 
 type Filter = ArticleCategory | "all";
-
-const ArticleCover = ({ article, height }: { article: ArticleSummary; height: number }) => {
-  const [failed, setFailed] = useState(false);
-  const category = getCategoryMeta(article.category);
-  if (!article.cover_image_url || failed) {
-    return (
-      <View style={[styles.coverFallback, { height, backgroundColor: category.color }]}>
-        <Newspaper size={height > 120 ? 44 : 26} color="rgba(255,255,255,0.85)" />
-      </View>
-    );
-  }
-  return (
-    <Image
-      source={{ uri: article.cover_image_url }}
-      style={{ width: "100%", height, backgroundColor: "#E2E8F0" }}
-      resizeMode="cover"
-      accessibilityIgnoresInvertColors
-      onError={() => setFailed(true)}
-    />
-  );
-};
-
-const NewsletterCard = ({ isMl }: { isMl: boolean }) => {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<{ state: "idle" | "loading" | "done" | "error"; message?: string }>({ state: "idle" });
-
-  const submit = async () => {
-    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim())) {
-      setStatus({ state: "error", message: isMl ? "ശരിയായ ഇമെയിൽ നൽകുക." : "Please enter a valid email address." });
-      return;
-    }
-    setStatus({ state: "loading" });
-    const result = await subscribeToNewsletter(email);
-    setStatus({ state: result.success ? "done" : "error", message: result.message });
-    if (result.success) setEmail("");
-  };
-
-  return (
-    <View style={styles.newsletter}>
-      <View style={styles.newsletterTitleRow}>
-        <Mail size={18} color={COLORS.white} />
-        <Text style={styles.newsletterTitle}>{isMl ? "ലോട്ടറി ന്യൂസ്‌ലെറ്റർ" : "Kerala Lottery Newsletter"}</Text>
-      </View>
-      <Text style={styles.newsletterText}>
-        {isMl ? "ബമ്പർ അറിയിപ്പുകളും ക്ലെയിം ടിപ്പുകളും ഇമെയിലിൽ. സൗജന്യം." : "Bumper announcements & claim tips by email. Free, no spam."}
-      </Text>
-      {status.state === "done" ? (
-        <Text style={styles.newsletterSuccess}>✓ {status.message}</Text>
-      ) : (
-        <View style={styles.newsletterForm}>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor="#94A3B8"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            style={styles.newsletterInput}
-            accessibilityLabel="Email address"
-            onSubmitEditing={submit}
-            returnKeyType="send"
-          />
-          <TouchableOpacity style={styles.newsletterBtn} onPress={submit} disabled={status.state === "loading"} accessibilityRole="button">
-            {status.state === "loading" ? <ActivityIndicator size="small" color={COLORS.textDark} /> : <Text style={styles.newsletterBtnText}>{isMl ? "ചേരുക" : "Subscribe"}</Text>}
-          </TouchableOpacity>
-        </View>
-      )}
-      {status.state === "error" ? <Text style={styles.newsletterError}>{status.message}</Text> : null}
-    </View>
-  );
-};
 
 export default function NewsScreen({ navigation }: any) {
   const { language } = useLanguage();
@@ -176,25 +102,7 @@ export default function NewsScreen({ navigation }: any) {
   const showHero = Boolean(hero) && category === "all" && !isLoading;
   const listData = showHero ? rest : articles;
 
-  const renderCard = ({ item }: { item: ArticleSummary }) => {
-    const meta = getCategoryMeta(item.category);
-    return (
-      <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => openArticle(item)} accessibilityRole="button" accessibilityLabel={item.title}>
-        <View style={styles.cardThumb}>
-          <ArticleCover article={item} height={92} />
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={[styles.categoryText, { color: meta.color }]}>{isMl ? meta.ml : meta.en}</Text>
-          <Text style={styles.cardTitle} numberOfLines={3}>{item.title}</Text>
-          <View style={styles.metaRow}>
-            <Text style={styles.metaText}>{formatArticleDate(item.published_at, language)}</Text>
-            <Clock size={12} color={COLORS.textLight} />
-            <Text style={styles.metaText}>{item.reading_minutes} {isMl ? "മിനിറ്റ്" : "min"}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderCard = ({ item }: { item: ArticleSummary }) => <ArticleListItem article={item} onPress={openArticle} />;
 
   const header = (
     <View>
@@ -270,7 +178,7 @@ export default function NewsScreen({ navigation }: any) {
   return (
     <SafeScreenContainer>
       <ScreenHeader
-        title={isMl ? "വാർത്തകൾ & ന്യൂസ്‌ലെറ്റർ" : "News & Newsletter"}
+        title={isMl ? "വാർത്തകൾ & ഗൈഡുകൾ" : "News & Guides"}
         subtitle={isMl ? "ലോട്ടറി വാർത്തകൾ, ഗൈഡുകൾ, ടിപ്പുകൾ" : "Lottery news, guides & tips"}
         onBack={() => navigation.goBack()}
       />
@@ -283,7 +191,6 @@ export default function NewsScreen({ navigation }: any) {
         ListFooterComponent={
           <View style={{ paddingTop: 8 }}>
             {isLoadingMore ? <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 16 }} /> : null}
-            {!isLoading && articles.length > 0 ? <NewsletterCard isMl={isMl} /> : null}
           </View>
         }
         contentContainerStyle={styles.listContent}
@@ -314,12 +221,7 @@ const styles = StyleSheet.create({
   featuredBadge: { backgroundColor: COLORS.goldLight, color: "#B45309", fontSize: 11, fontWeight: "800", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, overflow: "hidden" },
   heroTitle: { fontSize: 20, lineHeight: 27, fontWeight: "900", color: COLORS.textDark },
   heroExcerpt: { fontSize: 14, lineHeight: 21, color: "#475569" },
-  coverFallback: { width: "100%", alignItems: "center", justifyContent: "center" },
-  card: { flexDirection: "row", backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, overflow: "hidden", minHeight: 110 },
-  cardThumb: { width: 110, alignSelf: "stretch", justifyContent: "center", backgroundColor: "#E2E8F0" },
-  cardBody: { flex: 1, padding: 12, gap: 4, justifyContent: "center" },
   categoryText: { fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
-  cardTitle: { fontSize: 15, lineHeight: 21, fontWeight: "800", color: COLORS.textDark },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   metaText: { fontSize: 12, color: COLORS.textMuted },
   empty: { alignItems: "center", paddingVertical: 48, paddingHorizontal: 24, gap: 8 },
@@ -327,14 +229,4 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 14, color: COLORS.textMuted, textAlign: "center", lineHeight: 20 },
   retryBtn: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, marginTop: 10 },
   retryText: { color: COLORS.white, fontWeight: "800" },
-  newsletter: { backgroundColor: COLORS.primary, borderRadius: 18, padding: 18, marginTop: 20, gap: 8 },
-  newsletterTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  newsletterTitle: { color: COLORS.white, fontSize: 17, fontWeight: "900" },
-  newsletterText: { color: "rgba(255,255,255,0.88)", fontSize: 13, lineHeight: 19 },
-  newsletterForm: { flexDirection: "row", gap: 8, marginTop: 4 },
-  newsletterInput: { flex: 1, backgroundColor: COLORS.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: COLORS.textDark },
-  newsletterBtn: { backgroundColor: "#F59E0B", borderRadius: 10, paddingHorizontal: 16, justifyContent: "center", minWidth: 96, alignItems: "center" },
-  newsletterBtnText: { color: COLORS.textDark, fontWeight: "900" },
-  newsletterSuccess: { color: "#BBF7D0", fontWeight: "800", marginTop: 4 },
-  newsletterError: { color: "#FECACA", fontSize: 12, fontWeight: "700" },
 });

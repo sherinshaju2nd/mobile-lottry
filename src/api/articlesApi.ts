@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./lotteryApi";
 
 /**
- * Articles / newsletter feed published from the website admin (/admin → Articles).
+ * Articles feed published from the website admin (/admin → Articles).
  * Reads use the public key: RLS only returns published posts
  * (see frontend/supabase/migrations/20261107000000_articles_newsletter.sql).
  *
@@ -13,7 +13,6 @@ export const WEBSITE_URL = "https://www.keralalotteryresultstoday.in";
 
 export const ARTICLE_CATEGORIES = [
   { value: "news", en: "Lottery News", ml: "വാർത്തകൾ", color: "#0B3C5D", bg: "#EBF5FF" },
-  { value: "newsletter", en: "Newsletter", ml: "ന്യൂസ്‌ലെറ്റർ", color: "#7C3AED", bg: "#F5F3FF" },
   { value: "guide", en: "Guides", ml: "ഗൈഡുകൾ", color: "#047857", bg: "#ECFDF5" },
   { value: "tips", en: "Tips & Safety", ml: "ടിപ്സ്", color: "#B45309", bg: "#FFFBEB" },
   { value: "announcement", en: "Announcements", ml: "അറിയിപ്പുകൾ", color: "#BE123C", bg: "#FFF1F2" },
@@ -193,21 +192,5 @@ export const recordArticleView = async (slug: string): Promise<void> => {
     if (error) throw error;
   } catch (err: unknown) {
     console.warn("[articlesApi] view count failed:", errorMessage(err));
-  }
-};
-
-export const subscribeToNewsletter = async (email: string): Promise<{ success: boolean; message: string }> => {
-  try {
-    const res = await fetch(`${WEBSITE_URL}/api/newsletter`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), source: "mobile" }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok || !json?.success) return { success: false, message: json?.error ?? "Could not subscribe right now." };
-    return { success: true, message: json.message ?? "Subscribed!" };
-  } catch (err: unknown) {
-    console.warn("[articlesApi] subscribe failed:", errorMessage(err));
-    return { success: false, message: "No internet connection. Please try again." };
   }
 };

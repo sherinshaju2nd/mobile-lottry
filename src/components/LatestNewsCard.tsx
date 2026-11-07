@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { ChevronRight, Newspaper } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
@@ -9,13 +9,15 @@ import { ArticleSummary, fetchArticleFeed, getCategoryMeta, readCachedFeed } fro
 
 interface LatestNewsCardProps {
   navigation: { navigate: (screen: string, params?: object) => void };
+  /** Extra outer spacing for the host layout (e.g. marginBottom on the modern home). */
+  style?: StyleProp<ViewStyle>;
 }
 
 type LoadState = { status: "loading" } | { status: "ready"; article: ArticleSummary } | { status: "empty" };
 
 /** Same footprint as the real card so nothing jumps when data arrives. */
-const LatestNewsSkeleton = () => (
-  <View style={[styles.card, styles.skeletonCard]} accessibilityLabel="Loading latest news" accessible>
+const LatestNewsSkeleton = ({ style }: { style?: StyleProp<ViewStyle> }) => (
+  <View style={[styles.card, styles.skeletonCard, style]} accessibilityLabel="Loading latest news" accessible>
     <ShimmerSkeleton width={42} height={42} borderRadius={12} />
     <View style={[styles.textCol, { gap: 6 }]}>
       <ShimmerSkeleton width="55%" height={10} borderRadius={5} />
@@ -32,7 +34,7 @@ const LatestNewsSkeleton = () => (
  *   empty   → renders nothing (no articles published, or offline with no cache)
  * Fetching here also warms the News screen's offline cache.
  */
-export default function LatestNewsCard({ navigation }: LatestNewsCardProps) {
+export default function LatestNewsCard({ navigation, style }: LatestNewsCardProps) {
   const { language } = useLanguage();
   const isMl = language === "ml";
   const [state, setState] = useState<LoadState>({ status: "loading" });
@@ -55,7 +57,7 @@ export default function LatestNewsCard({ navigation }: LatestNewsCardProps) {
     };
   }, []);
 
-  if (state.status === "loading") return <LatestNewsSkeleton />;
+  if (state.status === "loading") return <LatestNewsSkeleton style={style} />;
   if (state.status === "empty") return null;
 
   const { article } = state;
@@ -69,7 +71,7 @@ export default function LatestNewsCard({ navigation }: LatestNewsCardProps) {
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, style]}
       onPress={openArticle}
       activeOpacity={0.85}
       accessibilityRole="button"

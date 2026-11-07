@@ -714,7 +714,7 @@ export default function HomeScreen2({ navigation }: any) {
           </View>
         </TouchableOpacity>
 
-        {/* News & newsletter entry point */}
+        {/* Latest news entry point */}
         <LatestNewsCard navigation={navigation} />
 
         {/* Section Header for Past Draws */}

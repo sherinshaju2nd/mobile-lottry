@@ -831,8 +831,8 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </ScrollView>
 
-        {/* News & newsletter entry point */}
-        <LatestNewsCard navigation={navigation} />
+        {/* Latest news entry point */}
+        <LatestNewsCard navigation={navigation} style={{ marginBottom: 16 }} />
 
         {/* Quick Ticket Checker Card */}
         {(() => {

@@ -1,15 +1,28 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ChevronDown, ChevronUp, Clock, Globe, RotateCw, Search, Share2, WifiOff } from "lucide-react-native";
 import SafeScreenContainer from "../components/SafeScreenContainer";
 import ScreenHeader from "../components/ScreenHeader";
 import ArticleMarkdownView from "../components/ArticleMarkdownView";
+import ArticleListItem from "../components/ArticleListItem";
+import AutoSizedImage from "../components/AutoSizedImage";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
 import { triggerLightHaptic } from "../utils/haptics";
 import { universalShare } from "../utils/shareHelper";
 import { resolveAppLink } from "../utils/deepLinking";
-import { Article, fetchArticle, formatArticleDate, getArticleWebUrl, getCategoryMeta, recordArticleView } from "../api/articlesApi";
+import {
+  Article,
+  ArticleSummary,
+  fetchArticle,
+  fetchArticleFeed,
+  formatArticleDate,
+  getArticleWebUrl,
+  getCategoryMeta,
+  recordArticleView,
+} from "../api/articlesApi";
+
+const MORE_ARTICLES_LIMIT = 4;
 
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => {
   const [open, setOpen] = useState(false);
@@ -45,6 +58,8 @@ export default function ArticleDetailScreen({ navigation, route }: any) {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coverFailed, setCoverFailed] = useState(false);
+  const onCoverFailed = useCallback(() => setCoverFailed(true), []);
+  const [moreArticles, setMoreArticles] = useState<ArticleSummary[]>([]);
 
   const load = useCallback(async () => {
     const result = await fetchArticle(slug);
@@ -60,6 +75,23 @@ export default function ArticleDetailScreen({ navigation, route }: any) {
     load();
     if (slug) recordArticleView(slug);
   }, [load, slug]);
+
+  // Other articles for the bottom of the page (falls back to the offline cache inside fetchArticleFeed).
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { articles } = await fetchArticleFeed({ page: 0 });
+      if (active) setMoreArticles(articles.filter((a) => a.slug !== slug).slice(0, MORE_ARTICLES_LIMIT));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  const openOtherArticle = (other: ArticleSummary) => {
+    triggerLightHaptic();
+    navigation.push("ArticleDetail", { slug: other.slug, title: other.title });
+  };
 
   const share = async () => {
     if (!article) return;
@@ -161,13 +193,12 @@ export default function ArticleDetailScreen({ navigation, route }: any) {
           </View>
 
           {article.cover_image_url && !coverFailed ? (
-            <Image
-              source={{ uri: article.cover_image_url }}
+            <AutoSizedImage
+              uri={article.cover_image_url}
+              alt={article.cover_image_alt ?? article.title}
+              minRatio={0.8}
               style={styles.cover}
-              resizeMode="cover"
-              accessibilityLabel={article.cover_image_alt ?? article.title}
-              accessible
-              onError={() => setCoverFailed(true)}
+              onFailed={onCoverFailed}
             />
           ) : null}
 
@@ -204,6 +235,22 @@ export default function ArticleDetailScreen({ navigation, route }: any) {
               <Text style={styles.secondaryBtnText}>{isMl ? "വെബ്സൈറ്റിൽ" : "Open on web"}</Text>
             </TouchableOpacity>
           </View>
+
+          {moreArticles.length > 0 ? (
+            <View style={styles.moreSection}>
+              <View style={styles.moreHeader}>
+                <Text style={styles.sectionTitle}>{isMl ? "കൂടുതൽ വാർത്തകൾ" : "More articles"}</Text>
+                <TouchableOpacity onPress={() => navigation.navigate("News")} accessibilityRole="link" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={styles.moreLink}>{isMl ? "എല്ലാം കാണുക" : "View all"}</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ gap: 12 }}>
+                {moreArticles.map((other) => (
+                  <ArticleListItem key={other.id} article={other} onPress={openOtherArticle} />
+                ))}
+              </View>
+            </View>
+          ) : null}
         </ScrollView>
       )}
     </SafeScreenContainer>
@@ -227,7 +274,7 @@ const styles = StyleSheet.create({
   author: { fontSize: 14, fontWeight: "800", color: COLORS.textDark },
   metaInline: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   metaText: { fontSize: 12, color: COLORS.textMuted },
-  cover: { width: "100%", aspectRatio: 1200 / 630, borderRadius: 14, marginBottom: 18, backgroundColor: "#E2E8F0" },
+  cover: { borderRadius: 14, marginBottom: 18 },
   faqSection: { marginTop: 18 },
   sectionTitle: { fontSize: 19, fontWeight: "900", color: COLORS.textDark, marginBottom: 10 },
   faq: { borderWidth: 1, borderColor: COLORS.border, borderRadius: 12, marginBottom: 10, overflow: "hidden" },
@@ -237,6 +284,9 @@ const styles = StyleSheet.create({
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 18 },
   tag: { fontSize: 12, fontWeight: "700", color: "#475569", backgroundColor: "#F1F5F9", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, overflow: "hidden" },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 24 },
+  moreSection: { marginTop: 32, paddingTop: 24, borderTopWidth: 1, borderTopColor: COLORS.border },
+  moreHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 },
+  moreLink: { fontSize: 14, fontWeight: "800", color: COLORS.primary },
   primaryBtn: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 12 },
   primaryBtnText: { color: COLORS.white, fontWeight: "800" },
   secondaryBtn: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: COLORS.primaryLight, paddingHorizontal: 16, paddingVertical: 11, borderRadius: 12 },

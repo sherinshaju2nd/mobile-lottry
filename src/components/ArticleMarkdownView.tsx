@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Image, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useMemo } from "react";
+import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Info, Lightbulb, TriangleAlert } from "lucide-react-native";
 import { BlockNode, CalloutTone, InlineNode, parseMarkdown } from "../utils/articleMarkdown";
 import { COLORS } from "../constants/colors";
+import AutoSizedImage from "./AutoSizedImage";
 
 const WEBSITE_URL = "https://www.keralalotteryresultstoday.in";
 
@@ -24,36 +25,6 @@ const openExternal = async (url: string) => {
   } catch (err: unknown) {
     console.warn("[ArticleMarkdownView] open link failed:", err instanceof Error ? err.message : String(err));
   }
-};
-
-/** Remote image that keeps its own aspect ratio (falls back to 16:9). */
-const AutoImage = ({ uri, alt }: { uri: string; alt: string }) => {
-  const [ratio, setRatio] = useState(16 / 9);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    Image.getSize(
-      uri,
-      (w, h) => active && w > 0 && h > 0 && setRatio(w / h),
-      () => active && setFailed(true),
-    );
-    return () => {
-      active = false;
-    };
-  }, [uri]);
-
-  if (failed) return null;
-  return (
-    <Image
-      source={{ uri }}
-      accessibilityLabel={alt}
-      accessible
-      style={[styles.image, { aspectRatio: ratio }]}
-      resizeMode="cover"
-      onError={() => setFailed(true)}
-    />
-  );
 };
 
 export default function ArticleMarkdownView({ markdown, onInternalLink }: Props) {
@@ -148,7 +119,7 @@ export default function ArticleMarkdownView({ markdown, onInternalLink }: Props)
       case "image":
         return (
           <View key={key} style={styles.figure}>
-            <AutoImage uri={block.src.startsWith("/") ? `${WEBSITE_URL}${block.src}` : block.src} alt={block.alt} />
+            <AutoSizedImage uri={block.src.startsWith("/") ? `${WEBSITE_URL}${block.src}` : block.src} alt={block.alt} minRatio={0.6} style={styles.image} />
             {block.caption ? <Text style={styles.caption}>{block.caption}</Text> : null}
           </View>
         );
@@ -208,7 +179,7 @@ const styles = StyleSheet.create({
   quote: { borderLeftWidth: 4, borderLeftColor: COLORS.primary, backgroundColor: "#F8FAFC", paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, marginBottom: 14 },
   callout: { flexDirection: "row", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 14, alignItems: "flex-start" },
   figure: { marginBottom: 16 },
-  image: { width: "100%", borderRadius: 12, backgroundColor: "#E2E8F0" },
+  image: { borderRadius: 12 },
   caption: { fontSize: 13, color: COLORS.textMuted, textAlign: "center", marginTop: 6 },
   codeBlock: { backgroundColor: "#0F172A", borderRadius: 12, padding: 14, marginBottom: 14 },
   codeText: { fontFamily: "monospace", color: "#E2E8F0", fontSize: 13 },

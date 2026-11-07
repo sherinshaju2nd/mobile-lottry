@@ -479,7 +479,7 @@ export default function SideMenuDrawerModal({
                 <ChevronRight size={16} color="#94A3B8" />
               </TouchableOpacity>
 
-              {/* News & newsletter */}
+              {/* News */}
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
@@ -493,7 +493,7 @@ export default function SideMenuDrawerModal({
                   <Newspaper size={18} color="#7C3AED" />
                 </View>
                 <View style={styles.menuTextCol}>
-                  <Text style={styles.menuTitle}>{isMl ? "വാർത്തകൾ & ന്യൂസ്‌ലെറ്റർ" : "News & Newsletter"}</Text>
+                  <Text style={styles.menuTitle}>{isMl ? "വാർത്തകൾ & ഗൈഡുകൾ" : "News & Guides"}</Text>
                   <Text style={styles.menuSub}>{isMl ? "ലോട്ടറി വാർത്തകൾ, ഗൈഡുകൾ, ടിപ്പുകൾ" : "Lottery news, guides & tips"}</Text>
                 </View>
                 <ChevronRight size={16} color="#94A3B8" />
