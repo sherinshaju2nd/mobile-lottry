@@ -4,62 +4,85 @@ import { ChevronRight, Newspaper } from "lucide-react-native";
 import { COLORS } from "../constants/colors";
 import { useLanguage } from "../context/LanguageContext";
 import { triggerLightHaptic } from "../utils/haptics";
+import ShimmerSkeleton from "./ShimmerSkeleton";
 import { ArticleSummary, fetchArticleFeed, getCategoryMeta, readCachedFeed } from "../api/articlesApi";
 
 interface LatestNewsCardProps {
   navigation: { navigate: (screen: string, params?: object) => void };
 }
 
+type LoadState = { status: "loading" } | { status: "ready"; article: ArticleSummary } | { status: "empty" };
+
+/** Same footprint as the real card so nothing jumps when data arrives. */
+const LatestNewsSkeleton = () => (
+  <View style={[styles.card, styles.skeletonCard]} accessibilityLabel="Loading latest news" accessible>
+    <ShimmerSkeleton width={42} height={42} borderRadius={12} />
+    <View style={[styles.textCol, { gap: 6 }]}>
+      <ShimmerSkeleton width="55%" height={10} borderRadius={5} />
+      <ShimmerSkeleton width="85%" height={14} borderRadius={6} />
+    </View>
+    <ShimmerSkeleton width={64} height={30} borderRadius={999} />
+  </View>
+);
+
 /**
- * Home-screen entry point to the News feed. Shows the newest article's headline when one
- * exists (cached first for instant paint, then refreshed), otherwise a generic prompt.
+ * Home-screen card for the newest article.
+ *   loading → skeleton (skipped when a cached article can be shown instantly)
+ *   ready   → real card; tapping opens that article
+ *   empty   → renders nothing (no articles published, or offline with no cache)
  * Fetching here also warms the News screen's offline cache.
  */
 export default function LatestNewsCard({ navigation }: LatestNewsCardProps) {
   const { language } = useLanguage();
   const isMl = language === "ml";
-  const [latest, setLatest] = useState<ArticleSummary | null>(null);
+  const [state, setState] = useState<LoadState>({ status: "loading" });
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const cached = await readCachedFeed();
-      if (active && cached[0]) setLatest(cached[0]);
+      const [cachedFirst] = await readCachedFeed();
+      if (active && cachedFirst) setState({ status: "ready", article: cachedFirst });
+
       const { articles, fromCache } = await fetchArticleFeed({ page: 0 });
-      if (active && !fromCache) setLatest(articles[0] ?? null);
+      if (!active) return;
+      const [latest] = articles;
+      if (latest) setState({ status: "ready", article: latest });
+      // Network answered "no articles" → hide. Offline → keep the cached card if we had one.
+      else if (!fromCache || !cachedFirst) setState({ status: "empty" });
     })();
     return () => {
       active = false;
     };
   }, []);
 
-  const openNews = () => {
-    triggerLightHaptic();
-    navigation.navigate("News");
-  };
+  if (state.status === "loading") return <LatestNewsSkeleton />;
+  if (state.status === "empty") return null;
 
-  const category = latest ? getCategoryMeta(latest.category) : null;
-  const label = latest
-    ? `${isMl ? "പുതിയ വാർത്ത" : "Latest News"}${category ? ` · ${isMl ? category.ml : category.en}` : ""}`
-    : isMl ? "വാർത്തകൾ & ന്യൂസ്‌ലെറ്റർ" : "News & Newsletter";
-  const headline = latest?.title ?? (isMl ? "ലോട്ടറി വാർത്തകൾ, ഗൈഡുകൾ, ടിപ്പുകൾ" : "Lottery news, claim guides & tips");
+  const { article } = state;
+  const category = getCategoryMeta(article.category);
+  const label = `${isMl ? "പുതിയ വാർത്ത" : "Latest News"} · ${isMl ? category.ml : category.en}`;
+
+  const openArticle = () => {
+    triggerLightHaptic();
+    navigation.navigate("ArticleDetail", { slug: article.slug, title: article.title });
+  };
 
   return (
     <TouchableOpacity
       style={styles.card}
-      onPress={openNews}
+      onPress={openArticle}
       activeOpacity={0.85}
       accessibilityRole="button"
-      accessibilityLabel={`${label}: ${headline}`}
-      accessibilityHint={isMl ? "വാർത്തകൾ തുറക്കുക" : "Opens the news feed"}
+      accessibilityLabel={`${label}: ${article.title}`}
+      accessibilityHint={isMl ? "ലേഖനം തുറക്കുക" : "Opens the article"}
     >
       <View style={styles.iconBox}>
         <Newspaper size={20} color="#7C3AED" />
-        {latest ? <View style={styles.dot} /> : null}
+        <View style={styles.dot} />
       </View>
       <View style={styles.textCol}>
         <Text style={styles.label} numberOfLines={1}>{label}</Text>
-        <Text style={styles.headline} numberOfLines={2}>{headline}</Text>
+        <Text style={styles.headline} numberOfLines={2}>{article.title}</Text>
       </View>
       <View style={styles.cta}>
         <Text style={styles.ctaText}>{isMl ? "വായിക്കുക" : "Read"}</Text>
@@ -106,6 +129,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#F5F3FF",
   },
+  skeletonCard: { borderColor: COLORS.border, shadowOpacity: 0, elevation: 0 },
   textCol: { flex: 1, gap: 2 },
   label: { fontSize: 11, fontWeight: "800", color: "#7C3AED", textTransform: "uppercase", letterSpacing: 0.4 },
   headline: { fontSize: 14, lineHeight: 19, fontWeight: "800", color: COLORS.textDark },
